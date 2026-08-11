@@ -1,0 +1,3 @@
+# Utiliser la confiance au premier usage pour les certificats TLS non reconnus
+
+`warpgatesh` accepte silencieusement les certificats TLS reconnus par le système. Pour une instance utilisant un certificat interne ou auto-signé non reconnu, le client affiche son empreinte lors de la première connexion, exige une confirmation explicite puis l’épingle au profil ; tout changement ultérieur bloque la synchronisation et demande une nouvelle validation. Ce modèle évite la gestion manuelle d’une CA dans le parcours courant sans transmettre un jeton d’accès à un serveur dont l’identité n’a jamais été vérifiée.

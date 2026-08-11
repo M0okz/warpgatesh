@@ -1,0 +1,18 @@
+[package]
+name = "warpgatesh-cli"
+description = "Command-line interface for WarpgateSH"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "warpgatesh"
+path = "src/main.rs"
+
+[dependencies]
+warpgatesh-core = { path = "../warpgatesh-core" }
+
+[lints]
+workspace = true

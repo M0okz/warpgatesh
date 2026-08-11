@@ -1,0 +1,14 @@
+[package]
+name = "warpgatesh-agent"
+description = "Per-user synchronization agent for WarpgateSH"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+warpgatesh-core = { path = "../warpgatesh-core" }
+
+[lints]
+workspace = true
