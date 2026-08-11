@@ -3,5 +3,6 @@
 **/dist/
 apps/warpgatesh-companion/src-tauri/target/
 apps/warpgatesh-companion/src-tauri/gen/schemas/
+apps/warpgatesh-companion/src-tauri/binaries/
 .DS_Store
 *.log

@@ -140,7 +140,9 @@ pub async fn open_token_page_for(base_url: String) -> Result<(), String> {
 pub async fn inspect_profile(request: ProfileRequest) -> Result<ProfileInspection, String> {
     validate_profile_request(&request)?;
     let client = ApiClient::new(request.base_url.trim()).map_err(display_error)?;
-    let metadata = client.validate(request.token.trim()).map_err(display_error)?;
+    let metadata = client
+        .validate(request.token.trim())
+        .map_err(display_error)?;
     let ssh_host = request
         .ssh_host
         .as_deref()
@@ -164,7 +166,9 @@ pub async fn inspect_profile(request: ProfileRequest) -> Result<ProfileInspectio
 pub async fn add_profile(request: ProfileRequest) -> Result<(), String> {
     validate_profile_request(&request)?;
     let client = ApiClient::new(request.base_url.trim()).map_err(display_error)?;
-    let metadata = client.validate(request.token.trim()).map_err(display_error)?;
+    let metadata = client
+        .validate(request.token.trim())
+        .map_err(display_error)?;
     let ssh_host = request
         .ssh_host
         .as_deref()
@@ -252,7 +256,9 @@ pub async fn open_target(alias: String) -> Result<(), String> {
         .map_err(display_error)?;
 
     #[cfg(not(any(target_os = "macos", target_os = "linux")))]
-    return Err("L’ouverture de cibles SSH n’est pas prise en charge sur cette plateforme.".to_owned());
+    return Err(
+        "L’ouverture de cibles SSH n’est pas prise en charge sur cette plateforme.".to_owned(),
+    );
 
     if status.success() {
         Ok(())
@@ -353,7 +359,10 @@ fn build_alerts(
             });
         }
     }
-    let stale_after = preferences.sync_interval_seconds.saturating_mul(2).saturating_add(60);
+    let stale_after = preferences
+        .sync_interval_seconds
+        .saturating_mul(2)
+        .saturating_add(60);
     if alerts.is_empty() && sync_age.is_some_and(|age| age > stale_after) {
         alerts.push(CompanionAlert {
             id: "stale".to_owned(),
@@ -369,7 +378,8 @@ fn build_alerts(
 fn validate_profile_request(request: &ProfileRequest) -> Result<(), String> {
     if !is_valid_profile_name(request.name.trim()) {
         return Err(
-            "Le nom doit utiliser uniquement des lettres minuscules, chiffres et tirets.".to_owned(),
+            "Le nom doit utiliser uniquement des lettres minuscules, chiffres et tirets."
+                .to_owned(),
         );
     }
     if request.token.trim().is_empty() {

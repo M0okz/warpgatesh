@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "identifier": "dev.warpgatesh.companion",
   "build": {
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "npm run prepare:sidecars && npm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "npm run build:bundle",
     "frontendDist": "../dist"
   },
   "app": {
@@ -34,6 +34,10 @@
   "bundle": {
     "active": true,
     "targets": ["app", "dmg"],
+    "externalBin": [
+      "binaries/warpgatesh",
+      "binaries/warpgatesh-agent"
+    ],
     "category": "Utility",
     "shortDescription": "Keep Warpgate SSH targets synchronized.",
     "longDescription": "Optional desktop companion for the WarpgateSH command-line client.",

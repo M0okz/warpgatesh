@@ -239,6 +239,18 @@ Pour construire un bundle macOS local :
 npm run tauri build -- --bundles app
 ```
 
+Le hook de build compile automatiquement `warpgatesh` et
+`warpgatesh-agent` en mode Release pour le même triple Rust que le compagnon,
+puis les embarque dans l’application. Il est également possible de préparer
+uniquement ces deux exécutables avec `npm run prepare:sidecars`.
+
+Pour produire à la fois l’application et son image disque, puis vérifier que
+la CLI et l’agent embarqués sont exécutables et partagent la bonne version :
+
+```sh
+npm run bundle:macos
+```
+
 L’application permet de consulter l’état de l’agent et la dernière
 synchronisation, de filtrer les cibles avec `⌘ K`, de forcer une synchronisation
 et d’ouvrir une cible SSH dans le terminal. Elle gère aussi l’ajout, le

@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "prepare:sidecars": "node scripts/prepare-sidecars.mjs",
+    "build:bundle": "npm run prepare:sidecars && npm run build",
+    "bundle:macos": "tauri build --bundles app,dmg && npm run verify:bundle",
+    "verify:bundle": "node scripts/verify-macos-bundle.mjs",
     "preview": "vite preview",
     "tauri": "tauri"
   },

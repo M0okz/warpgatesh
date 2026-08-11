@@ -30,16 +30,12 @@ pub fn run() {
                 .set_activation_policy(tauri::ActivationPolicy::Accessory)?;
 
             let show = MenuItem::with_id(app, "show", "Afficher WarpgateSH", true, None::<&str>)?;
-            let sync = MenuItem::with_id(app, "sync", "Synchroniser maintenant", true, None::<&str>)?;
+            let sync =
+                MenuItem::with_id(app, "sync", "Synchroniser maintenant", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "Quitter WarpgateSH", true, None::<&str>)?;
             let menu = Menu::with_items(
                 app,
-                &[
-                    &show,
-                    &sync,
-                    &PredefinedMenuItem::separator(app)?,
-                    &quit,
-                ],
+                &[&show, &sync, &PredefinedMenuItem::separator(app)?, &quit],
             )?;
             let mut tray = TrayIconBuilder::new()
                 .menu(&menu)
