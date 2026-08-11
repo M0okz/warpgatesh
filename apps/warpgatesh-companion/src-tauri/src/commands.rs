@@ -1,4 +1,3 @@
-use std::fs;
 use std::process::Command;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -8,11 +7,9 @@ use tauri_plugin_autostart::ManagerExt;
 use warpgatesh_core::aliases::is_valid_profile_name;
 use warpgatesh_core::profiles::Profile;
 use warpgatesh_runtime::api::ApiClient;
+use warpgatesh_runtime::configuration::ConfigurationMutation;
 use warpgatesh_runtime::ipc;
-use warpgatesh_runtime::keychain::{SystemKeychain, TokenStore};
-use warpgatesh_runtime::ssh::{
-    install_managed_include, open_token_page, save_host_keys, scan_host_keys,
-};
+use warpgatesh_runtime::ssh::{open_token_page, scan_host_keys};
 use warpgatesh_runtime::storage::{AgentErrorKind, LocalStore, Preferences};
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
@@ -105,7 +102,7 @@ pub async fn save_preferences(
     preferences: CompanionPreferences,
 ) -> Result<(), String> {
     let store = LocalStore::for_current_user().map_err(display_error)?;
-    let mut catalog = store.load_profiles().map_err(display_error)?;
+    let catalog = store.load_profiles().map_err(display_error)?;
     if let Some(default) = &preferences.default_profile {
         if catalog.find(default).is_none() {
             return Err(format!("Le profil « {default} » n’existe pas."));
@@ -122,12 +119,13 @@ pub async fn save_preferences(
         launch_companion_at_login: preferences.launch_companion_at_login,
         ..Preferences::default()
     };
-    store.save_preferences(&persisted).map_err(display_error)?;
-    catalog.default_profile = preferences.default_profile;
-    store.save_profiles(&catalog).map_err(display_error)?;
-
-    ipc::request(&store.paths().agent_socket, "reload").map_err(display_error)?;
-    request_sync(&store)?;
+    request_configuration(
+        &store,
+        &ConfigurationMutation::SavePreferences {
+            preferences: persisted,
+            default_profile: preferences.default_profile,
+        },
+    )?;
     Ok(())
 }
 
@@ -177,25 +175,21 @@ pub async fn add_profile(request: ProfileRequest) -> Result<(), String> {
     let ssh_port = request.ssh_port.unwrap_or(metadata.ssh_port);
     let host_keys = scan_host_keys(&ssh_host, ssh_port).map_err(display_error)?;
     let store = LocalStore::for_current_user().map_err(display_error)?;
-    let mut catalog = store.load_profiles().map_err(display_error)?;
-    catalog
-        .upsert(Profile {
-            name: request.name.clone(),
-            base_url: client.base_url().as_str().to_owned(),
-            username: metadata.username,
-            warpgate_version: metadata.version,
-            ssh_host,
-            ssh_port,
-        })
-        .map_err(display_error)?;
-
-    save_host_keys(store.paths(), &request.name, &host_keys.known_hosts).map_err(display_error)?;
-    SystemKeychain
-        .set(&request.name, request.token.trim())
-        .map_err(display_error)?;
-    store.save_profiles(&catalog).map_err(display_error)?;
-    install_managed_include(store.paths()).map_err(display_error)?;
-    request_sync(&store)?;
+    request_configuration(
+        &store,
+        &ConfigurationMutation::SaveProfile {
+            profile: Profile {
+                name: request.name.clone(),
+                base_url: client.base_url().as_str().to_owned(),
+                username: metadata.username,
+                warpgate_version: metadata.version,
+                ssh_host,
+                ssh_port,
+            },
+            token: request.token.trim().to_owned(),
+            known_hosts: host_keys.known_hosts,
+        },
+    )?;
     Ok(())
 }
 
@@ -205,44 +199,29 @@ pub async fn renew_profile_token(name: String, token: String) -> Result<(), Stri
         return Err("Le jeton API est requis.".to_owned());
     }
     let store = LocalStore::for_current_user().map_err(display_error)?;
-    let mut catalog = store.load_profiles().map_err(display_error)?;
+    let catalog = store.load_profiles().map_err(display_error)?;
     let existing = catalog
         .find(&name)
         .cloned()
         .ok_or_else(|| format!("Le profil « {name} » n’existe pas."))?;
     let client = ApiClient::new(&existing.base_url).map_err(display_error)?;
     let metadata = client.validate(token.trim()).map_err(display_error)?;
-    catalog
-        .upsert(Profile {
+    request_configuration(
+        &store,
+        &ConfigurationMutation::RenewToken {
+            name,
+            token: token.trim().to_owned(),
             username: metadata.username,
             warpgate_version: metadata.version,
-            ..existing
-        })
-        .map_err(display_error)?;
-    SystemKeychain
-        .set(&name, token.trim())
-        .map_err(display_error)?;
-    store.save_profiles(&catalog).map_err(display_error)?;
-    request_sync(&store)?;
+        },
+    )?;
     Ok(())
 }
 
 #[tauri::command]
 pub async fn remove_profile(name: String) -> Result<(), String> {
     let store = LocalStore::for_current_user().map_err(display_error)?;
-    let mut catalog = store.load_profiles().map_err(display_error)?;
-    if !catalog.remove(&name) {
-        return Err(format!("Le profil « {name} » n’existe pas."));
-    }
-    SystemKeychain.delete(&name).map_err(display_error)?;
-    let host_keys = store.paths().known_hosts_directory.join(&name);
-    match fs::remove_file(host_keys) {
-        Ok(()) => {}
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-        Err(error) => return Err(display_error(error)),
-    }
-    store.save_profiles(&catalog).map_err(display_error)?;
-    request_sync(&store)?;
+    request_configuration(&store, &ConfigurationMutation::RemoveProfile { name })?;
     Ok(())
 }
 
@@ -402,6 +381,18 @@ fn validate_profile_request(request: &ProfileRequest) -> Result<(), String> {
 fn request_sync(store: &LocalStore) -> Result<String, String> {
     ipc::request_with_retry(&store.paths().agent_socket, "sync", Duration::from_secs(20))
         .map_err(display_error)
+}
+
+fn request_configuration(
+    store: &LocalStore,
+    mutation: &ConfigurationMutation,
+) -> Result<String, String> {
+    ipc::request_mutation(
+        &store.paths().agent_socket,
+        mutation,
+        Duration::from_secs(20),
+    )
+    .map_err(display_error)
 }
 
 pub(crate) fn synchronize_from_tray() {

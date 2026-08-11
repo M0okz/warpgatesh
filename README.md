@@ -94,6 +94,13 @@ l’utilisateur active cette préférence ; le quitter n’arrête jamais l’ag
 L’arrêt de la synchronisation de fond reste une action explicite accompagnée
 d’un avertissement.
 
+L’agent est l’unique écrivain de la configuration locale. La CLI et le
+compagnon lui transmettent des mutations typées par le socket Unix privé ; ils
+ne modifient directement ni le catalogue, ni les préférences, ni les clés
+épinglées, ni le Trousseau. Une synchronisation réseau déjà en cours peut finir
+sur son instantané initial, puis l’agent enchaîne automatiquement une nouvelle
+synchronisation avec la configuration modifiée.
+
 Le fichier SSH est remplacé atomiquement seulement après une réponse Warpgate
 valide et complète. Une erreur conserve le dernier instantané réussi et le
 signale comme périmé ; elle ne produit jamais un fichier vide ou partiel.
@@ -253,7 +260,7 @@ Sur un Mac Intel, la racine Homebrew habituelle est `/usr/local`. La dernière
 commande réenregistre le `LaunchAgent` avec le binaire installé ; les profils,
 jetons, clés épinglées et instantanés existants sont conservés.
 
-La prise en charge volontaire des certificats TLS auto-signés et la migration
-des mutations de profils vers l’agent unique restent à implémenter avant le MVP
-complet. Le comportement par défaut continue de s’appuyer sur la validation TLS
-du système, sans ajouter de parcours de certificat à l’usage courant.
+La prise en charge volontaire des certificats TLS auto-signés reste à
+implémenter avant le MVP complet. Le comportement par défaut continue de
+s’appuyer sur la validation TLS du système, sans ajouter de parcours de
+certificat à l’usage courant.

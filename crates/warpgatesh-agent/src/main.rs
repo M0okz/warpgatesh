@@ -2,12 +2,19 @@ use std::process::ExitCode;
 
 use warpgatesh_core::schedule::SyncSchedule;
 use warpgatesh_runtime::RuntimeError;
+use warpgatesh_runtime::configuration::{ConfigurationMutation, LocalConfiguration};
+use warpgatesh_runtime::ipc::MUTATION_PREFIX;
 use warpgatesh_runtime::keychain::SystemKeychain;
 use warpgatesh_runtime::ssh::verify_host_keys;
 use warpgatesh_runtime::storage::{
     AGENT_STATUS_SCHEMA_VERSION, AgentErrorKind, AgentStatus, LocalStore,
 };
 use warpgatesh_runtime::sync::{SyncReport, synchronize_all};
+
+const LOCAL_COMMAND_LIMIT: u64 = 64 * 1024;
+
+#[cfg(unix)]
+type SyncWorker = std::thread::JoinHandle<Result<SyncReport, RuntimeError>>;
 
 fn main() -> ExitCode {
     match std::env::args().nth(1).as_deref() {
@@ -152,13 +159,15 @@ fn run_forever() -> Result<(), RuntimeError> {
     let mut failures = 0_u32;
     let mut next_sync = Instant::now();
     let mut sync_worker = None;
+    let mut resync_requested = false;
     println!(
         "warpgatesh-agent: running (default interval: {} seconds)",
         schedule.interval.as_secs()
     );
 
     loop {
-        if sync_worker.is_none() && Instant::now() >= next_sync {
+        if sync_worker.is_none() && (resync_requested || Instant::now() >= next_sync) {
+            resync_requested = false;
             sync_worker = Some(spawn_synchronization(&store));
         }
 
@@ -182,32 +191,20 @@ fn run_forever() -> Result<(), RuntimeError> {
             Ok((mut stream, _)) => {
                 let mut command = String::new();
                 if let Err(error) = BufReader::new(stream.try_clone()?)
-                    .take(1024)
+                    .take(LOCAL_COMMAND_LIMIT)
                     .read_line(&mut command)
                 {
                     eprintln!("warpgatesh-agent: could not read a local command: {error}");
                     continue;
                 }
-                let response = match command.trim_end() {
-                    "status" => "ok running".to_owned(),
-                    "sync" => {
-                        if sync_worker.is_none() {
-                            sync_worker = Some(spawn_synchronization(&store));
-                            "ok synchronization started".to_owned()
-                        } else {
-                            "ok synchronization already running".to_owned()
-                        }
-                    }
-                    "reload" => match schedule_from_preferences(&store) {
-                        Ok(updated) => {
-                            schedule = updated;
-                            next_sync = Instant::now() + schedule.interval;
-                            format!("ok interval {}", schedule.interval.as_secs())
-                        }
-                        Err(error) => format!("error {}", protocol_text(&error.to_string())),
-                    },
-                    _ => "error unknown agent command".to_owned(),
-                };
+                let response = handle_local_request(
+                    command.trim_end(),
+                    &store,
+                    &mut schedule,
+                    &mut next_sync,
+                    &mut sync_worker,
+                    &mut resync_requested,
+                );
                 answer_local_command(&mut stream, &response);
             }
             Err(error) if error.kind() == ErrorKind::WouldBlock => {
@@ -226,6 +223,57 @@ fn run_forever() -> Result<(), RuntimeError> {
 }
 
 #[cfg(unix)]
+fn handle_local_request(
+    request: &str,
+    store: &LocalStore,
+    schedule: &mut SyncSchedule,
+    next_sync: &mut std::time::Instant,
+    sync_worker: &mut Option<SyncWorker>,
+    resync_requested: &mut bool,
+) -> String {
+    if let Some(payload) = request.strip_prefix(MUTATION_PREFIX) {
+        return match apply_configuration(store, payload) {
+            Ok(()) => match schedule_from_preferences(store) {
+                Ok(updated) => {
+                    *schedule = updated;
+                    *resync_requested = true;
+                    "ok configuration saved".to_owned()
+                }
+                Err(error) => format!("error {}", protocol_text(&error.to_string())),
+            },
+            Err(error) => format!("error {}", protocol_text(&error.to_string())),
+        };
+    }
+
+    match request {
+        "status" => "ok running".to_owned(),
+        "sync" => {
+            if sync_worker.is_none() {
+                *sync_worker = Some(spawn_synchronization(store));
+                "ok synchronization started".to_owned()
+            } else {
+                "ok synchronization already running".to_owned()
+            }
+        }
+        "reload" => match schedule_from_preferences(store) {
+            Ok(updated) => {
+                *schedule = updated;
+                *next_sync = std::time::Instant::now() + schedule.interval;
+                format!("ok interval {}", schedule.interval.as_secs())
+            }
+            Err(error) => format!("error {}", protocol_text(&error.to_string())),
+        },
+        _ => "error unknown agent command".to_owned(),
+    }
+}
+
+#[cfg(unix)]
+fn apply_configuration(store: &LocalStore, payload: &str) -> Result<(), RuntimeError> {
+    let mutation = ConfigurationMutation::from_json(payload)?;
+    LocalConfiguration::new(store, &SystemKeychain).apply(mutation)
+}
+
+#[cfg(unix)]
 fn answer_local_command(stream: &mut std::os::unix::net::UnixStream, response: &str) {
     use std::io::Write;
 
@@ -238,9 +286,7 @@ fn answer_local_command(stream: &mut std::os::unix::net::UnixStream, response: &
 }
 
 #[cfg(unix)]
-fn spawn_synchronization(
-    store: &LocalStore,
-) -> std::thread::JoinHandle<Result<SyncReport, RuntimeError>> {
+fn spawn_synchronization(store: &LocalStore) -> SyncWorker {
     let store = store.clone();
     std::thread::spawn(move || synchronize_and_record(&store))
 }

@@ -3,8 +3,10 @@ use std::path::Path;
 use std::time::{Duration, Instant};
 
 use crate::RuntimeError;
+use crate::configuration::ConfigurationMutation;
 
 const RESPONSE_LIMIT: u64 = 16 * 1024;
+pub const MUTATION_PREFIX: &str = "mutate ";
 
 /// Send one command to the per-user synchronization agent.
 ///
@@ -109,6 +111,21 @@ pub fn request_with_retry(
     }
 }
 
+/// Send one typed configuration mutation to the background agent.
+///
+/// # Errors
+///
+/// Returns [`RuntimeError`] when serialization fails or the agent rejects the
+/// mutation.
+pub fn request_mutation(
+    path: &Path,
+    mutation: &ConfigurationMutation,
+    timeout: Duration,
+) -> Result<String, RuntimeError> {
+    let payload = serde_json::to_string(mutation)?;
+    request_with_retry(path, &format!("{MUTATION_PREFIX}{payload}"), timeout)
+}
+
 #[cfg(all(test, unix))]
 mod tests {
     use std::fs;
@@ -116,6 +133,7 @@ mod tests {
     use std::thread;
 
     use tempfile::TempDir;
+    use warpgatesh_core::profiles::Profile;
 
     use super::*;
 
@@ -177,6 +195,50 @@ mod tests {
             request_with_retry(&socket, "sync", Duration::from_secs(1))
                 .expect("delayed agent response"),
             "synchronized"
+        );
+        worker.join().expect("server thread");
+    }
+
+    #[test]
+    fn sends_a_typed_configuration_mutation() {
+        let directory = TempDir::new().expect("temporary directory");
+        let socket = directory.path().join("agent.sock");
+        let listener = UnixListener::bind(&socket).expect("bind socket");
+        let worker = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().expect("accept request");
+            let mut command = String::new();
+            stream.read_to_string(&mut command).expect("read command");
+            let payload = command
+                .trim_end()
+                .strip_prefix(MUTATION_PREFIX)
+                .expect("mutation prefix");
+            let mutation = ConfigurationMutation::from_json(payload).expect("typed mutation");
+            assert!(matches!(
+                mutation,
+                ConfigurationMutation::SaveProfile { profile, token, .. }
+                    if profile.name == "lab" && token == "secret"
+            ));
+            stream
+                .write_all(b"ok configuration saved\n")
+                .expect("response");
+        });
+        let mutation = ConfigurationMutation::SaveProfile {
+            profile: Profile {
+                name: "lab".to_owned(),
+                base_url: "https://warpgate.example/".to_owned(),
+                username: "gregory".to_owned(),
+                warpgate_version: None,
+                ssh_host: "ssh.example".to_owned(),
+                ssh_port: 2222,
+            },
+            token: "secret".to_owned(),
+            known_hosts: "ssh.example ssh-ed25519 AAAA\n".to_owned(),
+        };
+
+        assert_eq!(
+            request_mutation(&socket, &mutation, Duration::from_secs(1))
+                .expect("mutation response"),
+            "configuration saved"
         );
         worker.join().expect("server thread");
     }

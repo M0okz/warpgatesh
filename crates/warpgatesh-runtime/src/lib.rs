@@ -1,6 +1,7 @@
 //! Warpgate API and operating-system integration for `WarpgateSH`.
 
 pub mod api;
+pub mod configuration;
 pub mod error;
 pub mod ipc;
 pub mod keychain;

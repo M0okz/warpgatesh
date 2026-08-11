@@ -8,13 +8,11 @@ use warpgatesh_core::aliases::is_valid_profile_name;
 use warpgatesh_core::profiles::Profile;
 use warpgatesh_runtime::RuntimeError;
 use warpgatesh_runtime::api::ApiClient;
+use warpgatesh_runtime::configuration::ConfigurationMutation;
 use warpgatesh_runtime::ipc;
-use warpgatesh_runtime::keychain::{SystemKeychain, TokenStore};
 #[cfg(target_os = "macos")]
 use warpgatesh_runtime::launchd;
-use warpgatesh_runtime::ssh::{
-    install_managed_include, open_token_page, save_host_keys, scan_host_keys,
-};
+use warpgatesh_runtime::ssh::{open_token_page, scan_host_keys};
 use warpgatesh_runtime::storage::LocalStore;
 
 fn main() -> ExitCode {
@@ -152,30 +150,20 @@ fn add_profile(name: &str, url: &str) -> Result<(), RuntimeError> {
         ));
     }
 
-    let store = LocalStore::for_current_user()?;
-    let mut catalog = store.load_profiles()?;
-    catalog.upsert(Profile {
-        name: name.to_owned(),
-        base_url: client.base_url().as_str().to_owned(),
-        username: metadata.username,
-        warpgate_version: metadata.version,
-        ssh_host,
-        ssh_port,
+    request_configuration_mutation(&ConfigurationMutation::SaveProfile {
+        profile: Profile {
+            name: name.to_owned(),
+            base_url: client.base_url().as_str().to_owned(),
+            username: metadata.username,
+            warpgate_version: metadata.version,
+            ssh_host,
+            ssh_port,
+        },
+        token,
+        known_hosts: host_keys.known_hosts,
     })?;
-
-    SystemKeychain.set(name, &token)?;
-    save_host_keys(store.paths(), name, &host_keys.known_hosts)?;
-    store.save_profiles(&catalog)?;
-    let include_added = install_managed_include(store.paths())?;
-    println!(
-        "Profile '{name}' saved{}.",
-        if include_added {
-            " and the OpenSSH Include was installed"
-        } else {
-            ""
-        }
-    );
-    request_synchronization()
+    println!("Profile '{name}' saved and synchronization requested.");
+    Ok(())
 }
 
 fn login(arguments: &[String]) -> Result<(), RuntimeError> {
@@ -185,7 +173,7 @@ fn login(arguments: &[String]) -> Result<(), RuntimeError> {
         ));
     };
     let store = LocalStore::for_current_user()?;
-    let mut catalog = store.load_profiles()?;
+    let catalog = store.load_profiles()?;
     let existing = catalog
         .find(name)
         .cloned()
@@ -198,18 +186,14 @@ fn login(arguments: &[String]) -> Result<(), RuntimeError> {
     }
     let token = prompt_token()?;
     let metadata = client.validate(&token)?;
-    catalog.upsert(Profile {
+    request_configuration_mutation(&ConfigurationMutation::RenewToken {
         name: existing.name,
-        base_url: existing.base_url,
+        token,
         username: metadata.username,
         warpgate_version: metadata.version,
-        ssh_host: existing.ssh_host,
-        ssh_port: existing.ssh_port,
     })?;
-    SystemKeychain.set(name, &token)?;
-    store.save_profiles(&catalog)?;
     println!("Token for profile '{name}' updated.");
-    request_synchronization()
+    Ok(())
 }
 
 fn list_profiles() -> Result<(), RuntimeError> {
@@ -234,16 +218,18 @@ fn list_profiles() -> Result<(), RuntimeError> {
 
 fn set_default_profile(name: &str) -> Result<(), RuntimeError> {
     let store = LocalStore::for_current_user()?;
-    let mut catalog = store.load_profiles()?;
+    let catalog = store.load_profiles()?;
     if catalog.find(name).is_none() {
         return Err(RuntimeError::InvalidInput(format!(
             "unknown profile '{name}'"
         )));
     }
-    catalog.default_profile = Some(name.to_owned());
-    store.save_profiles(&catalog)?;
+    request_configuration_mutation(&ConfigurationMutation::SavePreferences {
+        preferences: store.load_preferences()?,
+        default_profile: Some(name.to_owned()),
+    })?;
     println!("Default profile set to '{name}'.");
-    request_synchronization()
+    Ok(())
 }
 
 fn list_targets(arguments: &[String]) -> Result<(), RuntimeError> {
@@ -364,6 +350,30 @@ fn request_synchronization() -> Result<(), RuntimeError> {
 
     #[cfg(not(target_os = "macos"))]
     run_agent_once()
+}
+
+fn request_configuration_mutation(mutation: &ConfigurationMutation) -> Result<(), RuntimeError> {
+    #[cfg(target_os = "macos")]
+    {
+        use std::time::Duration;
+
+        let store = LocalStore::for_current_user()?;
+        ensure_persistent_agent()?;
+        ipc::request_mutation(
+            &store.paths().agent_socket,
+            mutation,
+            Duration::from_secs(20),
+        )?;
+        Ok(())
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = mutation;
+        Err(RuntimeError::Command(
+            "configuration mutations require the persistent background agent".to_owned(),
+        ))
+    }
 }
 
 #[cfg(target_os = "macos")]

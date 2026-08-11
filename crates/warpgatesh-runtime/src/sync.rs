@@ -127,8 +127,6 @@ pub fn synchronize_all(
 
     atomic_write(store.paths().ssh_config.as_path(), rendered.as_bytes())?;
     store.save_snapshot(&snapshot)?;
-    store.save_profiles(&catalog)?;
-
     Ok(SyncReport {
         profile_count: catalog.profiles.len(),
         target_count: snapshot.targets.len(),
