@@ -1,6 +1,6 @@
 use std::io::{Read, Write};
 use std::path::Path;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::RuntimeError;
 
@@ -51,6 +51,38 @@ pub fn request(_path: &Path, _command: &str) -> Result<String, RuntimeError> {
     ))
 }
 
+/// Send a command while allowing a newly launched agent time to create its
+/// socket.
+///
+/// # Errors
+///
+/// Returns [`RuntimeError`] immediately for protocol and agent errors, or after
+/// `timeout` when the socket remains absent or refuses connections.
+pub fn request_with_retry(
+    path: &Path,
+    command: &str,
+    timeout: Duration,
+) -> Result<String, RuntimeError> {
+    use std::io::ErrorKind;
+    use std::thread;
+
+    let deadline = Instant::now() + timeout;
+    loop {
+        match request(path, command) {
+            Err(RuntimeError::Io(error))
+                if matches!(
+                    error.kind(),
+                    ErrorKind::NotFound | ErrorKind::ConnectionRefused
+                ) && Instant::now() < deadline =>
+            {
+                let remaining = deadline.saturating_duration_since(Instant::now());
+                thread::sleep(remaining.min(Duration::from_millis(100)));
+            }
+            result => return result,
+        }
+    }
+}
+
 #[cfg(all(test, unix))]
 mod tests {
     use std::fs;
@@ -98,6 +130,28 @@ mod tests {
 
         let error = request(&socket, "sync").expect_err("agent error");
         assert!(error.to_string().contains("token expired"));
+        worker.join().expect("server thread");
+    }
+
+    #[test]
+    fn waits_for_a_socket_created_during_agent_startup() {
+        let directory = TempDir::new().expect("temporary directory");
+        let socket = directory.path().join("agent.sock");
+        let server_socket = socket.clone();
+        let worker = thread::spawn(move || {
+            thread::sleep(Duration::from_millis(75));
+            let listener = UnixListener::bind(server_socket).expect("bind delayed socket");
+            let (mut stream, _) = listener.accept().expect("accept request");
+            let mut command = String::new();
+            stream.read_to_string(&mut command).expect("read command");
+            stream.write_all(b"ok synchronized\n").expect("response");
+        });
+
+        assert_eq!(
+            request_with_retry(&socket, "sync", Duration::from_secs(1))
+                .expect("delayed agent response"),
+            "synchronized"
+        );
         worker.join().expect("server thread");
     }
 }

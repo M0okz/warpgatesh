@@ -175,7 +175,6 @@ fn add_profile(name: &str, url: &str) -> Result<(), RuntimeError> {
             ""
         }
     );
-    ensure_persistent_agent()?;
     request_synchronization()
 }
 
@@ -210,7 +209,6 @@ fn login(arguments: &[String]) -> Result<(), RuntimeError> {
     SystemKeychain.set(name, &token)?;
     store.save_profiles(&catalog)?;
     println!("Token for profile '{name}' updated.");
-    ensure_persistent_agent()?;
     request_synchronization()
 }
 
@@ -354,30 +352,14 @@ fn run_agent(arguments: &[String]) -> Result<(), RuntimeError> {
 fn request_synchronization() -> Result<(), RuntimeError> {
     #[cfg(target_os = "macos")]
     {
-        use std::io::ErrorKind;
-        use std::thread;
         use std::time::Duration;
 
         let store = LocalStore::for_current_user()?;
         ensure_persistent_agent()?;
-        for attempt in 0..20 {
-            match ipc::request(&store.paths().agent_socket, "sync") {
-                Ok(message) => {
-                    println!("{message}");
-                    return Ok(());
-                }
-                Err(RuntimeError::Io(error))
-                    if matches!(
-                        error.kind(),
-                        ErrorKind::NotFound | ErrorKind::ConnectionRefused
-                    ) && attempt < 19 =>
-                {
-                    thread::sleep(Duration::from_millis(100));
-                }
-                Err(error) => return Err(error),
-            }
-        }
-        unreachable!("the synchronization retry loop always returns")
+        let message =
+            ipc::request_with_retry(&store.paths().agent_socket, "sync", Duration::from_secs(10))?;
+        println!("{message}");
+        Ok(())
     }
 
     #[cfg(not(target_os = "macos"))]
