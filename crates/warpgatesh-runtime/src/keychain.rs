@@ -1,5 +1,6 @@
 use crate::RuntimeError;
 
+#[cfg(target_os = "macos")]
 const SERVICE: &str = "dev.warpgatesh.api-token";
 
 pub trait TokenStore {
