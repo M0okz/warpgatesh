@@ -4,7 +4,9 @@ use std::path::{Path, PathBuf};
 pub struct WarpgatePaths {
     pub application_support: PathBuf,
     pub profiles: PathBuf,
+    pub snapshot: PathBuf,
     pub agent_socket: PathBuf,
+    pub user_ssh_config: PathBuf,
     pub ssh_directory: PathBuf,
     pub ssh_config: PathBuf,
     pub known_hosts_directory: PathBuf,
@@ -22,7 +24,9 @@ impl WarpgatePaths {
 
         Self {
             profiles: application_support.join("profiles.json"),
+            snapshot: application_support.join("snapshot.json"),
             agent_socket: application_support.join("agent.sock"),
+            user_ssh_config: home.join(".ssh/config"),
             ssh_config: ssh_directory.join("config"),
             known_hosts_directory: ssh_directory.join("known_hosts"),
             application_support,

@@ -9,6 +9,7 @@ repository.workspace = true
 
 [dependencies]
 warpgatesh-core = { path = "../warpgatesh-core" }
+warpgatesh-runtime = { path = "../warpgatesh-runtime" }
 
 [lints]
 workspace = true

@@ -1,15 +1,17 @@
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 
+use serde::{Deserialize, Serialize};
+
 /// A Warpgate SSH target as exposed by the user-facing API.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Target {
     pub id: String,
     pub name: String,
 }
 
 /// The OpenSSH aliases allocated to one target.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct TargetAliases {
     pub target_id: String,
     pub short: Option<String>,

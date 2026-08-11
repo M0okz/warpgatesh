@@ -12,7 +12,9 @@ name = "warpgatesh"
 path = "src/main.rs"
 
 [dependencies]
+rpassword.workspace = true
 warpgatesh-core = { path = "../warpgatesh-core" }
+warpgatesh-runtime = { path = "../warpgatesh-runtime" }
 
 [lints]
 workspace = true

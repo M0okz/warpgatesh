@@ -2,5 +2,6 @@
 
 pub mod aliases;
 pub mod paths;
+pub mod profiles;
 pub mod schedule;
 pub mod ssh_config;

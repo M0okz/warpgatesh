@@ -185,8 +185,20 @@ partager dans une issue GitHub.
 
 ## Développement
 
-Le workspace Rust contient actuellement le cœur de domaine, la CLI
-`warpgatesh` et le squelette de l’agent utilisateur. Pour vérifier le socle :
+Le workspace Rust contient le cœur de domaine, le client de l’API utilisateur
+Warpgate, la CLI `warpgatesh` et l’agent utilisateur. Le flux de développement
+actuel permet d’ajouter un profil, d’enregistrer le jeton dans le Trousseau,
+d’épingler les clés SSH présentées, de synchroniser les cibles accessibles et
+de produire la Configuration SSH gérée.
+
+```sh
+cargo build --workspace
+./target/debug/warpgatesh profile add homeblack https://warpgate.example
+./target/debug/warpgatesh ls
+./target/debug/warpgatesh status
+```
+
+Pour vérifier le socle :
 
 ```sh
 cargo fmt --all -- --check
@@ -195,5 +207,5 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo run --bin warpgatesh -- --help
 ```
 
-Le prochain incrément reliera les profils et la synchronisation à l’API
-utilisateur de Warpgate, puis produira réellement la Configuration SSH gérée.
+Le processus permanent `LaunchAgent`, l’IPC local, la confirmation TLS pour les
+certificats auto-signés et le compagnon Tauri restent à implémenter avant le MVP.
