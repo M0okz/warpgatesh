@@ -181,6 +181,14 @@ CLI dans `/usr/local/bin`, avec l’autorisation administrateur de macOS.
 
 WarpgateSH ne modifie ni le `PATH` ni les fichiers de configuration du shell.
 
+La désinstallation se lance depuis **Préférences → Retirer WarpgateSH**. Elle
+arrête et retire le LaunchAgent, supprime uniquement le lien CLI créé par
+l’application, place le bundle dans la Corbeille et conserve par défaut les
+profils, jetons, instantanés et fichiers SSH gérés. Une option séparée permet
+d’effacer également ces données après avoir saisi explicitement
+`DÉSINSTALLER` ; la configuration SSH appartenant à l’utilisateur est alors
+préservée, à l’exception de la directive `Include` ajoutée par WarpgateSH.
+
 ## Confidentialité et diagnostics
 
 WarpgateSH ne collecte aucune télémétrie et n’envoie automatiquement aucun

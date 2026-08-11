@@ -2,9 +2,12 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use warpgatesh_runtime::RuntimeError;
+use warpgatesh_runtime::keychain::{SystemKeychain, TokenStore};
 use warpgatesh_runtime::launchd;
+use warpgatesh_runtime::ssh::uninstall_managed_include;
 use warpgatesh_runtime::storage::LocalStore;
 
 const CLI_LINK: &str = "/usr/local/bin/warpgatesh";
@@ -15,6 +18,15 @@ const ADMIN_INSTALL_SCRIPT: &str = r#"on run argv
   set targetDirectory to item 3 of argv
   set installCommand to "/bin/mkdir -p " & quoted form of targetDirectory & " && /bin/ln -s " & quoted form of sourcePath & " " & quoted form of targetPath
   do shell script installCommand with administrator privileges
+end run"#;
+const ADMIN_UNLINK_SCRIPT: &str = r#"on run argv
+  set targetPath to item 1 of argv
+  do shell script "/usr/bin/unlink " & quoted form of targetPath with administrator privileges
+end run"#;
+const ADMIN_MOVE_SCRIPT: &str = r#"on run argv
+  set sourcePath to item 1 of argv
+  set targetPath to item 2 of argv
+  do shell script "/bin/mv " & quoted form of sourcePath & " " & quoted form of targetPath with administrator privileges
 end run"#;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -101,6 +113,52 @@ pub fn install_cli() -> Result<CliInstallation, RuntimeError> {
         _ => Err(RuntimeError::Command(
             "macOS n’a pas installé la commande warpgatesh.".to_owned(),
         )),
+    }
+}
+
+pub fn uninstall_components(store: &LocalStore) -> Result<(), RuntimeError> {
+    launchd::uninstall(store.paths())?;
+    uninstall_managed_cli()?;
+    Ok(())
+}
+
+pub fn delete_user_data(store: &LocalStore) -> Result<(), RuntimeError> {
+    let catalog = store.load_profiles()?;
+    let tokens = SystemKeychain;
+    for profile in &catalog.profiles {
+        tokens.delete(&profile.name)?;
+    }
+
+    uninstall_managed_include(store.paths())?;
+    remove_directory_if_exists(&store.paths().ssh_directory)?;
+    remove_directory_if_exists(&store.paths().application_support)?;
+    Ok(())
+}
+
+pub fn move_application_to_trash() -> Result<PathBuf, RuntimeError> {
+    let executable = std::env::current_exe()?;
+    let home = std::env::var_os("HOME").ok_or_else(|| {
+        RuntimeError::InvalidInput("Le compte courant n’a pas de dossier personnel.".to_owned())
+    })?;
+    let trash = PathBuf::from(home).join(".Trash");
+    move_application_to_trash_from(&executable, &trash)
+}
+
+fn move_application_to_trash_from(
+    executable: &Path,
+    trash: &Path,
+) -> Result<PathBuf, RuntimeError> {
+    let application = application_bundle_from(executable)?;
+    fs::create_dir_all(trash)?;
+    let destination = available_trash_destination(trash, &application);
+
+    match fs::rename(&application, &destination) {
+        Ok(()) => Ok(destination),
+        Err(error) if error.kind() == std::io::ErrorKind::PermissionDenied => {
+            move_with_administrator(&application, &destination)?;
+            Ok(destination)
+        }
+        Err(error) => Err(error.into()),
     }
 }
 
@@ -225,6 +283,110 @@ fn install_link_with_administrator(source: &Path, target: &Path) -> Result<(), R
     }
 }
 
+fn uninstall_managed_cli() -> Result<bool, RuntimeError> {
+    let bundled = bundled_executable("warpgatesh")?;
+    let target = Path::new(CLI_LINK);
+    let candidates = executable_candidates(target);
+    uninstall_managed_cli_from(&bundled, target, &candidates)
+}
+
+fn uninstall_managed_cli_from(
+    bundled: &Path,
+    target: &Path,
+    candidates: &[PathBuf],
+) -> Result<bool, RuntimeError> {
+    if !matches!(
+        detect_cli_installation(bundled, target, candidates)?,
+        CliInstallation::Managed(_)
+    ) {
+        return Ok(false);
+    }
+
+    match fs::remove_file(target) {
+        Ok(()) => Ok(true),
+        Err(error) if error.kind() == std::io::ErrorKind::PermissionDenied => {
+            unlink_with_administrator(target)?;
+            Ok(true)
+        }
+        Err(error) => Err(error.into()),
+    }
+}
+
+fn unlink_with_administrator(target: &Path) -> Result<(), RuntimeError> {
+    run_administrator_script(ADMIN_UNLINK_SCRIPT, &[target], "La suppression de la CLI")
+}
+
+fn move_with_administrator(source: &Path, target: &Path) -> Result<(), RuntimeError> {
+    run_administrator_script(
+        ADMIN_MOVE_SCRIPT,
+        &[source, target],
+        "Le déplacement de WarpgateSH dans la Corbeille",
+    )
+}
+
+fn run_administrator_script(
+    script: &str,
+    arguments: &[&Path],
+    action: &str,
+) -> Result<(), RuntimeError> {
+    let output = Command::new("/usr/bin/osascript")
+        .args(["-e", script, "--"])
+        .args(arguments)
+        .output()?;
+    if output.status.success() {
+        Ok(())
+    } else {
+        let details = String::from_utf8_lossy(&output.stderr).trim().to_owned();
+        Err(RuntimeError::Command(if details.is_empty() {
+            format!("{action} a été annulé ou refusé par macOS.")
+        } else {
+            format!("{action} a échoué : {details}")
+        }))
+    }
+}
+
+fn application_bundle_from(executable: &Path) -> Result<PathBuf, RuntimeError> {
+    let macos = executable.parent();
+    let contents = macos.and_then(Path::parent);
+    let application = contents.and_then(Path::parent);
+    match (macos, contents, application) {
+        (Some(macos), Some(contents), Some(application))
+            if macos.file_name().is_some_and(|name| name == "MacOS")
+                && contents.file_name().is_some_and(|name| name == "Contents")
+                && application.extension().is_some_and(|extension| extension == "app") =>
+        {
+            Ok(application.to_path_buf())
+        }
+        _ => Err(RuntimeError::Command(
+            "La désinstallation est disponible uniquement depuis l’application WarpgateSH installée."
+                .to_owned(),
+        )),
+    }
+}
+
+fn available_trash_destination(trash: &Path, application: &Path) -> PathBuf {
+    let name = application
+        .file_name()
+        .unwrap_or_else(|| std::ffi::OsStr::new("WarpgateSH.app"));
+    let preferred = trash.join(name);
+    if !preferred.exists() {
+        return preferred;
+    }
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    trash.join(format!("WarpgateSH-{timestamp}.app"))
+}
+
+fn remove_directory_if_exists(path: &Path) -> Result<(), RuntimeError> {
+    match fs::remove_dir_all(path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error.into()),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use tempfile::TempDir;
@@ -320,5 +482,81 @@ mod tests {
                 .expect("external status"),
             CliInstallation::External(external)
         );
+    }
+
+    #[test]
+    fn uninstalls_only_a_cli_link_owned_by_the_bundle() {
+        let directory = TempDir::new().expect("temporary directory");
+        let bundled = directory.path().join("bundle/warpgatesh");
+        let target = directory.path().join("bin/warpgatesh");
+        fs::create_dir_all(bundled.parent().expect("bundle parent")).expect("bundle directory");
+        fs::create_dir_all(target.parent().expect("target parent")).expect("target directory");
+        executable(&bundled);
+        std::os::unix::fs::symlink(&bundled, &target).expect("managed link");
+
+        assert!(uninstall_managed_cli_from(&bundled, &target, &[]).expect("uninstall managed CLI"));
+        assert!(!target.exists());
+
+        let external = directory.path().join("external-warpgatesh");
+        executable(&external);
+        assert!(
+            !uninstall_managed_cli_from(&bundled, &external, &[]).expect("preserve external CLI")
+        );
+        assert!(external.exists());
+    }
+
+    #[test]
+    fn recognizes_the_application_owning_an_executable() {
+        assert_eq!(
+            application_bundle_from(Path::new(
+                "/Applications/WarpgateSH.app/Contents/MacOS/warpgatesh-companion"
+            ))
+            .expect("application bundle"),
+            Path::new("/Applications/WarpgateSH.app")
+        );
+    }
+
+    #[test]
+    fn refuses_to_uninstall_from_a_development_binary() {
+        let error = application_bundle_from(Path::new("/tmp/target/debug/warpgatesh-companion"))
+            .expect_err("development binary");
+        assert!(
+            error
+                .to_string()
+                .contains("uniquement depuis l’application")
+        );
+    }
+
+    #[test]
+    fn never_overwrites_an_application_already_in_the_trash() {
+        let directory = TempDir::new().expect("temporary directory");
+        let trash = directory.path().join(".Trash");
+        fs::create_dir_all(&trash).expect("trash directory");
+        fs::create_dir_all(trash.join("WarpgateSH.app")).expect("existing application");
+
+        let destination =
+            available_trash_destination(&trash, Path::new("/Applications/WarpgateSH.app"));
+        assert_ne!(destination, trash.join("WarpgateSH.app"));
+        assert_eq!(
+            destination.extension().and_then(|value| value.to_str()),
+            Some("app")
+        );
+    }
+
+    #[test]
+    fn moves_an_application_bundle_to_the_trash() {
+        let directory = TempDir::new().expect("temporary directory");
+        let application = directory.path().join("Applications/WarpgateSH.app");
+        let executable_path = application.join("Contents/MacOS/warpgatesh-companion");
+        fs::create_dir_all(executable_path.parent().expect("MacOS directory"))
+            .expect("create application");
+        executable(&executable_path);
+        let trash = directory.path().join(".Trash");
+
+        let destination =
+            move_application_to_trash_from(&executable_path, &trash).expect("move application");
+        assert_eq!(destination, trash.join("WarpgateSH.app"));
+        assert!(destination.exists());
+        assert!(!application.exists());
     }
 }

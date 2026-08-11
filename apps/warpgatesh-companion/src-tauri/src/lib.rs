@@ -92,6 +92,7 @@ pub fn run() {
             commands::remove_profile,
             commands::open_target,
             commands::install_command_line_tool,
+            commands::uninstall_warpgatesh,
         ])
         .build(tauri::generate_context!())
         .expect("error while building the WarpgateSH companion");

@@ -68,6 +68,37 @@ pub fn is_loaded() -> Result<bool, RuntimeError> {
         .success())
 }
 
+/// Stop and remove the per-user macOS `LaunchAgent`.
+///
+/// Returns `true` when a loaded service or property list was removed.
+///
+/// # Errors
+///
+/// Returns [`RuntimeError`] when launchd rejects the operation or the property
+/// list cannot be removed.
+#[cfg(target_os = "macos")]
+pub fn uninstall(paths: &WarpgatePaths) -> Result<bool, RuntimeError> {
+    use std::fs;
+
+    let loaded = is_loaded()?;
+    if loaded {
+        run_launchctl(&["bootout", &launchd_service()?])?;
+    }
+
+    let property_list_removed = match fs::remove_file(&paths.launch_agent) {
+        Ok(()) => true,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => false,
+        Err(error) => return Err(error.into()),
+    };
+    match fs::remove_file(&paths.agent_socket) {
+        Ok(()) => {}
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(error) => return Err(error.into()),
+    }
+
+    Ok(loaded || property_list_removed)
+}
+
 #[cfg(target_os = "macos")]
 fn run_launchctl(arguments: &[&str]) -> Result<(), RuntimeError> {
     use std::process::Command;

@@ -44,6 +44,11 @@ export type TerminalIntegration = {
   path: string;
 };
 
+export type UninstallRequest = {
+  deleteUserData: boolean;
+  confirmation: string;
+};
+
 export type ProfileRequest = {
   name: string;
   baseUrl: string;

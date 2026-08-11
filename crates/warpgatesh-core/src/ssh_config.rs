@@ -43,6 +43,33 @@ pub fn ensure_managed_include(existing: &str) -> (String, bool) {
     (format!("{SSH_INCLUDE_LINE}\n\n{existing}"), true)
 }
 
+#[must_use]
+pub fn remove_managed_include(existing: &str) -> (String, bool) {
+    let installed_prefix = format!("{SSH_INCLUDE_LINE}\n\n");
+    if let Some(original) = existing.strip_prefix(&installed_prefix) {
+        return (original.to_owned(), true);
+    }
+    if existing == format!("{SSH_INCLUDE_LINE}\n") || existing == SSH_INCLUDE_LINE {
+        return (String::new(), true);
+    }
+
+    let mut updated = String::with_capacity(existing.len());
+    let mut removed = false;
+    for line in existing.split_inclusive('\n') {
+        if line.trim() == SSH_INCLUDE_LINE {
+            removed = true;
+        } else {
+            updated.push_str(line);
+        }
+    }
+
+    if removed {
+        (updated, true)
+    } else {
+        (existing.to_owned(), false)
+    }
+}
+
 /// Render one profile into the managed OpenSSH configuration.
 ///
 /// # Errors
@@ -128,6 +155,31 @@ mod tests {
         let (updated, changed) = ensure_managed_include(existing);
         assert!(!changed);
         assert_eq!(updated, existing);
+    }
+
+    #[test]
+    fn removes_only_the_managed_include() {
+        let existing = "Include ~/.ssh/warpgatesh/config\n\nHost example\n  User gregory\n";
+        let (updated, changed) = remove_managed_include(existing);
+        assert!(changed);
+        assert_eq!(updated, "Host example\n  User gregory\n");
+    }
+
+    #[test]
+    fn leaves_an_unmanaged_configuration_unchanged() {
+        let existing = "Host example\n  User gregory\n";
+        let (updated, changed) = remove_managed_include(existing);
+        assert!(!changed);
+        assert_eq!(updated, existing);
+    }
+
+    #[test]
+    fn restores_leading_whitespace_from_the_original_configuration() {
+        let original = "\nHost example\n";
+        let (installed, _) = ensure_managed_include(original);
+        let (restored, changed) = remove_managed_include(&installed);
+        assert!(changed);
+        assert_eq!(restored, original);
     }
 
     #[test]

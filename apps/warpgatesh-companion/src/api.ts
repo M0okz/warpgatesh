@@ -5,6 +5,7 @@ import type {
   ProfileInspection,
   ProfileRequest,
   TerminalIntegration,
+  UninstallRequest,
 } from "./types";
 
 const demoState: CompanionState = {
@@ -101,4 +102,9 @@ export async function openTarget(alias: string): Promise<void> {
 export async function installCommandLineTool(): Promise<TerminalIntegration> {
   if (isDemo) return demoState.terminalIntegration;
   return invoke<TerminalIntegration>("install_command_line_tool");
+}
+
+export async function uninstallWarpgateSH(request: UninstallRequest): Promise<void> {
+  if (isDemo) return;
+  return invoke<void>("uninstall_warpgatesh", { request });
 }

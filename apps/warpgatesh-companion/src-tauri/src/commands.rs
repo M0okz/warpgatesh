@@ -82,6 +82,13 @@ pub struct ProfileRequest {
     ssh_port: Option<u16>,
 }
 
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UninstallRequest {
+    delete_user_data: bool,
+    confirmation: String,
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProfileInspection {
@@ -106,6 +113,30 @@ pub async fn install_command_line_tool() -> Result<TerminalIntegration, String> 
     installation::install_cli()
         .map(|status| terminal_integration(&status))
         .map_err(display_error)
+}
+
+#[tauri::command]
+pub async fn uninstall_warpgatesh(app: AppHandle, request: UninstallRequest) -> Result<(), String> {
+    if request.confirmation.trim() != "DÉSINSTALLER" {
+        return Err("Saisissez DÉSINSTALLER pour confirmer.".to_owned());
+    }
+
+    if app.autolaunch().is_enabled().map_err(display_error)? {
+        app.autolaunch().disable().map_err(display_error)?;
+    }
+    let store = LocalStore::for_current_user().map_err(display_error)?;
+    installation::uninstall_components(&store).map_err(display_error)?;
+    if request.delete_user_data {
+        installation::delete_user_data(&store).map_err(display_error)?;
+    }
+    installation::move_application_to_trash().map_err(display_error)?;
+
+    let handle = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_millis(150));
+        handle.exit(0);
+    });
+    Ok(())
 }
 
 #[tauri::command]

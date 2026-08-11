@@ -6,7 +6,7 @@ use std::process::{Command, Stdio};
 
 use glob::glob;
 use warpgatesh_core::paths::WarpgatePaths;
-use warpgatesh_core::ssh_config::ensure_managed_include;
+use warpgatesh_core::ssh_config::{ensure_managed_include, remove_managed_include};
 
 use crate::RuntimeError;
 use crate::storage::atomic_write;
@@ -162,6 +162,25 @@ pub fn install_managed_include(paths: &WarpgatePaths) -> Result<bool, RuntimeErr
     Ok(changed)
 }
 
+/// Remove only the `Include` directive owned by `WarpgateSH`.
+///
+/// # Errors
+///
+/// Returns [`RuntimeError`] when the user's SSH configuration cannot be read or
+/// replaced.
+pub fn uninstall_managed_include(paths: &WarpgatePaths) -> Result<bool, RuntimeError> {
+    let existing = match fs::read_to_string(&paths.user_ssh_config) {
+        Ok(content) => content,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+        Err(error) => return Err(error.into()),
+    };
+    let (updated, changed) = remove_managed_include(&existing);
+    if changed {
+        atomic_write(&paths.user_ssh_config, updated.as_bytes())?;
+    }
+    Ok(changed)
+}
+
 /// Collect literal aliases declared in the user's SSH files, excluding the
 /// WarpgateSH-managed file itself.
 ///
@@ -292,6 +311,26 @@ mod tests {
         let paths = WarpgatePaths::for_home(home.path());
         assert!(install_managed_include(&paths).expect("first install"));
         assert!(!install_managed_include(&paths).expect("second install"));
+    }
+
+    #[test]
+    fn uninstalls_only_the_managed_include() {
+        let directory = TempDir::new().expect("temporary directory");
+        let paths = WarpgatePaths::for_home(directory.path());
+        fs::create_dir_all(paths.user_ssh_config.parent().expect("SSH directory"))
+            .expect("create SSH directory");
+        fs::write(
+            &paths.user_ssh_config,
+            "Include ~/.ssh/warpgatesh/config\n\nHost example\n  User gregory\n",
+        )
+        .expect("write SSH config");
+
+        assert!(uninstall_managed_include(&paths).expect("uninstall include"));
+        assert_eq!(
+            fs::read_to_string(&paths.user_ssh_config).expect("read SSH config"),
+            "Host example\n  User gregory\n"
+        );
+        assert!(!uninstall_managed_include(&paths).expect("second uninstall"));
     }
 
     #[test]

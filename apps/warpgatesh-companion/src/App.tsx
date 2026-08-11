@@ -10,6 +10,7 @@ import {
   renewProfileToken,
   savePreferences,
   synchronizeNow,
+  uninstallWarpgateSH,
 } from "./api";
 import type {
   CompanionPreferences,
@@ -332,13 +333,18 @@ function PreferencesView({
   busy,
   onSave,
   onInstallCli,
+  onUninstall,
 }: {
   state: CompanionState;
   busy: boolean;
   onSave: (preferences: CompanionPreferences) => Promise<void>;
   onInstallCli: () => Promise<void>;
+  onUninstall: (deleteUserData: boolean, confirmation: string) => Promise<void>;
 }) {
   const [draft, setDraft] = useState(state.preferences);
+  const [showUninstall, setShowUninstall] = useState(false);
+  const [deleteUserData, setDeleteUserData] = useState(false);
+  const [uninstallConfirmation, setUninstallConfirmation] = useState("");
 
   useEffect(() => setDraft(state.preferences), [
     state.preferences.defaultProfile,
@@ -400,6 +406,35 @@ function PreferencesView({
         </div>
         <button className="button-primary preferences-save" type="submit" disabled={busy}>Enregistrer les préférences</button>
       </form>
+      <div className="danger-zone">
+        <div>
+          <p className="section-kicker">Désinstallation</p>
+          <h2>Retirer WarpgateSH</h2>
+          <p>L’agent sera arrêté, la CLI installée par l’app sera retirée et l’application sera placée dans la Corbeille.</p>
+        </div>
+        {!showUninstall ? (
+          <button className="button-danger-outline" type="button" disabled={busy} onClick={() => setShowUninstall(true)}>
+            Désinstaller…
+          </button>
+        ) : (
+          <div className="uninstall-confirmation">
+            <label className="destructive-option">
+              <input type="checkbox" checked={deleteUserData} onChange={(event) => setDeleteUserData(event.target.checked)} />
+              <span><strong>Supprimer aussi mes données</strong><small>Efface les profils, jetons du Trousseau, instantanés et fichiers SSH gérés. Cette action est irréversible.</small></span>
+            </label>
+            <label className="confirmation-field">
+              <span>Saisissez <strong>DÉSINSTALLER</strong> pour confirmer</span>
+              <input autoComplete="off" value={uninstallConfirmation} onChange={(event) => setUninstallConfirmation(event.target.value)} />
+            </label>
+            <div className="uninstall-actions">
+              <button className="button-secondary" type="button" disabled={busy} onClick={() => { setShowUninstall(false); setDeleteUserData(false); setUninstallConfirmation(""); }}>Annuler</button>
+              <button className="button-danger" type="button" disabled={busy || uninstallConfirmation.trim() !== "DÉSINSTALLER"} onClick={() => void onUninstall(deleteUserData, uninstallConfirmation)}>
+                {deleteUserData ? "Tout supprimer" : "Désinstaller et conserver les données"}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </section>
   );
 }
@@ -481,6 +516,18 @@ export default function App() {
     }, "La commande warpgatesh est disponible dans le terminal.");
   }
 
+  async function handleUninstall(deleteUserData: boolean, confirmation: string) {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      await uninstallWarpgateSH({ deleteUserData, confirmation });
+    } catch (reason) {
+      setError(String(reason));
+      setBusy(false);
+    }
+  }
+
   const running = state?.agentRunning ?? false;
   const defaultProfile = state?.profiles.find((profile) => profile.isDefault);
 
@@ -504,7 +551,7 @@ export default function App() {
         {state === null ? <p className="loading-state">Lecture de l’état local…</p> : null}
         {state && view === "access" ? <AccessView state={state} busy={busy} onSync={() => void handleSync()} onOpen={(alias) => void handleOpen(alias)} onNavigate={setView} /> : null}
         {state && view === "profiles" ? <ProfilesView profiles={state.profiles} busy={busy} onChanged={refresh} runAction={runAction} /> : null}
-        {state && view === "preferences" ? <PreferencesView state={state} busy={busy} onSave={handlePreferences} onInstallCli={handleInstallCli} /> : null}
+        {state && view === "preferences" ? <PreferencesView state={state} busy={busy} onSave={handlePreferences} onInstallCli={handleInstallCli} onUninstall={handleUninstall} /> : null}
       </main>
 
       <footer className="profile-footer">

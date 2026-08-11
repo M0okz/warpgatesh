@@ -920,6 +920,114 @@ main {
   margin-top: 16px;
 }
 
+.danger-zone {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 20px;
+  padding: 22px;
+  margin-top: 18px;
+  border: 1px solid rgb(164 67 54 / 24%);
+  border-radius: 16px;
+  background: rgb(246 228 223 / 42%);
+}
+
+.danger-zone h2 {
+  color: var(--danger);
+}
+
+.danger-zone p:not(.section-kicker) {
+  max-width: 430px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.button-danger-outline,
+.button-danger {
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.button-danger-outline {
+  border: 1px solid rgb(164 67 54 / 34%);
+  color: var(--danger);
+  background: transparent;
+}
+
+.button-danger {
+  border: 0;
+  color: #fff;
+  background: var(--danger);
+}
+
+.button-danger-outline:disabled,
+.button-danger:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.uninstall-confirmation {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 15px;
+  padding-top: 17px;
+  border-top: 1px solid rgb(164 67 54 / 20%);
+}
+
+.destructive-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 10px;
+}
+
+.destructive-option input {
+  margin-top: 2px;
+  accent-color: var(--danger);
+}
+
+.destructive-option span {
+  display: grid;
+  gap: 4px;
+}
+
+.destructive-option strong,
+.confirmation-field span {
+  font-size: 0.72rem;
+}
+
+.destructive-option small {
+  color: var(--muted);
+  font-size: 0.66rem;
+  line-height: 1.45;
+}
+
+.confirmation-field {
+  display: grid;
+  gap: 7px;
+}
+
+.confirmation-field input {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--surface-raised);
+}
+
+.uninstall-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .profile-avatar {
   width: 34px;
   height: 34px;
@@ -988,6 +1096,10 @@ main {
   }
 
   .setting-row--terminal {
+    grid-template-columns: 1fr;
+  }
+
+  .danger-zone {
     grid-template-columns: 1fr;
   }
 

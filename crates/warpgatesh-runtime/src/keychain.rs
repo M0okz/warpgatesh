@@ -44,8 +44,12 @@ impl TokenStore for SystemKeychain {
     }
 
     fn delete(&self, profile: &str) -> Result<(), RuntimeError> {
-        security_framework::passwords::delete_generic_password(SERVICE, profile)
-            .map_err(|error| RuntimeError::Keychain(error.to_string()))
+        match security_framework::passwords::delete_generic_password(SERVICE, profile) {
+            Ok(()) => Ok(()),
+            // A partially removed profile must not make a later cleanup fail.
+            Err(error) if error.code() == -25_300 => Ok(()),
+            Err(error) => Err(RuntimeError::Keychain(error.to_string())),
+        }
     }
 }
 
