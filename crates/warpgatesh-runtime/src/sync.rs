@@ -59,8 +59,6 @@ pub fn synchronize_all(
 
         profile.username = metadata.username;
         profile.warpgate_version = metadata.version;
-        profile.ssh_host = metadata.ssh_host;
-        profile.ssh_port = metadata.ssh_port;
 
         let is_default = default_profile.as_deref() == Some(profile.name.as_str());
         rendered.push_str(&render_profile(
@@ -211,7 +209,7 @@ mod tests {
                 base_url,
                 username: "pending".to_owned(),
                 warpgate_version: None,
-                ssh_host: "pending".to_owned(),
+                ssh_host: "10.60.0.17".to_owned(),
                 ssh_port: 22,
             })
             .expect("profile");
@@ -226,6 +224,13 @@ mod tests {
 
         assert_eq!(report.target_count, 1);
         assert_eq!(report.added, 1);
+        let saved_profile = store
+            .load_profiles()
+            .expect("saved profiles")
+            .profiles
+            .remove(0);
+        assert_eq!(saved_profile.ssh_host, "10.60.0.17");
+        assert_eq!(saved_profile.ssh_port, 22);
         let config = fs::read_to_string(paths.ssh_config).expect("managed config");
         assert!(config.contains("Host db db.lab"));
         assert!(!config.contains("Host web"));

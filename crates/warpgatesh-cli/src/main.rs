@@ -115,7 +115,21 @@ fn add_profile(name: &str, url: &str) -> Result<(), RuntimeError> {
         "Retrieving SSH host keys from {}:{}…",
         metadata.ssh_host, metadata.ssh_port
     );
-    let host_keys = scan_host_keys(&metadata.ssh_host, metadata.ssh_port)?;
+    let (ssh_host, ssh_port, host_keys) =
+        match scan_host_keys(&metadata.ssh_host, metadata.ssh_port) {
+            Ok(host_keys) => (metadata.ssh_host.clone(), metadata.ssh_port, host_keys),
+            Err(error) => {
+                eprintln!(
+                    "warpgatesh: the SSH endpoint advertised by Warpgate is unreachable: {error}"
+                );
+                println!("If the HTTP and SSH endpoints differ, enter the reachable SSH endpoint.");
+                let host = prompt_with_default("SSH host", &metadata.ssh_host)?;
+                let port = prompt_port(metadata.ssh_port)?;
+                println!("Retrieving SSH host keys from {host}:{port}…");
+                let host_keys = scan_host_keys(&host, port)?;
+                (host, port, host_keys)
+            }
+        };
     println!("\nSSH host-key fingerprints:\n{}", host_keys.fingerprints);
     if !confirm("Trust and pin these SSH host keys? [y/N] ")? {
         return Err(RuntimeError::InvalidInput(
@@ -130,8 +144,8 @@ fn add_profile(name: &str, url: &str) -> Result<(), RuntimeError> {
         base_url: client.base_url().as_str().to_owned(),
         username: metadata.username,
         warpgate_version: metadata.version,
-        ssh_host: metadata.ssh_host,
-        ssh_port: metadata.ssh_port,
+        ssh_host,
+        ssh_port,
     })?;
 
     SystemKeychain.set(name, &token)?;
@@ -175,8 +189,8 @@ fn login(arguments: &[String]) -> Result<(), RuntimeError> {
         base_url: existing.base_url,
         username: metadata.username,
         warpgate_version: metadata.version,
-        ssh_host: metadata.ssh_host,
-        ssh_port: metadata.ssh_port,
+        ssh_host: existing.ssh_host,
+        ssh_port: existing.ssh_port,
     })?;
     SystemKeychain.set(name, &token)?;
     store.save_profiles(&catalog)?;
@@ -425,6 +439,34 @@ fn prompt_token() -> Result<String, RuntimeError> {
     } else {
         Ok(token)
     }
+}
+
+fn prompt_with_default(label: &str, default: &str) -> Result<String, RuntimeError> {
+    print!("{label} [{default}]: ");
+    io::stdout().flush()?;
+    let mut value = String::new();
+    io::stdin().read_line(&mut value)?;
+    let value = value.trim();
+    let selected = if value.is_empty() { default } else { value };
+    if selected.is_empty() || selected.chars().any(char::is_whitespace) {
+        return Err(RuntimeError::InvalidInput(format!(
+            "invalid {label}: whitespace is not allowed"
+        )));
+    }
+    Ok(selected.to_owned())
+}
+
+fn prompt_port(default: u16) -> Result<u16, RuntimeError> {
+    let value = prompt_with_default("SSH port", &default.to_string())?;
+    let port = value.parse::<u16>().map_err(|_| {
+        RuntimeError::InvalidInput(format!("invalid SSH port '{value}'; expected 1-65535"))
+    })?;
+    if port == 0 {
+        return Err(RuntimeError::InvalidInput(
+            "invalid SSH port '0'; expected 1-65535".to_owned(),
+        ));
+    }
+    Ok(port)
 }
 
 fn confirm(prompt: &str) -> Result<bool, RuntimeError> {

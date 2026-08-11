@@ -137,6 +137,12 @@ modifie pas SSH et indique la capacité manquante ainsi que la version Warpgate
 détectée. Une version minimale documentée sera fixée après validation du premier
 prototype contre de vraies instances.
 
+Si l’endpoint SSH annoncé par l’API n’est pas joignable — par exemple lorsque le
+nom HTTP pointe vers un reverse proxy qui ne publie pas le port SSH — la CLI
+demande l’hôte et le port SSH réellement accessibles. Cet endpoint est épinglé
+au Profil avec ses clés d’hôte et n’est pas remplacé silencieusement lors des
+synchronisations suivantes.
+
 ## Compagnon graphique
 
 Le compagnon graphique du MVP vit dans la barre des menus ou la zone de

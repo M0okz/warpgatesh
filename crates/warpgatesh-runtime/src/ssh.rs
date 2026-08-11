@@ -54,8 +54,15 @@ pub fn scan_host_keys(host: &str, port: u16) -> Result<ScannedHostKeys, RuntimeE
         .args(["-T", "5", "-p", &port.to_string(), host])
         .output()?;
     if !scan.status.success() || scan.stdout.is_empty() {
+        let details = String::from_utf8_lossy(&scan.stderr);
+        let details = details.trim();
         return Err(RuntimeError::Command(format!(
-            "could not retrieve the SSH host key for {host}:{port}"
+            "could not retrieve the SSH host key for {host}:{port}{}",
+            if details.is_empty() {
+                " (connection timed out or returned no host key)".to_owned()
+            } else {
+                format!(": {details}")
+            }
         )));
     }
 
