@@ -14,6 +14,21 @@ const RESPONSE_LIMIT: u64 = 16 * 1024;
 /// invalid, or the agent reports an error.
 #[cfg(unix)]
 pub fn request(path: &Path, command: &str) -> Result<String, RuntimeError> {
+    request_with_read_timeout(path, command, Duration::from_secs(120))
+}
+
+/// Send one command with a bounded response wait.
+///
+/// # Errors
+///
+/// Returns [`RuntimeError`] when the socket is unavailable, the response is
+/// invalid, or the agent does not answer before `read_timeout`.
+#[cfg(unix)]
+pub fn request_with_read_timeout(
+    path: &Path,
+    command: &str,
+    read_timeout: Duration,
+) -> Result<String, RuntimeError> {
     use std::net::Shutdown;
     use std::os::unix::net::UnixStream;
 
@@ -24,7 +39,7 @@ pub fn request(path: &Path, command: &str) -> Result<String, RuntimeError> {
     }
 
     let mut stream = UnixStream::connect(path)?;
-    stream.set_read_timeout(Some(Duration::from_secs(120)))?;
+    stream.set_read_timeout(Some(read_timeout))?;
     stream.set_write_timeout(Some(Duration::from_secs(5)))?;
     stream.write_all(command.as_bytes())?;
     stream.write_all(b"\n")?;
@@ -42,6 +57,17 @@ pub fn request(path: &Path, command: &str) -> Result<String, RuntimeError> {
             "the synchronization agent returned an invalid response".to_owned(),
         ))
     }
+}
+
+#[cfg(not(unix))]
+pub fn request_with_read_timeout(
+    _path: &Path,
+    _command: &str,
+    _read_timeout: Duration,
+) -> Result<String, RuntimeError> {
+    Err(RuntimeError::Command(
+        "local agent IPC is unsupported on this platform".to_owned(),
+    ))
 }
 
 #[cfg(not(unix))]

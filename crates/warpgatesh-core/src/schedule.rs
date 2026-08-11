@@ -21,6 +21,14 @@ impl Default for SyncSchedule {
 
 impl SyncSchedule {
     #[must_use]
+    pub fn with_interval(interval: Duration) -> Self {
+        Self {
+            interval,
+            ..Self::default()
+        }
+    }
+
+    #[must_use]
     pub fn retry_delay(self, consecutive_failures: u32) -> Duration {
         if consecutive_failures == 0 {
             return Duration::ZERO;
@@ -63,5 +71,12 @@ mod tests {
         assert_eq!(schedule.retry_delay(1), Duration::from_secs(15));
         assert_eq!(schedule.retry_delay(3), Duration::from_secs(60));
         assert_eq!(schedule.retry_delay(20), Duration::from_secs(900));
+    }
+
+    #[test]
+    fn accepts_a_user_interval_without_changing_retry_policy() {
+        let schedule = SyncSchedule::with_interval(Duration::from_secs(900));
+        assert_eq!(schedule.interval, Duration::from_secs(900));
+        assert_eq!(schedule.retry_delay(1), Duration::from_secs(15));
     }
 }

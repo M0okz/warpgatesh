@@ -2,6 +2,9 @@ export type CompanionProfile = {
   name: string;
   username: string;
   baseUrl: string;
+  warpgateVersion: string | null;
+  sshHost: string;
+  sshPort: number;
   isDefault: boolean;
 };
 
@@ -12,9 +15,42 @@ export type CompanionTarget = {
   profile: string;
 };
 
+export type CompanionPreferences = {
+  syncIntervalSeconds: number;
+  launchCompanionAtLogin: boolean;
+  defaultProfile: string | null;
+};
+
+export type CompanionAlert = {
+  id: string;
+  kind: "warning" | "error";
+  title: string;
+  message: string;
+  action: "profiles" | null;
+};
+
 export type CompanionState = {
   agentRunning: boolean;
   profiles: CompanionProfile[];
   targets: CompanionTarget[];
   lastSyncAgeSeconds: number | null;
+  preferences: CompanionPreferences;
+  alerts: CompanionAlert[];
+};
+
+export type ProfileRequest = {
+  name: string;
+  baseUrl: string;
+  token: string;
+  sshHost?: string;
+  sshPort?: number;
+};
+
+export type ProfileInspection = {
+  normalizedBaseUrl: string;
+  username: string;
+  warpgateVersion: string | null;
+  sshHost: string;
+  sshPort: number;
+  fingerprints: string;
 };

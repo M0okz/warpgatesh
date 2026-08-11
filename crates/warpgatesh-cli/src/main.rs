@@ -380,7 +380,12 @@ fn ensure_persistent_agent() -> Result<bool, RuntimeError> {
 }
 
 fn agent_is_running(store: &LocalStore) -> bool {
-    ipc::request(&store.paths().agent_socket, "status").is_ok()
+    ipc::request_with_read_timeout(
+        &store.paths().agent_socket,
+        "status",
+        std::time::Duration::from_secs(1),
+    )
+    .is_ok()
 }
 
 fn agent_executable() -> Result<std::path::PathBuf, RuntimeError> {

@@ -51,8 +51,8 @@ avertissement puis lance OpenSSH sans attendre ; `warpgatesh sync` reste le moye
 explicite de demander une actualisation immédiate.
 
 La CLI reste l’interface principale. Une petite interface optionnelle dans la
-barre des menus pourra ensuite servir uniquement aux préférences, à la
-connexion et à la synchronisation automatique.
+barre des menus sert aux préférences, à la recherche de cibles et au suivi de
+la synchronisation automatique.
 
 ## MVP
 
@@ -232,9 +232,13 @@ Pour construire un bundle macOS local :
 npm run tauri build -- --bundles app
 ```
 
-L’application permet actuellement de consulter l’état de l’agent, la dernière
-synchronisation, les profils et les cibles, de filtrer ces dernières avec
-`⌘ K`, de forcer une synchronisation et d’ouvrir une cible SSH dans le terminal.
+L’application permet de consulter l’état de l’agent et la dernière
+synchronisation, de filtrer les cibles avec `⌘ K`, de forcer une synchronisation
+et d’ouvrir une cible SSH dans le terminal. Elle gère aussi l’ajout, le
+renouvellement et la suppression des profils, le profil par défaut, la cadence
+de l’agent et l’ouverture du compagnon à la connexion. Elle se rafraîchit
+automatiquement lorsqu’elle est visible et remonte les échecs API, les jetons
+refusés, les clés SSH modifiées et les instantanés périmés.
 
 Pour installer localement les deux binaires Release sur un Mac Apple Silicon
 équipé de Homebrew, sans modifier le `PATH` :
@@ -249,6 +253,7 @@ Sur un Mac Intel, la racine Homebrew habituelle est `/usr/local`. La dernière
 commande réenregistre le `LaunchAgent` avec le binaire installé ; les profils,
 jetons, clés épinglées et instantanés existants sont conservés.
 
-La confirmation TLS pour les certificats auto-signés, la migration des mutations
-de profils vers l’agent unique et l’écran de préférences du compagnon restent à
-implémenter avant le MVP complet.
+La prise en charge volontaire des certificats TLS auto-signés et la migration
+des mutations de profils vers l’agent unique restent à implémenter avant le MVP
+complet. Le comportement par défaut continue de s’appuyer sur la validation TLS
+du système, sans ajouter de parcours de certificat à l’usage courant.

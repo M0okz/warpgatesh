@@ -115,6 +115,18 @@ impl ProfileCatalog {
     pub fn is_default(&self, name: &str) -> bool {
         self.default_profile.as_deref() == Some(name)
     }
+
+    /// Remove a profile and select the first remaining profile when needed.
+    #[must_use]
+    pub fn remove(&mut self, name: &str) -> bool {
+        let previous_len = self.profiles.len();
+        self.profiles.retain(|profile| profile.name != name);
+        let removed = self.profiles.len() != previous_len;
+        if removed && self.default_profile.as_deref() == Some(name) {
+            self.default_profile = self.profiles.first().map(|profile| profile.name.clone());
+        }
+        removed
+    }
 }
 
 #[cfg(test)]
@@ -149,5 +161,16 @@ mod tests {
         assert_eq!(catalog.profiles.len(), 1);
         assert_eq!(catalog.profiles[0].ssh_port, 22);
         assert!(catalog.is_default("homeblack"));
+    }
+
+    #[test]
+    fn removing_the_default_selects_the_next_profile() {
+        let mut catalog = ProfileCatalog::default();
+        catalog.upsert(profile("alpha")).expect("valid profile");
+        catalog.upsert(profile("beta")).expect("valid profile");
+
+        assert!(catalog.remove("alpha"));
+        assert_eq!(catalog.default_profile.as_deref(), Some("beta"));
+        assert!(!catalog.remove("missing"));
     }
 }

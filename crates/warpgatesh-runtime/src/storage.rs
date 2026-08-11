@@ -10,6 +10,66 @@ use warpgatesh_core::profiles::ProfileCatalog;
 use crate::RuntimeError;
 
 pub const SNAPSHOT_SCHEMA_VERSION: u32 = 1;
+pub const PREFERENCES_SCHEMA_VERSION: u32 = 1;
+pub const AGENT_STATUS_SCHEMA_VERSION: u32 = 1;
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct Preferences {
+    pub schema_version: u32,
+    pub sync_interval_seconds: u64,
+    pub launch_companion_at_login: bool,
+}
+
+impl Default for Preferences {
+    fn default() -> Self {
+        Self {
+            schema_version: PREFERENCES_SCHEMA_VERSION,
+            sync_interval_seconds: 5 * 60,
+            launch_companion_at_login: false,
+        }
+    }
+}
+
+impl Preferences {
+    /// Validate values shared by the agent and companion.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`RuntimeError`] when the schema or synchronization interval is invalid.
+    pub fn validate(&self) -> Result<(), RuntimeError> {
+        if self.schema_version != PREFERENCES_SCHEMA_VERSION {
+            return Err(RuntimeError::Incompatible(format!(
+                "unsupported preferences schema version {}",
+                self.schema_version
+            )));
+        }
+        if !(60..=86_400).contains(&self.sync_interval_seconds) {
+            return Err(RuntimeError::InvalidInput(
+                "the synchronization interval must be between 60 and 86400 seconds".to_owned(),
+            ));
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AgentErrorKind {
+    Unauthorized,
+    ApiUnreachable,
+    HostKey,
+    Incompatible,
+    Other,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct AgentStatus {
+    pub schema_version: u32,
+    pub last_attempt_epoch_seconds: u64,
+    pub last_success_epoch_seconds: Option<u64>,
+    pub last_error_kind: Option<AgentErrorKind>,
+    pub last_error_message: Option<String>,
+}
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Snapshot {
@@ -77,6 +137,58 @@ impl LocalStore {
     pub fn save_profiles(&self, catalog: &ProfileCatalog) -> Result<(), RuntimeError> {
         catalog.validate()?;
         atomic_write_json(&self.paths.profiles, catalog)
+    }
+
+    /// Load persisted user preferences, or defaults on first launch.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`RuntimeError`] when persisted preferences cannot be read or validated.
+    pub fn load_preferences(&self) -> Result<Preferences, RuntimeError> {
+        if !self.paths.preferences.exists() {
+            return Ok(Preferences::default());
+        }
+        let preferences: Preferences = serde_json::from_slice(&fs::read(&self.paths.preferences)?)?;
+        preferences.validate()?;
+        Ok(preferences)
+    }
+
+    /// Persist validated preferences atomically.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`RuntimeError`] when preferences are invalid or cannot be written.
+    pub fn save_preferences(&self, preferences: &Preferences) -> Result<(), RuntimeError> {
+        preferences.validate()?;
+        atomic_write_json(&self.paths.preferences, preferences)
+    }
+
+    /// Load the latest health report written by the background agent.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`RuntimeError`] when the report cannot be read or has an unsupported schema.
+    pub fn load_agent_status(&self) -> Result<Option<AgentStatus>, RuntimeError> {
+        if !self.paths.agent_status.exists() {
+            return Ok(None);
+        }
+        let status: AgentStatus = serde_json::from_slice(&fs::read(&self.paths.agent_status)?)?;
+        if status.schema_version != AGENT_STATUS_SCHEMA_VERSION {
+            return Err(RuntimeError::Incompatible(format!(
+                "unsupported agent status schema version {}",
+                status.schema_version
+            )));
+        }
+        Ok(Some(status))
+    }
+
+    /// Persist the latest background-agent health report atomically.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`RuntimeError`] when the report cannot be written.
+    pub fn save_agent_status(&self, status: &AgentStatus) -> Result<(), RuntimeError> {
+        atomic_write_json(&self.paths.agent_status, status)
     }
 
     /// Load the last complete synchronization snapshot.
@@ -214,5 +326,28 @@ mod tests {
         assert_eq!(store.load_profiles().expect("load catalog"), catalog);
         let persisted = fs::read_to_string(&store.paths().profiles).expect("profile file");
         assert!(!persisted.contains("token"));
+    }
+
+    #[test]
+    fn preferences_default_and_round_trip() {
+        let directory = TempDir::new().expect("temporary directory");
+        let store = store(&directory);
+        assert_eq!(
+            store.load_preferences().expect("defaults"),
+            Preferences::default()
+        );
+
+        let preferences = Preferences {
+            sync_interval_seconds: 900,
+            launch_companion_at_login: true,
+            ..Preferences::default()
+        };
+        store
+            .save_preferences(&preferences)
+            .expect("save preferences");
+        assert_eq!(
+            store.load_preferences().expect("load preferences"),
+            preferences
+        );
     }
 }

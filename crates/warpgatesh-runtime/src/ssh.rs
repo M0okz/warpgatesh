@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -108,6 +108,39 @@ pub fn save_host_keys(
         &paths.known_hosts_directory.join(profile),
         known_hosts.as_bytes(),
     )
+}
+
+/// Verify that an SSH endpoint still presents exactly the keys pinned by the user.
+///
+/// # Errors
+///
+/// Returns [`RuntimeError`] when the endpoint is unreachable, the pin cannot be
+/// read, or the presented key material differs from the approved material.
+pub fn verify_host_keys(
+    paths: &WarpgatePaths,
+    profile: &str,
+    host: &str,
+    port: u16,
+) -> Result<(), RuntimeError> {
+    let pinned = fs::read_to_string(paths.known_hosts_directory.join(profile))?;
+    let presented = scan_host_keys(host, port)?;
+    if key_material(&pinned) != key_material(&presented.known_hosts) {
+        return Err(RuntimeError::Command(format!(
+            "SSH host keys changed for profile '{profile}' at {host}:{port}; review and add the profile again before synchronizing"
+        )));
+    }
+    Ok(())
+}
+
+fn key_material(known_hosts: &str) -> BTreeSet<(&str, &str)> {
+    known_hosts
+        .lines()
+        .filter_map(|line| {
+            let mut fields = line.split_whitespace();
+            let _hosts = fields.next()?;
+            Some((fields.next()?, fields.next()?))
+        })
+        .collect()
 }
 
 /// Install the single managed `Include` directive when absent.
@@ -259,5 +292,16 @@ mod tests {
         let paths = WarpgatePaths::for_home(home.path());
         assert!(install_managed_include(&paths).expect("first install"));
         assert!(!install_managed_include(&paths).expect("second install"));
+    }
+
+    #[test]
+    fn compares_host_keys_without_depending_on_host_labels_or_order() {
+        let pinned = "host-a ssh-ed25519 AAAA\nhost-a ssh-rsa BBBB\n";
+        let presented = "[host-b]:2222 ssh-rsa BBBB\n[host-b]:2222 ssh-ed25519 AAAA\n";
+        assert_eq!(key_material(pinned), key_material(presented));
+        assert_ne!(
+            key_material(pinned),
+            key_material("host-b ssh-ed25519 CCCC\n")
+        );
     }
 }

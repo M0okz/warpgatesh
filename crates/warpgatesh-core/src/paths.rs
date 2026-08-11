@@ -4,7 +4,9 @@ use std::path::{Path, PathBuf};
 pub struct WarpgatePaths {
     pub application_support: PathBuf,
     pub profiles: PathBuf,
+    pub preferences: PathBuf,
     pub snapshot: PathBuf,
+    pub agent_status: PathBuf,
     pub agent_socket: PathBuf,
     pub agent_stdout_log: PathBuf,
     pub agent_stderr_log: PathBuf,
@@ -27,7 +29,9 @@ impl WarpgatePaths {
 
         Self {
             profiles: application_support.join("profiles.json"),
+            preferences: application_support.join("preferences.json"),
             snapshot: application_support.join("snapshot.json"),
+            agent_status: application_support.join("agent-status.json"),
             agent_socket: application_support.join("agent.sock"),
             agent_stdout_log: application_support.join("agent.log"),
             agent_stderr_log: application_support.join("agent-error.log"),

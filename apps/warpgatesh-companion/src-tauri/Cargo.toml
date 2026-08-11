@@ -18,7 +18,8 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-autostart = "2"
 warpgatesh-core = { path = "../../../crates/warpgatesh-core" }
 warpgatesh-runtime = { path = "../../../crates/warpgatesh-runtime" }
 

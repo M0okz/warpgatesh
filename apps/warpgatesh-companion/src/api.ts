@@ -1,5 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { CompanionState } from "./types";
+import type {
+  CompanionPreferences,
+  CompanionState,
+  ProfileInspection,
+  ProfileRequest,
+} from "./types";
 
 const demoState: CompanionState = {
   agentRunning: true,
@@ -8,38 +13,82 @@ const demoState: CompanionState = {
       name: "homeblack",
       username: "gregory.narcin",
       baseUrl: "https://bastion.int.homeblack.fr/",
+      warpgateVersion: "0.27.1",
+      sshHost: "bastion.int.homeblack.fr",
+      sshPort: 2222,
       isDefault: true,
     },
   ],
-  targets: [
-    "dmz-nextcloud-01",
-    "dmz-gitlab-01",
-    "trust-auth-01",
-    "trust-dns-01",
-    "trust-wazuh-01",
-    "pve-dell",
-  ].map((name) => ({
-    alias: `${name}.homeblack`,
-    qualifiedAlias: `${name}.homeblack`,
-    name,
-    profile: "homeblack",
-  })),
+  targets: ["dmz-nextcloud-01", "dmz-gitlab-01", "trust-auth-01", "trust-dns-01"].map(
+    (name) => ({
+      alias: `${name}.homeblack`,
+      qualifiedAlias: `${name}.homeblack`,
+      name,
+      profile: "homeblack",
+    }),
+  ),
   lastSyncAgeSeconds: 74,
+  preferences: {
+    syncIntervalSeconds: 300,
+    launchCompanionAtLogin: false,
+    defaultProfile: "homeblack",
+  },
+  alerts: [],
 };
 
 const isTauri = "__TAURI_INTERNALS__" in window;
+const isDemo = import.meta.env.DEV && !isTauri;
 
 export async function getCompanionState(): Promise<CompanionState> {
-  if (import.meta.env.DEV && !isTauri) return demoState;
+  if (isDemo) return demoState;
   return invoke<CompanionState>("get_companion_state");
 }
 
 export async function synchronizeNow(): Promise<string> {
-  if (import.meta.env.DEV && !isTauri) return "Demo synchronization complete";
+  if (isDemo) return "Demo synchronization complete";
   return invoke<string>("sync_now");
 }
 
+export async function savePreferences(preferences: CompanionPreferences): Promise<void> {
+  if (isDemo) return;
+  return invoke<void>("save_preferences", { preferences });
+}
+
+export async function openTokenPage(baseUrl: string): Promise<void> {
+  if (isDemo) return;
+  return invoke<void>("open_token_page_for", { baseUrl });
+}
+
+export async function inspectProfile(request: ProfileRequest): Promise<ProfileInspection> {
+  if (isDemo) {
+    return {
+      normalizedBaseUrl: request.baseUrl,
+      username: "gregory.narcin",
+      warpgateVersion: "0.27.1",
+      sshHost: request.sshHost || "bastion.example.org",
+      sshPort: request.sshPort || 2222,
+      fingerprints: "256 SHA256:example ED25519\n3072 SHA256:example RSA",
+    };
+  }
+  return invoke<ProfileInspection>("inspect_profile", { request });
+}
+
+export async function addProfile(request: ProfileRequest): Promise<void> {
+  if (isDemo) return;
+  return invoke<void>("add_profile", { request });
+}
+
+export async function renewProfileToken(name: string, token: string): Promise<void> {
+  if (isDemo) return;
+  return invoke<void>("renew_profile_token", { name, token });
+}
+
+export async function removeProfile(name: string): Promise<void> {
+  if (isDemo) return;
+  return invoke<void>("remove_profile", { name });
+}
+
 export async function openTarget(alias: string): Promise<void> {
-  if (import.meta.env.DEV && !isTauri) return;
+  if (isDemo) return;
   return invoke<void>("open_target", { alias });
 }
