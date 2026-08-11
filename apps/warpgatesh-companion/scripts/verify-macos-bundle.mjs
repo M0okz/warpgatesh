@@ -28,6 +28,19 @@ for (const executable of [companion, cli, agent]) {
   accessSync(executable, constants.R_OK | constants.X_OK);
 }
 
+if (bundle.includes("universal-apple-darwin")) {
+  for (const executable of [companion, cli, agent]) {
+    const architectures = capture("/usr/bin/lipo", ["-archs", executable])
+      .split(/\s+/)
+      .sort();
+    if (architectures.join(" ") !== "arm64 x86_64") {
+      throw new Error(
+        `Unexpected architectures for ${executable}: ${architectures.join(" ")}`,
+      );
+    }
+  }
+}
+
 const cliVersion = capture(cli, ["--version"]);
 if (cliVersion !== `warpgatesh ${packageMetadata.version}`) {
   throw new Error(

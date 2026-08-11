@@ -272,6 +272,12 @@ la CLI et l’agent embarqués sont exécutables et partagent la bonne version :
 npm run bundle:macos
 ```
 
+Les releases publiques sont produites par un workflow dédié à partir d’un tag
+`vX.Y.Z`. Il assemble un DMG universel Intel/Apple Silicon, le signe avec un
+certificat Developer ID, le fait notarier par Apple et crée une release GitHub
+en brouillon après les contrôles Gatekeeper. La procédure et les secrets requis
+sont détaillés dans [`docs/releasing-macos.md`](docs/releasing-macos.md).
+
 L’application permet de consulter l’état de l’agent et la dernière
 synchronisation, de filtrer les cibles avec `⌘ K`, de forcer une synchronisation
 et d’ouvrir une cible SSH dans le terminal. Elle gère aussi l’ajout, le

@@ -1,0 +1,101 @@
+name: Release macOS
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  macos:
+    name: Signed universal DMG
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: apps/warpgatesh-companion
+    env:
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/warpgatesh-companion/package-lock.json
+
+      - name: Install Rust and macOS targets
+        run: |
+          rustup toolchain install 1.85.0 --profile minimal
+          rustup default 1.85.0
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Verify release version
+        run: npm run verify:release-version -- "${GITHUB_REF_NAME}"
+
+      - name: Require Apple release credentials
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          test -n "${APPLE_CERTIFICATE}"
+          test -n "${APPLE_CERTIFICATE_PASSWORD}"
+          test -n "${KEYCHAIN_PASSWORD}"
+          test -n "${APPLE_ID}"
+          test -n "${APPLE_PASSWORD}"
+          test -n "${APPLE_TEAM_ID}"
+
+      - name: Import Developer ID certificate
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          certificate_path="${RUNNER_TEMP}/warpgatesh-developer-id.p12"
+          keychain_path="${RUNNER_TEMP}/warpgatesh-signing.keychain-db"
+          printf '%s' "${APPLE_CERTIFICATE}" | base64 --decode > "${certificate_path}"
+          security create-keychain -p "${KEYCHAIN_PASSWORD}" "${keychain_path}"
+          security set-keychain-settings -lut 21600 "${keychain_path}"
+          security unlock-keychain -p "${KEYCHAIN_PASSWORD}" "${keychain_path}"
+          security import "${certificate_path}" -P "${APPLE_CERTIFICATE_PASSWORD}" -A -t cert -f pkcs12 -k "${keychain_path}"
+          security list-keychain -d user -s "${keychain_path}"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${KEYCHAIN_PASSWORD}" "${keychain_path}"
+          identity=$(security find-identity -v -p codesigning "${keychain_path}" | awk -F'"' '/Developer ID Application/{print $2; exit}')
+          test -n "${identity}"
+          printf 'APPLE_SIGNING_IDENTITY=%s\n' "${identity}" >> "${GITHUB_ENV}"
+
+      - name: Build, sign and notarize universal DMG
+        run: npm run bundle:macos:universal
+
+      - name: Verify Apple distribution checks
+        run: |
+          bundle="src-tauri/target/universal-apple-darwin/release/bundle/macos/WarpgateSH.app"
+          dmg="src-tauri/target/universal-apple-darwin/release/bundle/dmg/WarpgateSH_${GITHUB_REF_NAME#v}_universal.dmg"
+          codesign --verify --deep --strict --verbose=2 "${bundle}"
+          spctl --assess --type execute --verbose=2 "${bundle}"
+          xcrun stapler validate "${bundle}"
+          hdiutil verify "${dmg}"
+          xcrun stapler validate "${dmg}"
+          shasum -a 256 "${dmg}" > "${dmg}.sha256"
+
+      - name: Create draft GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          dmg="src-tauri/target/universal-apple-darwin/release/bundle/dmg/WarpgateSH_${GITHUB_REF_NAME#v}_universal.dmg"
+          gh release create "${GITHUB_REF_NAME}" "${dmg}" "${dmg}.sha256" \
+            --verify-tag \
+            --draft \
+            --title "WarpgateSH ${GITHUB_REF_NAME#v}" \
+            --generate-notes

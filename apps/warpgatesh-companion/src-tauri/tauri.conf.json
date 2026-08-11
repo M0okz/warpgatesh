@@ -42,7 +42,8 @@
     "shortDescription": "Keep Warpgate SSH targets synchronized.",
     "longDescription": "Optional desktop companion for the WarpgateSH command-line client.",
     "macOS": {
-      "minimumSystemVersion": "13.0"
+      "minimumSystemVersion": "13.0",
+      "hardenedRuntime": true
     }
   }
 }

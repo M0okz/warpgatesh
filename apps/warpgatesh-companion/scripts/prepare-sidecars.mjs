@@ -14,35 +14,48 @@ if (!/^[a-zA-Z0-9_.-]+$/.test(targetTriple)) {
 }
 
 const cargo = process.env.CARGO?.trim() || "cargo";
-run(cargo, [
-  "build",
-  "--release",
-  "--locked",
-  "--target",
-  targetTriple,
-  "--package",
-  "warpgatesh-cli",
-  "--package",
-  "warpgatesh-agent",
-]);
+const buildTargets =
+  targetTriple === "universal-apple-darwin"
+    ? ["aarch64-apple-darwin", "x86_64-apple-darwin"]
+    : [targetTriple];
+
+for (const buildTarget of buildTargets) {
+  run(cargo, [
+    "build",
+    "--release",
+    "--locked",
+    "--target",
+    buildTarget,
+    "--package",
+    "warpgatesh-cli",
+    "--package",
+    "warpgatesh-agent",
+  ]);
+}
 
 const extension = process.platform === "win32" ? ".exe" : "";
 const outputDirectory = join(companionDirectory, "src-tauri", "binaries");
 mkdirSync(outputDirectory, { recursive: true });
 
 for (const binary of ["warpgatesh", "warpgatesh-agent"]) {
-  const source = join(
-    workspaceDirectory,
-    "target",
-    targetTriple,
-    "release",
-    `${binary}${extension}`,
-  );
   const destination = join(
     outputDirectory,
     `${binary}-${targetTriple}${extension}`,
   );
-  copyFileSync(source, destination);
+  const sources = buildTargets.map((buildTarget) =>
+    join(
+      workspaceDirectory,
+      "target",
+      buildTarget,
+      "release",
+      `${binary}${extension}`,
+    ),
+  );
+  if (targetTriple === "universal-apple-darwin") {
+    run("/usr/bin/lipo", ["-create", ...sources, "-output", destination]);
+  } else {
+    copyFileSync(sources[0], destination);
+  }
   if (process.platform !== "win32") {
     chmodSync(destination, 0o755);
   }
