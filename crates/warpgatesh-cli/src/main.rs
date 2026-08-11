@@ -115,21 +115,36 @@ fn add_profile(name: &str, url: &str) -> Result<(), RuntimeError> {
         "Retrieving SSH host keys from {}:{}…",
         metadata.ssh_host, metadata.ssh_port
     );
-    let (ssh_host, ssh_port, host_keys) =
-        match scan_host_keys(&metadata.ssh_host, metadata.ssh_port) {
-            Ok(host_keys) => (metadata.ssh_host.clone(), metadata.ssh_port, host_keys),
-            Err(error) => {
-                eprintln!(
-                    "warpgatesh: the SSH endpoint advertised by Warpgate is unreachable: {error}"
-                );
-                println!("If the HTTP and SSH endpoints differ, enter the reachable SSH endpoint.");
+    let (ssh_host, ssh_port, host_keys) = match scan_host_keys(
+        &metadata.ssh_host,
+        metadata.ssh_port,
+    ) {
+        Ok(host_keys) => (metadata.ssh_host.clone(), metadata.ssh_port, host_keys),
+        Err(error) => {
+            eprintln!(
+                "warpgatesh: the SSH endpoint advertised by Warpgate is unreachable: {error}"
+            );
+            println!("If the HTTP and SSH endpoints differ, enter the reachable SSH endpoint.");
+            loop {
                 let host = prompt_with_default("SSH host", &metadata.ssh_host)?;
                 let port = prompt_port(metadata.ssh_port)?;
+                if same_endpoint(&metadata.ssh_host, metadata.ssh_port, &host, port) {
+                    eprintln!(
+                        "warpgatesh: that is the same unreachable endpoint; enter a different SSH host or port"
+                    );
+                    continue;
+                }
                 println!("Retrieving SSH host keys from {host}:{port}…");
-                let host_keys = scan_host_keys(&host, port)?;
-                (host, port, host_keys)
+                match scan_host_keys(&host, port) {
+                    Ok(host_keys) => break (host, port, host_keys),
+                    Err(error) => {
+                        eprintln!("warpgatesh: {error}");
+                        eprintln!("Try another reachable SSH host or port.");
+                    }
+                }
             }
-        };
+        }
+    };
     println!("\nSSH host-key fingerprints:\n{}", host_keys.fingerprints);
     if !confirm("Trust and pin these SSH host keys? [y/N] ")? {
         return Err(RuntimeError::InvalidInput(
@@ -469,6 +484,15 @@ fn prompt_port(default: u16) -> Result<u16, RuntimeError> {
     Ok(port)
 }
 
+fn same_endpoint(
+    advertised_host: &str,
+    advertised_port: u16,
+    selected_host: &str,
+    selected_port: u16,
+) -> bool {
+    advertised_host.eq_ignore_ascii_case(selected_host) && advertised_port == selected_port
+}
+
 fn confirm(prompt: &str) -> Result<bool, RuntimeError> {
     print!("{prompt}");
     io::stdout().flush()?;
@@ -530,4 +554,25 @@ fn execute_ssh(alias: &str, ssh_arguments: &[String]) -> ExitCode {
 fn execute_ssh(_alias: &str, _ssh_arguments: &[String]) -> ExitCode {
     eprintln!("warpgatesh: OpenSSH delegation is not supported on this platform");
     ExitCode::FAILURE
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rejects_the_same_unreachable_endpoint_before_rescanning() {
+        assert!(same_endpoint(
+            "bastion.int.homeblack.fr",
+            2222,
+            "BASTION.int.homeblack.fr",
+            2222
+        ));
+        assert!(!same_endpoint(
+            "bastion.int.homeblack.fr",
+            2222,
+            "10.60.0.17",
+            2222
+        ));
+    }
 }
