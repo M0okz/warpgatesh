@@ -857,6 +857,65 @@ main {
   accent-color: var(--accent-strong);
 }
 
+.setting-row--terminal {
+  align-items: start;
+}
+
+.terminal-control {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.terminal-control code {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--muted);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 0.61rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terminal-status {
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.67rem;
+  font-weight: 680;
+}
+
+.terminal-status > span {
+  width: 7px;
+  height: 7px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: var(--faint);
+}
+
+.terminal-status--managed,
+.terminal-status--external {
+  color: var(--accent-strong);
+}
+
+.terminal-status--managed > span,
+.terminal-status--external > span {
+  background: var(--accent);
+}
+
+.terminal-status--conflict {
+  color: var(--danger);
+}
+
+.terminal-status--conflict > span {
+  background: var(--danger);
+}
+
+.terminal-control .button-secondary {
+  min-height: 36px;
+}
+
 .preferences-save {
   margin-top: 16px;
 }
@@ -926,6 +985,14 @@ main {
 
   .metrics-row {
     gap: 10px;
+  }
+
+  .setting-row--terminal {
+    grid-template-columns: 1fr;
+  }
+
+  .terminal-control {
+    justify-items: start;
   }
 }
 

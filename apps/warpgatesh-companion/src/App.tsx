@@ -3,6 +3,7 @@ import {
   addProfile,
   getCompanionState,
   inspectProfile,
+  installCommandLineTool,
   openTarget,
   openTokenPage,
   removeProfile,
@@ -330,10 +331,12 @@ function PreferencesView({
   state,
   busy,
   onSave,
+  onInstallCli,
 }: {
   state: CompanionState;
   busy: boolean;
   onSave: (preferences: CompanionPreferences) => Promise<void>;
+  onInstallCli: () => Promise<void>;
 }) {
   const [draft, setDraft] = useState(state.preferences);
 
@@ -342,6 +345,14 @@ function PreferencesView({
     state.preferences.launchCompanionAtLogin,
     state.preferences.syncIntervalSeconds,
   ]);
+
+  const terminal = state.terminalIntegration;
+  const terminalLabels = {
+    managed: "Installée par WarpgateSH",
+    external: "Déjà disponible",
+    missing: "Non installée",
+    conflict: "Conflit détecté",
+  } as const;
 
   return (
     <section className="page-panel" aria-labelledby="preferences-title">
@@ -363,6 +374,30 @@ function PreferencesView({
           <span><strong>Ouvrir à la connexion</strong><small>Place WarpgateSH dans la barre des menus au démarrage du Mac.</small></span>
           <input type="checkbox" checked={draft.launchCompanionAtLogin} onChange={(event) => setDraft((value) => ({ ...value, launchCompanionAtLogin: event.target.checked }))} />
         </label>
+        <div className="setting-row setting-row--terminal">
+          <span>
+            <strong>Intégration terminal</strong>
+            <small>
+              {terminal.status === "external"
+                ? "Une installation existante fournit déjà la commande warpgatesh."
+                : terminal.status === "conflict"
+                  ? "Ce chemin est occupé par une commande qui n’appartient pas à WarpgateSH."
+                  : "Rend la CLI principale disponible sans modifier votre shell ni son PATH."}
+            </small>
+          </span>
+          <div className="terminal-control" aria-live="polite">
+            <span className={`terminal-status terminal-status--${terminal.status}`}>
+              <span aria-hidden="true" />
+              {terminalLabels[terminal.status]}
+            </span>
+            <code title={terminal.path}>{terminal.path}</code>
+            {terminal.status === "missing" ? (
+              <button className="button-secondary" type="button" disabled={busy} onClick={() => void onInstallCli()}>
+                Installer la CLI
+              </button>
+            ) : null}
+          </div>
+        </div>
         <button className="button-primary preferences-save" type="submit" disabled={busy}>Enregistrer les préférences</button>
       </form>
     </section>
@@ -439,6 +474,13 @@ export default function App() {
     }, "Préférences enregistrées.");
   }
 
+  async function handleInstallCli() {
+    await runAction(async () => {
+      await installCommandLineTool();
+      await refresh();
+    }, "La commande warpgatesh est disponible dans le terminal.");
+  }
+
   const running = state?.agentRunning ?? false;
   const defaultProfile = state?.profiles.find((profile) => profile.isDefault);
 
@@ -462,7 +504,7 @@ export default function App() {
         {state === null ? <p className="loading-state">Lecture de l’état local…</p> : null}
         {state && view === "access" ? <AccessView state={state} busy={busy} onSync={() => void handleSync()} onOpen={(alias) => void handleOpen(alias)} onNavigate={setView} /> : null}
         {state && view === "profiles" ? <ProfilesView profiles={state.profiles} busy={busy} onChanged={refresh} runAction={runAction} /> : null}
-        {state && view === "preferences" ? <PreferencesView state={state} busy={busy} onSave={handlePreferences} /> : null}
+        {state && view === "preferences" ? <PreferencesView state={state} busy={busy} onSave={handlePreferences} onInstallCli={handleInstallCli} /> : null}
       </main>
 
       <footer className="profile-footer">

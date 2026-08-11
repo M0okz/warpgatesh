@@ -35,7 +35,13 @@ export type CompanionState = {
   targets: CompanionTarget[];
   lastSyncAgeSeconds: number | null;
   preferences: CompanionPreferences;
+  terminalIntegration: TerminalIntegration;
   alerts: CompanionAlert[];
+};
+
+export type TerminalIntegration = {
+  status: "managed" | "external" | "missing" | "conflict";
+  path: string;
 };
 
 export type ProfileRequest = {

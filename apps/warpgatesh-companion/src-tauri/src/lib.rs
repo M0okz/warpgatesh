@@ -1,4 +1,5 @@
 mod commands;
+mod installation;
 
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
@@ -26,8 +27,13 @@ pub fn run() {
         ))
         .setup(|app| {
             #[cfg(target_os = "macos")]
-            app.handle()
-                .set_activation_policy(tauri::ActivationPolicy::Accessory)?;
+            {
+                app.handle()
+                    .set_activation_policy(tauri::ActivationPolicy::Accessory)?;
+                if let Err(error) = installation::ensure_bundled_agent() {
+                    eprintln!("warpgatesh-companion: could not install the agent: {error}");
+                }
+            }
 
             let show = MenuItem::with_id(app, "show", "Afficher WarpgateSH", true, None::<&str>)?;
             let sync =
@@ -85,6 +91,7 @@ pub fn run() {
             commands::renew_profile_token,
             commands::remove_profile,
             commands::open_target,
+            commands::install_command_line_tool,
         ])
         .build(tauri::generate_context!())
         .expect("error while building the WarpgateSH companion");

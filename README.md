@@ -205,6 +205,8 @@ d’épingler les clés SSH présentées, d’installer automatiquement un
 `LaunchAgent`, de synchroniser les cibles accessibles en arrière-plan et de
 produire la Configuration SSH gérée. La CLI dialogue avec l’agent par un socket
 Unix privé pour forcer une synchronisation sans lancer un second écrivain.
+Lorsqu’un agent répond déjà, la CLI le réutilise sans remplacer son LaunchAgent,
+notamment lorsque celui-ci provient de l’application installée.
 
 ```sh
 cargo build --workspace
@@ -243,6 +245,17 @@ Le hook de build compile automatiquement `warpgatesh` et
 `warpgatesh-agent` en mode Release pour le même triple Rust que le compagnon,
 puis les embarque dans l’application. Il est également possible de préparer
 uniquement ces deux exécutables avec `npm run prepare:sidecars`.
+
+Au premier lancement de l’application Release depuis un emplacement durable,
+le compagnon enregistre automatiquement l’agent embarqué comme LaunchAgent de
+la session utilisateur. Le mode de développement ne remplace jamais cet agent
+de production, et une application ouverte directement depuis un volume DMG
+demande d’abord à être déplacée dans Applications.
+
+Les préférences affichent aussi l’état de l’intégration terminal. Une CLI déjà
+installée par Homebrew est réutilisée. Sinon, une action explicite peut créer
+`/usr/local/bin/warpgatesh` avec l’autorisation macOS nécessaire ; aucun fichier
+ou lien préexistant n’est écrasé.
 
 Pour produire à la fois l’application et son image disque, puis vérifier que
 la CLI et l’agent embarqués sont exécutables et partagent la bonne version :

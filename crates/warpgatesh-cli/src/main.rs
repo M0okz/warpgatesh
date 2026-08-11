@@ -341,7 +341,7 @@ fn request_synchronization() -> Result<(), RuntimeError> {
         use std::time::Duration;
 
         let store = LocalStore::for_current_user()?;
-        ensure_persistent_agent()?;
+        ensure_agent_available(&store)?;
         let message =
             ipc::request_with_retry(&store.paths().agent_socket, "sync", Duration::from_secs(10))?;
         println!("{message}");
@@ -358,7 +358,7 @@ fn request_configuration_mutation(mutation: &ConfigurationMutation) -> Result<()
         use std::time::Duration;
 
         let store = LocalStore::for_current_user()?;
-        ensure_persistent_agent()?;
+        ensure_agent_available(&store)?;
         ipc::request_mutation(
             &store.paths().agent_socket,
             mutation,
@@ -374,6 +374,14 @@ fn request_configuration_mutation(mutation: &ConfigurationMutation) -> Result<()
             "configuration mutations require the persistent background agent".to_owned(),
         ))
     }
+}
+
+#[cfg(target_os = "macos")]
+fn ensure_agent_available(store: &LocalStore) -> Result<(), RuntimeError> {
+    if !agent_is_running(store) {
+        ensure_persistent_agent()?;
+    }
+    Ok(())
 }
 
 #[cfg(target_os = "macos")]

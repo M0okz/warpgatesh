@@ -12,6 +12,8 @@ use warpgatesh_runtime::ipc;
 use warpgatesh_runtime::ssh::{open_token_page, scan_host_keys};
 use warpgatesh_runtime::storage::{AgentErrorKind, LocalStore, Preferences};
 
+use crate::installation;
+
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CompanionState {
@@ -20,7 +22,15 @@ pub struct CompanionState {
     targets: Vec<CompanionTarget>,
     last_sync_age_seconds: Option<u64>,
     preferences: CompanionPreferences,
+    terminal_integration: TerminalIntegration,
     alerts: Vec<CompanionAlert>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TerminalIntegration {
+    status: String,
+    path: String,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
@@ -87,7 +97,15 @@ pub struct ProfileInspection {
 pub async fn get_companion_state(app: AppHandle) -> Result<CompanionState, String> {
     let store = LocalStore::for_current_user().map_err(display_error)?;
     let launches_at_login = app.autolaunch().is_enabled().map_err(display_error)?;
-    load_state(&store, launches_at_login)
+    let terminal = load_terminal_integration()?;
+    load_state(&store, launches_at_login, terminal)
+}
+
+#[tauri::command]
+pub async fn install_command_line_tool() -> Result<TerminalIntegration, String> {
+    installation::install_cli()
+        .map(|status| terminal_integration(&status))
+        .map_err(display_error)
 }
 
 #[tauri::command]
@@ -267,7 +285,11 @@ pub async fn open_target(alias: String) -> Result<(), String> {
     }
 }
 
-fn load_state(store: &LocalStore, launches_at_login: bool) -> Result<CompanionState, String> {
+fn load_state(
+    store: &LocalStore,
+    launches_at_login: bool,
+    terminal_integration: TerminalIntegration,
+) -> Result<CompanionState, String> {
     let catalog = store.load_profiles().map_err(display_error)?;
     let snapshot = store.load_snapshot().map_err(display_error)?;
     let preferences = store.load_preferences().map_err(display_error)?;
@@ -321,8 +343,22 @@ fn load_state(store: &LocalStore, launches_at_login: bool) -> Result<CompanionSt
             launch_companion_at_login: launches_at_login,
             default_profile: catalog.default_profile,
         },
+        terminal_integration,
         alerts,
     })
+}
+
+fn load_terminal_integration() -> Result<TerminalIntegration, String> {
+    installation::cli_installation()
+        .map(|status| terminal_integration(&status))
+        .map_err(display_error)
+}
+
+fn terminal_integration(status: &installation::CliInstallation) -> TerminalIntegration {
+    TerminalIntegration {
+        status: status.status().to_owned(),
+        path: status.path().display().to_string(),
+    }
 }
 
 fn build_alerts(
@@ -463,11 +499,20 @@ mod tests {
             })
             .expect("save snapshot");
 
-        let state = load_state(&store, false).expect("companion state");
+        let state = load_state(
+            &store,
+            false,
+            TerminalIntegration {
+                status: "missing".to_owned(),
+                path: "/usr/local/bin/warpgatesh".to_owned(),
+            },
+        )
+        .expect("companion state");
         assert_eq!(state.profiles.len(), 1);
         assert_eq!(state.targets.len(), 1);
         assert_eq!(state.targets[0].alias, "dmz-nextcloud-01.homeblack");
         assert!(!state.agent_running);
         assert_eq!(state.alerts[0].id, "agent-down");
+        assert_eq!(state.terminal_integration.status, "missing");
     }
 }

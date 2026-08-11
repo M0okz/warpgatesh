@@ -4,6 +4,7 @@ import type {
   CompanionState,
   ProfileInspection,
   ProfileRequest,
+  TerminalIntegration,
 } from "./types";
 
 const demoState: CompanionState = {
@@ -32,6 +33,10 @@ const demoState: CompanionState = {
     syncIntervalSeconds: 300,
     launchCompanionAtLogin: false,
     defaultProfile: "homeblack",
+  },
+  terminalIntegration: {
+    status: "missing",
+    path: "/usr/local/bin/warpgatesh",
   },
   alerts: [],
 };
@@ -91,4 +96,9 @@ export async function removeProfile(name: string): Promise<void> {
 export async function openTarget(alias: string): Promise<void> {
   if (isDemo) return;
   return invoke<void>("open_target", { alias });
+}
+
+export async function installCommandLineTool(): Promise<TerminalIntegration> {
+  if (isDemo) return demoState.terminalIntegration;
+  return invoke<TerminalIntegration>("install_command_line_tool");
 }
