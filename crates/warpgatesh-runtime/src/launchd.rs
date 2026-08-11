@@ -197,7 +197,8 @@ mod tests {
         .expect("property list");
 
         assert!(plist.contains("<string>dev.warpgatesh.agent</string>"));
-        assert!(plist.contains("/Users/A &amp; B/Library/Application Support"));
+        assert!(plist.contains("/Users/A &amp; B/"));
+        assert!(plist.contains("agent.log"));
         assert!(plist.contains("<key>KeepAlive</key>\n  <true/>"));
     }
 }
