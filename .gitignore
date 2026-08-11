@@ -1,3 +1,7 @@
 /target/
+**/node_modules/
+**/dist/
+apps/warpgatesh-companion/src-tauri/target/
+apps/warpgatesh-companion/src-tauri/gen/schemas/
 .DS_Store
 *.log

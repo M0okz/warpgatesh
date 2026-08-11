@@ -216,6 +216,39 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo run --bin warpgatesh -- --help
 ```
 
+Le compagnon macOS se trouve dans `apps/warpgatesh-companion`. Il lit le même
+état local que la CLI et dialogue directement avec l’agent déjà actif : quitter
+l’application n’interrompt donc jamais la synchronisation de fond.
+
+```sh
+cd apps/warpgatesh-companion
+npm install
+npm run tauri dev
+```
+
+Pour construire un bundle macOS local :
+
+```sh
+npm run tauri build -- --bundles app
+```
+
+L’application permet actuellement de consulter l’état de l’agent, la dernière
+synchronisation, les profils et les cibles, de filtrer ces dernières avec
+`⌘ K`, de forcer une synchronisation et d’ouvrir une cible SSH dans le terminal.
+
+Pour installer localement les deux binaires Release sur un Mac Apple Silicon
+équipé de Homebrew, sans modifier le `PATH` :
+
+```sh
+cargo install --path crates/warpgatesh-cli --root /opt/homebrew --force --locked
+cargo install --path crates/warpgatesh-agent --root /opt/homebrew --force --locked
+warpgatesh agent install
+```
+
+Sur un Mac Intel, la racine Homebrew habituelle est `/usr/local`. La dernière
+commande réenregistre le `LaunchAgent` avec le binaire installé ; les profils,
+jetons, clés épinglées et instantanés existants sont conservés.
+
 La confirmation TLS pour les certificats auto-signés, la migration des mutations
-de profils vers l’agent unique et le compagnon Tauri restent à implémenter avant
-le MVP complet.
+de profils vers l’agent unique et l’écran de préférences du compagnon restent à
+implémenter avant le MVP complet.
