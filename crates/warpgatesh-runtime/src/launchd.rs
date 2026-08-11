@@ -1,7 +1,10 @@
+#[cfg(any(target_os = "macos", test))]
 use std::path::Path;
 
+#[cfg(any(target_os = "macos", test))]
 use warpgatesh_core::paths::WarpgatePaths;
 
+#[cfg(any(target_os = "macos", test))]
 use crate::RuntimeError;
 
 pub const LABEL: &str = "dev.warpgatesh.agent";
@@ -49,16 +52,6 @@ pub fn ensure_installed(
     Ok(changed)
 }
 
-#[cfg(not(target_os = "macos"))]
-pub fn ensure_installed(
-    _paths: &WarpgatePaths,
-    _agent_executable: &Path,
-) -> Result<bool, RuntimeError> {
-    Err(RuntimeError::Command(
-        "persistent agent installation is currently supported on macOS only".to_owned(),
-    ))
-}
-
 /// Report whether launchd currently knows the per-user service.
 ///
 /// # Errors
@@ -73,11 +66,6 @@ pub fn is_loaded() -> Result<bool, RuntimeError> {
         .output()?
         .status
         .success())
-}
-
-#[cfg(not(target_os = "macos"))]
-pub fn is_loaded() -> Result<bool, RuntimeError> {
-    Ok(false)
 }
 
 #[cfg(target_os = "macos")]

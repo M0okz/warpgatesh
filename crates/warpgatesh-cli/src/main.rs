@@ -364,6 +364,7 @@ fn ensure_persistent_agent() -> Result<bool, RuntimeError> {
 
 #[cfg(not(target_os = "macos"))]
 fn ensure_persistent_agent() -> Result<bool, RuntimeError> {
+    let _ = agent_executable()?;
     Ok(false)
 }
 
