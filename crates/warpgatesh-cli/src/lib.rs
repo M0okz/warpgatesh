@@ -69,7 +69,7 @@ pub fn parse(arguments: impl IntoIterator<Item = String>) -> Result<CliCommand, 
 
 pub const HELP: &str = "WarpgateSH — unofficial community client for Warpgate\n\n\
 Usage:\n  warpgatesh <target> [-- <ssh arguments>]\n  warpgatesh <command> [arguments]\n\n\
-Commands:\n  profile add <name> <url>  Add or replace a Warpgate profile\n  profile list              List configured profiles\n  profile default <name>    Select the profile providing short aliases\n  login <profile>           Replace a personal API token\n  ls                        List synchronized SSH targets\n  sync                      Request an immediate synchronization\n  status                    Show profile and snapshot status\n  doctor                    Diagnose the local installation\n  help                      Show this help\n";
+Commands:\n  profile add <name> <url>  Add or replace a Warpgate profile\n  profile list              List configured profiles\n  profile default <name>    Select the profile providing short aliases\n  login <profile>           Replace a personal API token\n  ls                        List synchronized SSH targets\n  sync                      Request an immediate synchronization\n  status                    Show profile and snapshot status\n  agent install             Install and start the background agent\n  agent status              Show whether the background agent is running\n  doctor                    Diagnose the local installation\n  help                      Show this help\n";
 
 #[must_use]
 pub fn openssh_arguments(alias: &str, ssh_arguments: &[String]) -> Vec<String> {

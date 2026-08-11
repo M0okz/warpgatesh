@@ -8,7 +8,10 @@ use warpgatesh_core::aliases::is_valid_profile_name;
 use warpgatesh_core::profiles::Profile;
 use warpgatesh_runtime::RuntimeError;
 use warpgatesh_runtime::api::ApiClient;
+use warpgatesh_runtime::ipc;
 use warpgatesh_runtime::keychain::{SystemKeychain, TokenStore};
+#[cfg(target_os = "macos")]
+use warpgatesh_runtime::launchd;
 use warpgatesh_runtime::ssh::{
     install_managed_include, open_token_page, save_host_keys, scan_host_keys,
 };
@@ -64,13 +67,11 @@ fn run_management(name: &str, arguments: &[String]) -> Result<(), RuntimeError> 
         "ls" => list_targets(arguments),
         "sync" => {
             require_no_arguments("sync", arguments)?;
-            run_agent_once()
+            request_synchronization()
         }
         "status" => status(arguments),
         "doctor" => doctor(arguments),
-        "agent" => Err(RuntimeError::InvalidInput(
-            "agent management will be added with the persistent LaunchAgent".to_owned(),
-        )),
+        "agent" => run_agent(arguments),
         _ => Err(RuntimeError::InvalidInput(format!(
             "unknown management command '{name}'"
         ))),
@@ -145,7 +146,8 @@ fn add_profile(name: &str, url: &str) -> Result<(), RuntimeError> {
             ""
         }
     );
-    run_agent_once()
+    ensure_persistent_agent()?;
+    request_synchronization()
 }
 
 fn login(arguments: &[String]) -> Result<(), RuntimeError> {
@@ -179,7 +181,8 @@ fn login(arguments: &[String]) -> Result<(), RuntimeError> {
     SystemKeychain.set(name, &token)?;
     store.save_profiles(&catalog)?;
     println!("Token for profile '{name}' updated.");
-    run_agent_once()
+    ensure_persistent_agent()?;
+    request_synchronization()
 }
 
 fn list_profiles() -> Result<(), RuntimeError> {
@@ -213,7 +216,7 @@ fn set_default_profile(name: &str) -> Result<(), RuntimeError> {
     catalog.default_profile = Some(name.to_owned());
     store.save_profiles(&catalog)?;
     println!("Default profile set to '{name}'.");
-    run_agent_once()
+    request_synchronization()
 }
 
 fn list_targets(arguments: &[String]) -> Result<(), RuntimeError> {
@@ -249,6 +252,14 @@ fn status(arguments: &[String]) -> Result<(), RuntimeError> {
         }
         None => println!("Last successful sync: never"),
     }
+    println!(
+        "Background agent: {}",
+        if agent_is_running(&store) {
+            "running"
+        } else {
+            "not running"
+        }
+    );
     Ok(())
 }
 
@@ -269,20 +280,122 @@ fn doctor(arguments: &[String]) -> Result<(), RuntimeError> {
         "Configured profiles: {}",
         store.load_profiles()?.profiles.len()
     );
+    println!(
+        "Background agent: {}",
+        if agent_is_running(&store) {
+            "ok"
+        } else {
+            "not running"
+        }
+    );
     Ok(())
 }
 
-fn run_agent_once() -> Result<(), RuntimeError> {
+fn run_agent(arguments: &[String]) -> Result<(), RuntimeError> {
+    match arguments {
+        [command] if command == "install" => {
+            let installed = ensure_persistent_agent()?;
+            println!(
+                "Background agent {}.",
+                if installed {
+                    "installed and started"
+                } else {
+                    "is already installed"
+                }
+            );
+            Ok(())
+        }
+        [command] if command == "status" => {
+            let store = LocalStore::for_current_user()?;
+            if agent_is_running(&store) {
+                println!("Background agent is running.");
+                Ok(())
+            } else {
+                Err(RuntimeError::Command(
+                    "background agent is not running; use 'warpgatesh agent install'".to_owned(),
+                ))
+            }
+        }
+        _ => Err(RuntimeError::InvalidInput(
+            "usage: warpgatesh agent install | agent status".to_owned(),
+        )),
+    }
+}
+
+fn request_synchronization() -> Result<(), RuntimeError> {
+    #[cfg(target_os = "macos")]
+    {
+        use std::io::ErrorKind;
+        use std::thread;
+        use std::time::Duration;
+
+        let store = LocalStore::for_current_user()?;
+        ensure_persistent_agent()?;
+        for attempt in 0..20 {
+            match ipc::request(&store.paths().agent_socket, "sync") {
+                Ok(message) => {
+                    println!("{message}");
+                    return Ok(());
+                }
+                Err(RuntimeError::Io(error))
+                    if matches!(
+                        error.kind(),
+                        ErrorKind::NotFound | ErrorKind::ConnectionRefused
+                    ) && attempt < 19 =>
+                {
+                    thread::sleep(Duration::from_millis(100));
+                }
+                Err(error) => return Err(error),
+            }
+        }
+        unreachable!("the synchronization retry loop always returns")
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    run_agent_once()
+}
+
+#[cfg(target_os = "macos")]
+fn ensure_persistent_agent() -> Result<bool, RuntimeError> {
+    let store = LocalStore::for_current_user()?;
+    let executable = agent_executable()?;
+    launchd::ensure_installed(store.paths(), &executable)
+}
+
+#[cfg(not(target_os = "macos"))]
+fn ensure_persistent_agent() -> Result<bool, RuntimeError> {
+    Ok(false)
+}
+
+fn agent_is_running(store: &LocalStore) -> bool {
+    ipc::request(&store.paths().agent_socket, "status").is_ok()
+}
+
+fn agent_executable() -> Result<std::path::PathBuf, RuntimeError> {
     let current = std::env::current_exe()?;
     let sibling = current
         .parent()
         .unwrap_or_else(|| Path::new("."))
         .join("warpgatesh-agent");
-    let executable = if sibling.is_file() {
-        sibling
-    } else {
-        "warpgatesh-agent".into()
-    };
+    if sibling.is_file() {
+        return Ok(sibling);
+    }
+
+    let path = std::env::var_os("PATH").unwrap_or_default();
+    for directory in std::env::split_paths(&path) {
+        let candidate = directory.join("warpgatesh-agent");
+        if candidate.is_file() {
+            return Ok(candidate);
+        }
+    }
+    Err(RuntimeError::Command(
+        "warpgatesh-agent is not installed next to the CLI or in PATH".to_owned(),
+    ))
+}
+
+#[cfg(not(target_os = "macos"))]
+fn run_agent_once() -> Result<(), RuntimeError> {
+    let executable = agent_executable()?;
     let status = Command::new(&executable)
         .arg("--once")
         .status()

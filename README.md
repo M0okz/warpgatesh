@@ -33,7 +33,7 @@ Warpgate et maintient l’accès local à jour.
 ## Expérience souhaitée
 
 ```sh
-warpgatesh login
+warpgatesh login homeblack
 warpgatesh ls
 warpgatesh sync
 warpgatesh dmz-nextcloud-01
@@ -188,12 +188,15 @@ partager dans une issue GitHub.
 Le workspace Rust contient le cœur de domaine, le client de l’API utilisateur
 Warpgate, la CLI `warpgatesh` et l’agent utilisateur. Le flux de développement
 actuel permet d’ajouter un profil, d’enregistrer le jeton dans le Trousseau,
-d’épingler les clés SSH présentées, de synchroniser les cibles accessibles et
-de produire la Configuration SSH gérée.
+d’épingler les clés SSH présentées, d’installer automatiquement un
+`LaunchAgent`, de synchroniser les cibles accessibles en arrière-plan et de
+produire la Configuration SSH gérée. La CLI dialogue avec l’agent par un socket
+Unix privé pour forcer une synchronisation sans lancer un second écrivain.
 
 ```sh
 cargo build --workspace
 ./target/debug/warpgatesh profile add homeblack https://warpgate.example
+./target/debug/warpgatesh agent status
 ./target/debug/warpgatesh ls
 ./target/debug/warpgatesh status
 ```
@@ -207,5 +210,6 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo run --bin warpgatesh -- --help
 ```
 
-Le processus permanent `LaunchAgent`, l’IPC local, la confirmation TLS pour les
-certificats auto-signés et le compagnon Tauri restent à implémenter avant le MVP.
+La confirmation TLS pour les certificats auto-signés, la migration des mutations
+de profils vers l’agent unique et le compagnon Tauri restent à implémenter avant
+le MVP complet.
