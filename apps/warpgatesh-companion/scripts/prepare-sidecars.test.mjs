@@ -27,6 +27,11 @@ test("prepares one sidecar per architecture for a universal macOS build", () => 
         sourceTargets: ["x86_64-apple-darwin"],
       },
       {
+        binary: "warpgatesh",
+        destinationTarget: "universal-apple-darwin",
+        sourceTargets: ["aarch64-apple-darwin", "x86_64-apple-darwin"],
+      },
+      {
         binary: "warpgatesh-agent",
         destinationTarget: "aarch64-apple-darwin",
         sourceTargets: ["aarch64-apple-darwin"],
@@ -35,6 +40,11 @@ test("prepares one sidecar per architecture for a universal macOS build", () => 
         binary: "warpgatesh-agent",
         destinationTarget: "x86_64-apple-darwin",
         sourceTargets: ["x86_64-apple-darwin"],
+      },
+      {
+        binary: "warpgatesh-agent",
+        destinationTarget: "universal-apple-darwin",
+        sourceTargets: ["aarch64-apple-darwin", "x86_64-apple-darwin"],
       },
     ],
   );

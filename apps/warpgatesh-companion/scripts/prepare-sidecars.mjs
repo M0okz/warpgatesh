@@ -55,7 +55,11 @@ for (const { binary, destinationTarget, sourceTargets } of sidecarPlan) {
       `${binary}${extension}`,
     ),
   );
-  copyFileSync(sources[0], destination);
+  if (sources.length === 1) {
+    copyFileSync(sources[0], destination);
+  } else {
+    run("lipo", ["-create", ...sources, "-output", destination]);
+  }
   if (process.platform !== "win32") {
     chmodSync(destination, 0o755);
   }
