@@ -46,10 +46,8 @@ pub fn run() {
             let mut tray = TrayIconBuilder::new()
                 .menu(&menu)
                 .tooltip("WarpgateSH")
-                .show_menu_on_left_click(false);
-            if let Some(icon) = app.default_window_icon().cloned() {
-                tray = tray.icon(icon);
-            }
+                .show_menu_on_left_click(false)
+                .icon(tauri::include_image!("icons/tray-icon.png"));
             #[cfg(target_os = "macos")]
             {
                 tray = tray.icon_as_template(true);

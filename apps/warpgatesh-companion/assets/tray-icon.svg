@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44">
+  <!--
+    Compact macOS template image. Black pixels define the mask and the
+    transparent background lets macOS adapt the glyph to either menu-bar theme.
+  -->
+  <path
+    d="M6 39V20C6 10.8 12.8 4 22 4S38 10.8 38 20V39H32V20C32 14.1 27.9 10 22 10S12 14.1 12 20V39H6Z"
+    fill="#000"
+  />
+  <path
+    d="M16 16L24 22.5L16 29"
+    fill="none"
+    stroke="#000"
+    stroke-width="4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path d="M25 29H29" fill="none" stroke="#000" stroke-width="4" stroke-linecap="round"/>
+</svg>

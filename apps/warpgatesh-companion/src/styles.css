@@ -2,24 +2,24 @@
   font-family:
     Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
   color: var(--ink);
-  background: #efede8;
+  background: #14141a;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  color-scheme: light dark;
-  --canvas: #efede8;
-  --surface: #f9f8f5;
-  --surface-raised: #ffffff;
-  --ink: #2a2926;
-  --muted: #77736b;
-  --faint: #a29d93;
-  --line: #dedbd4;
-  --line-strong: #cac5ba;
-  --accent: #287451;
-  --accent-strong: #175f40;
-  --accent-soft: #dcece2;
-  --danger: #a44336;
-  --danger-soft: #f6e4df;
-  --shadow: 0 14px 36px rgb(44 39 30 / 8%);
+  color-scheme: dark;
+  --canvas: #14141a;
+  --surface: #181820;
+  --surface-raised: #1c1c24;
+  --ink: #c1c9e4;
+  --muted: #929bb5;
+  --faint: #68718a;
+  --line: #2f303b;
+  --line-strong: #454857;
+  --accent: #449fbe;
+  --accent-strong: #5aabc7;
+  --accent-soft: #192528;
+  --danger: #d35d47;
+  --danger-soft: #2e1d20;
+  --shadow: 0 18px 42px rgb(0 0 0 / 24%);
 }
 
 * {
@@ -37,7 +37,7 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    radial-gradient(circle at 100% 0%, rgb(40 116 81 / 8%), transparent 36%),
+    radial-gradient(circle at 100% 0%, rgb(68 159 190 / 12%), transparent 36%),
     var(--canvas);
 }
 
@@ -53,12 +53,12 @@ button {
 
 button:focus-visible,
 input:focus-visible {
-  outline: 3px solid rgb(40 116 81 / 28%);
+  outline: 3px solid rgb(68 159 190 / 32%);
   outline-offset: 2px;
 }
 
 select:focus-visible {
-  outline: 3px solid rgb(40 116 81 / 28%);
+  outline: 3px solid rgb(68 159 190 / 32%);
   outline-offset: 2px;
 }
 
@@ -132,7 +132,7 @@ h2 {
   border: 1px solid var(--line);
   border-radius: 999px;
   color: var(--muted);
-  background: rgb(255 255 255 / 52%);
+  background: rgb(28 28 36 / 76%);
   font-size: 0.75rem;
   font-weight: 620;
 }
@@ -147,13 +147,13 @@ h2 {
 
 .status-pill--live {
   color: var(--accent-strong);
-  border-color: rgb(40 116 81 / 22%);
+  border-color: rgb(68 159 190 / 30%);
   background: var(--accent-soft);
 }
 
 .status-pill--live .status-dot {
   background: var(--accent);
-  box-shadow: 0 0 0 4px rgb(40 116 81 / 10%);
+  box-shadow: 0 0 0 4px rgb(68 159 190 / 12%);
 }
 
 .status-pill--offline .status-dot {
@@ -172,7 +172,7 @@ main {
   margin-bottom: 16px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: rgb(255 255 255 / 36%);
+  background: rgb(28 28 36 / 60%);
 }
 
 .view-tabs button {
@@ -193,14 +193,14 @@ main {
 .view-tabs button.is-active {
   color: var(--ink);
   background: var(--surface-raised);
-  box-shadow: 0 2px 8px rgb(44 39 30 / 8%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
 }
 
 .connection-panel,
 .targets-panel {
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: rgb(249 248 245 / 88%);
+  background: rgb(24 24 32 / 90%);
   box-shadow: var(--shadow);
   backdrop-filter: blur(18px);
 }
@@ -237,13 +237,13 @@ main {
 
 .route-node--live {
   color: var(--accent-strong);
-  border-color: rgb(40 116 81 / 32%);
+  border-color: rgb(68 159 190 / 38%);
   background: var(--accent-soft);
 }
 
 .route-node--offline {
   color: var(--danger);
-  border-color: rgb(164 67 54 / 24%);
+  border-color: rgb(211 93 71 / 30%);
   background: var(--danger-soft);
 }
 
@@ -301,9 +301,9 @@ main {
   margin-top: 22px;
   border: 0;
   border-radius: 11px;
-  color: #f8fbf9;
-  background: var(--accent-strong);
-  box-shadow: 0 7px 18px rgb(23 95 64 / 18%);
+  color: #14141a;
+  background: var(--accent);
+  box-shadow: 0 7px 18px rgb(68 159 190 / 18%);
   cursor: pointer;
   font-size: 0.84rem;
   font-weight: 650;
@@ -311,8 +311,8 @@ main {
 }
 
 .sync-button:hover:not(:disabled) {
-  background: #104e34;
-  box-shadow: 0 9px 22px rgb(23 95 64 / 24%);
+  background: var(--accent-strong);
+  box-shadow: 0 9px 22px rgb(68 159 190 / 24%);
   transform: translateY(-1px);
 }
 
@@ -338,7 +338,7 @@ main {
 .error-banner {
   margin-top: 14px;
   padding: 13px 15px;
-  border: 1px solid rgb(164 67 54 / 24%);
+  border: 1px solid rgb(211 93 71 / 30%);
   border-radius: 12px;
   color: var(--danger);
   background: var(--danger-soft);
@@ -348,7 +348,7 @@ main {
 .notice-banner {
   margin-bottom: 14px;
   padding: 11px 14px;
-  border: 1px solid rgb(40 116 81 / 22%);
+  border: 1px solid rgb(68 159 190 / 30%);
   border-radius: 11px;
   color: var(--accent-strong);
   background: var(--accent-soft);
@@ -389,7 +389,7 @@ main {
 }
 
 .health-alert--error {
-  border-color: rgb(164 67 54 / 24%);
+  border-color: rgb(211 93 71 / 30%);
   background: var(--danger-soft);
 }
 
@@ -446,8 +446,8 @@ main {
 }
 
 .search-field:focus-within {
-  border-color: rgb(40 116 81 / 44%);
-  box-shadow: 0 0 0 3px rgb(40 116 81 / 10%);
+  border-color: rgb(68 159 190 / 52%);
+  box-shadow: 0 0 0 3px rgb(68 159 190 / 12%);
 }
 
 .search-field input {
@@ -518,7 +518,7 @@ main {
 }
 
 .target-main:hover {
-  background: rgb(40 116 81 / 6%);
+  background: rgb(68 159 190 / 8%);
 }
 
 .target-name,
@@ -547,7 +547,7 @@ main {
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgb(40 116 81 / 18%);
+  border: 1px solid rgb(68 159 190 / 26%);
   border-radius: 8px;
   color: var(--accent-strong);
   background: var(--accent-soft);
@@ -591,7 +591,7 @@ main {
   padding: 22px;
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: rgb(249 248 245 / 88%);
+  background: rgb(24 24 32 / 90%);
   box-shadow: var(--shadow);
   backdrop-filter: blur(18px);
 }
@@ -623,8 +623,8 @@ main {
 
 .button-primary {
   border: 0;
-  color: #f8fbf9;
-  background: var(--accent-strong);
+  color: #14141a;
+  background: var(--accent);
 }
 
 .button-primary:disabled,
@@ -732,7 +732,7 @@ main {
   gap: 13px;
   padding: 16px;
   margin-bottom: 16px;
-  border: 1px solid rgb(40 116 81 / 22%);
+  border: 1px solid rgb(68 159 190 / 30%);
   border-radius: 13px;
   background: var(--accent-soft);
 }
@@ -782,7 +782,7 @@ main {
 
 .fingerprint-box {
   padding: 13px;
-  border: 1px solid rgb(40 116 81 / 28%);
+  border: 1px solid rgb(68 159 190 / 36%);
   border-radius: 10px;
   background: var(--surface-raised);
   font-size: 0.7rem;
@@ -927,9 +927,9 @@ main {
   gap: 20px;
   padding: 22px;
   margin-top: 18px;
-  border: 1px solid rgb(164 67 54 / 24%);
+  border: 1px solid rgb(211 93 71 / 30%);
   border-radius: 16px;
-  background: rgb(246 228 223 / 42%);
+  background: rgb(46 29 32 / 64%);
 }
 
 .danger-zone h2 {
@@ -955,7 +955,7 @@ main {
 }
 
 .button-danger-outline {
-  border: 1px solid rgb(164 67 54 / 34%);
+  border: 1px solid rgb(211 93 71 / 42%);
   color: var(--danger);
   background: transparent;
 }
@@ -977,7 +977,7 @@ main {
   grid-column: 1 / -1;
   gap: 15px;
   padding-top: 17px;
-  border-top: 1px solid rgb(164 67 54 / 20%);
+  border-top: 1px solid rgb(211 93 71 / 26%);
 }
 
 .destructive-option {
@@ -1105,59 +1105,6 @@ main {
 
   .terminal-control {
     justify-items: start;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --canvas: #1d1e1c;
-    --surface: #262725;
-    --surface-raised: #2b2c29;
-    --ink: #eeeae2;
-    --muted: #aaa69d;
-    --faint: #7e7b75;
-    --line: #3a3b37;
-    --line-strong: #4a4b46;
-    --accent: #68b98b;
-    --accent-strong: #8bd3a7;
-    --accent-soft: #243d30;
-    --danger: #e28b7d;
-    --danger-soft: #452d29;
-    --shadow: 0 18px 42px rgb(0 0 0 / 20%);
-  }
-
-  body {
-    background:
-      radial-gradient(circle at 100% 0%, rgb(104 185 139 / 8%), transparent 36%),
-      var(--canvas);
-  }
-
-  .status-pill {
-    background: rgb(43 44 41 / 76%);
-  }
-
-  .connection-panel,
-  .targets-panel,
-  .page-panel {
-    background: rgb(38 39 37 / 90%);
-  }
-
-  .sync-button {
-    color: #143321;
-    background: var(--accent-strong);
-  }
-
-  .sync-button:hover:not(:disabled) {
-    background: #a2dfb8;
-  }
-
-  .view-tabs {
-    background: rgb(43 44 41 / 60%);
-  }
-
-  .button-primary {
-    color: #143321;
-    background: var(--accent-strong);
   }
 }
 

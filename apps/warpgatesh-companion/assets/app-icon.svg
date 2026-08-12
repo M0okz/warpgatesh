@@ -1,16 +1,33 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <defs>
-    <linearGradient id="surface" x1="170" y1="110" x2="850" y2="920" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#2D825B"/>
-      <stop offset="1" stop-color="#174D36"/>
+    <linearGradient id="surface" x1="180" y1="100" x2="850" y2="930" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1C1C24"/>
+      <stop offset="1" stop-color="#14141A"/>
+    </linearGradient>
+    <linearGradient id="gateway" x1="300" y1="180" x2="700" y2="800" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C1C9E4"/>
+      <stop offset="1" stop-color="#BFCCE7"/>
     </linearGradient>
   </defs>
+
   <rect width="1024" height="1024" rx="224" fill="url(#surface)"/>
-  <path d="M210 512h604" stroke="#BFE6CF" stroke-width="42" stroke-linecap="round" stroke-dasharray="4 76"/>
-  <circle cx="220" cy="512" r="72" fill="#F4F1E9"/>
-  <circle cx="512" cy="512" r="108" fill="#DCECE2"/>
-  <circle cx="804" cy="512" r="72" fill="#F4F1E9"/>
-  <path d="M445 467l42 105 25-66 25 66 42-105" fill="none" stroke="#174D36" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="220" cy="512" r="23" fill="#287451"/>
-  <circle cx="804" cy="512" r="23" fill="#287451"/>
+
+  <!-- The open arch is the Warpgate; the prompt makes the SSH purpose explicit. -->
+  <path
+    d="M250 754V430C250 265 365 158 512 158C659 158 774 265 774 430V754"
+    fill="none"
+    stroke="url(#gateway)"
+    stroke-width="82"
+    stroke-linecap="round"
+  />
+
+  <path
+    d="M408 420L535 526L408 632"
+    fill="none"
+    stroke="#449FBE"
+    stroke-width="66"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path d="M570 632H686" fill="none" stroke="#BFCCE7" stroke-width="66" stroke-linecap="round"/>
 </svg>
