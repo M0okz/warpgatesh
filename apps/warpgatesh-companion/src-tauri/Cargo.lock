@@ -4242,7 +4242,7 @@ dependencies = [
 
 [[package]]
 name = "warpgatesh-companion"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "serde",
  "tauri",
@@ -4256,14 +4256,14 @@ dependencies = [
 
 [[package]]
 name = "warpgatesh-core"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "warpgatesh-runtime"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "glob",
  "reqwest",
