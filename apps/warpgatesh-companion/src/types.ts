@@ -31,6 +31,7 @@ export type CompanionAlert = {
 
 export type CompanionState = {
   agentRunning: boolean;
+  agentSynchronizing: boolean;
   profiles: CompanionProfile[];
   targets: CompanionTarget[];
   lastSyncAgeSeconds: number | null;

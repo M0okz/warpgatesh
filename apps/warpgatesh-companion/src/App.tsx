@@ -33,11 +33,19 @@ function formatAge(seconds: number | null): string {
   return `Il y a ${hours} h`;
 }
 
-function RouteLine({ running }: { running: boolean }) {
+function RouteLine({ running, synchronizing }: { running: boolean; synchronizing: boolean }) {
+  const label = !running
+    ? "Agent hors ligne"
+    : synchronizing
+      ? "Synchronisation de Mac vers Warpgate en cours"
+      : "Agent connecté";
   return (
-    <div className="route-line" aria-label={running ? "Agent connecté" : "Agent hors ligne"}>
+    <div className="route-line" aria-label={label}>
       <span className="route-node route-node--local">Mac</span>
-      <span className="route-track" aria-hidden="true" />
+      <span
+        className={synchronizing ? "route-track route-track--syncing" : "route-track"}
+        aria-hidden="true"
+      />
       <span className={`route-node ${running ? "route-node--live" : "route-node--offline"}`}>
         Warpgate
       </span>
@@ -76,6 +84,7 @@ function AccessView({
 }) {
   const searchInput = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
+  const synchronizing = busy || state.agentSynchronizing;
 
   useEffect(() => {
     function focusSearch(event: KeyboardEvent) {
@@ -101,7 +110,7 @@ function AccessView({
   return (
     <>
       <section className="connection-panel" aria-label="État de la connexion">
-        <RouteLine running={state.agentRunning} />
+        <RouteLine running={state.agentRunning} synchronizing={synchronizing} />
         <div className="metrics-row">
           <div>
             <span className="metric-value">{state.targets.length}</span>
@@ -118,11 +127,11 @@ function AccessView({
             <span className="metric-label">dernière synchro</span>
           </div>
         </div>
-        <button className="sync-button" type="button" disabled={busy || !state.agentRunning} onClick={onSync}>
-          <span className={busy ? "sync-glyph sync-glyph--busy" : "sync-glyph"} aria-hidden="true">
+        <button className="sync-button" type="button" disabled={synchronizing || !state.agentRunning} onClick={onSync}>
+          <span className={synchronizing ? "sync-glyph sync-glyph--busy" : "sync-glyph"} aria-hidden="true">
             ↻
           </span>
-          {busy ? "Synchronisation…" : "Synchroniser maintenant"}
+          {synchronizing ? "Synchronisation…" : "Synchroniser maintenant"}
         </button>
       </section>
 
@@ -442,11 +451,39 @@ function PreferencesView({
 
 export default function App() {
   const refreshing = useRef(false);
+  const noticeTimeout = useRef<number | null>(null);
   const [view, setView] = useState<View>("access");
   const [state, setState] = useState<CompanionState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  const dismissNotice = useCallback(() => {
+    if (noticeTimeout.current !== null) {
+      window.clearTimeout(noticeTimeout.current);
+      noticeTimeout.current = null;
+    }
+    setNotice(null);
+  }, []);
+
+  const showNotice = useCallback((message: string) => {
+    if (noticeTimeout.current !== null) {
+      window.clearTimeout(noticeTimeout.current);
+    }
+    setNotice(message);
+    noticeTimeout.current = window.setTimeout(() => {
+      noticeTimeout.current = null;
+      setNotice(null);
+    }, 4_000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (noticeTimeout.current !== null) {
+        window.clearTimeout(noticeTimeout.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let disposed = false;
@@ -479,26 +516,31 @@ export default function App() {
 
   useEffect(() => {
     void refresh();
+    const refreshInterval = state?.agentSynchronizing ? 1_000 : 5_000;
     const interval = window.setInterval(() => {
       if (document.visibilityState === "visible") void refresh();
-    }, 5_000);
+    }, refreshInterval);
     function onVisibilityChange() {
-      if (document.visibilityState === "visible") void refresh();
+      if (document.visibilityState === "visible") {
+        void refresh();
+      } else {
+        dismissNotice();
+      }
     }
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [refresh]);
+  }, [dismissNotice, refresh, state?.agentSynchronizing]);
 
   async function runAction(action: () => Promise<void>, success: string): Promise<boolean> {
     setBusy(true);
     setError(null);
-    setNotice(null);
+    dismissNotice();
     try {
       await action();
-      setNotice(success);
+      showNotice(success);
       return true;
     } catch (reason) {
       setError(String(reason));
@@ -537,7 +579,7 @@ export default function App() {
   async function handleUninstall(deleteUserData: boolean, confirmation: string) {
     setBusy(true);
     setError(null);
-    setNotice(null);
+    dismissNotice();
     try {
       await uninstallWarpgateSH({ deleteUserData, confirmation });
     } catch (reason) {

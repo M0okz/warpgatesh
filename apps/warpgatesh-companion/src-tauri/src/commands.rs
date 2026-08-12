@@ -18,6 +18,7 @@ use crate::installation;
 #[serde(rename_all = "camelCase")]
 pub struct CompanionState {
     agent_running: bool,
+    agent_synchronizing: bool,
     profiles: Vec<CompanionProfile>,
     targets: Vec<CompanionTarget>,
     last_sync_age_seconds: Option<u64>,
@@ -356,16 +357,28 @@ fn load_state(
             (targets, Some(age))
         },
     );
-    let agent_running = ipc::request_with_read_timeout(
+    let agent_runtime = ipc::request_with_read_timeout(
         &store.paths().agent_socket,
         "status",
         Duration::from_secs(1),
     )
-    .is_ok();
-    let alerts = build_alerts(store, agent_running, last_sync_age_seconds, &preferences)?;
+    .map_or(
+        AgentRuntimeState {
+            running: false,
+            synchronizing: false,
+        },
+        |response| parse_agent_runtime_state(&response),
+    );
+    let alerts = build_alerts(
+        store,
+        agent_runtime.running,
+        last_sync_age_seconds,
+        &preferences,
+    )?;
 
     Ok(CompanionState {
-        agent_running,
+        agent_running: agent_runtime.running,
+        agent_synchronizing: agent_runtime.synchronizing,
         profiles,
         targets,
         last_sync_age_seconds,
@@ -377,6 +390,21 @@ fn load_state(
         terminal_integration,
         alerts,
     })
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct AgentRuntimeState {
+    running: bool,
+    synchronizing: bool,
+}
+
+fn parse_agent_runtime_state(response: &str) -> AgentRuntimeState {
+    AgentRuntimeState {
+        running: response.split_whitespace().any(|field| field == "running"),
+        synchronizing: response
+            .split_whitespace()
+            .any(|field| field == "state=synchronizing"),
+    }
 }
 
 fn load_terminal_integration() -> Result<TerminalIntegration, String> {
@@ -543,7 +571,26 @@ mod tests {
         assert_eq!(state.targets.len(), 1);
         assert_eq!(state.targets[0].alias, "dmz-nextcloud-01.homeblack");
         assert!(!state.agent_running);
+        assert!(!state.agent_synchronizing);
         assert_eq!(state.alerts[0].id, "agent-down");
         assert_eq!(state.terminal_integration.status, "missing");
+    }
+
+    #[test]
+    fn parses_the_live_agent_synchronization_state() {
+        assert_eq!(
+            parse_agent_runtime_state("running state=synchronizing next_sync_seconds=0"),
+            AgentRuntimeState {
+                running: true,
+                synchronizing: true,
+            }
+        );
+        assert_eq!(
+            parse_agent_runtime_state("running state=idle next_sync_seconds=42"),
+            AgentRuntimeState {
+                running: true,
+                synchronizing: false,
+            }
+        );
     }
 }

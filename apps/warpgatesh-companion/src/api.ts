@@ -10,6 +10,7 @@ import type {
 
 const demoState: CompanionState = {
   agentRunning: true,
+  agentSynchronizing: false,
   profiles: [
     {
       name: "homeblack",

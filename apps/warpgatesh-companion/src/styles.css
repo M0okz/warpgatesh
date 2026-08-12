@@ -250,8 +250,25 @@ main {
 }
 
 .route-track {
+  position: relative;
+  overflow: hidden;
   height: 1px;
   background: var(--accent);
+}
+
+.route-track--syncing {
+  height: 2px;
+  background: rgb(68 159 190 / 28%);
+}
+
+.route-track--syncing::after {
+  position: absolute;
+  inset: 0 auto 0 -32%;
+  width: 32%;
+  background: linear-gradient(90deg, transparent, var(--accent-strong), var(--ink), transparent);
+  box-shadow: 0 0 8px rgb(85 188 221 / 50%);
+  content: "";
+  animation: route-sync-flow 900ms linear infinite;
 }
 
 .route-track--quiet {
@@ -260,19 +277,21 @@ main {
 
 .metrics-row {
   display: grid;
-  grid-template-columns: minmax(58px, 0.55fr) minmax(58px, 0.55fr) minmax(130px, 1.5fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
   padding-top: 20px;
   border-top: 1px solid var(--line);
 }
 
 .metrics-row > div {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: 1.75rem auto;
+  align-items: end;
   min-width: 0;
 }
 
 .metric-value {
+  align-self: end;
   color: var(--ink);
   font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
   font-size: 1.35rem;
@@ -1073,6 +1092,12 @@ main {
   }
 }
 
+@keyframes route-sync-flow {
+  to {
+    transform: translateX(412%);
+  }
+}
+
 @media (max-width: 460px) {
   .app-shell {
     padding: 26px 14px 18px;
@@ -1111,6 +1136,14 @@ main {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .route-track--syncing {
+    background: var(--accent-strong);
+  }
+
+  .route-track--syncing::after {
+    display: none;
+  }
+
   *,
   *::before,
   *::after {
