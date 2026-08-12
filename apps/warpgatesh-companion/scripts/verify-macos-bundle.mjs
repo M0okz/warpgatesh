@@ -20,6 +20,8 @@ const bundle =
     "WarpgateSH.app",
   );
 const executables = join(bundle, "Contents", "MacOS");
+const resources = join(bundle, "Contents", "Resources");
+const infoPlist = join(bundle, "Contents", "Info.plist");
 const companion = join(executables, "warpgatesh-companion");
 const cli = join(executables, "warpgatesh");
 const agent = join(executables, "warpgatesh-agent");
@@ -27,6 +29,16 @@ const agent = join(executables, "warpgatesh-agent");
 for (const executable of [companion, cli, agent]) {
   accessSync(executable, constants.R_OK | constants.X_OK);
 }
+
+const iconFile = capture("/usr/libexec/PlistBuddy", [
+  "-c",
+  "Print :CFBundleIconFile",
+  infoPlist,
+]);
+if (iconFile !== "icon.icns") {
+  throw new Error(`Unexpected bundled application icon: ${iconFile}`);
+}
+accessSync(join(resources, iconFile), constants.R_OK);
 
 if (bundle.includes("universal-apple-darwin")) {
   for (const executable of [companion, cli, agent]) {

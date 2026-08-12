@@ -17,6 +17,7 @@
   --accent: #449fbe;
   --accent-strong: #5aabc7;
   --accent-soft: #192528;
+  --success: #4acb78;
   --danger: #d35d47;
   --danger-soft: #2e1d20;
   --shadow: 0 18px 42px rgb(0 0 0 / 24%);
@@ -152,12 +153,13 @@ h2 {
 }
 
 .status-pill--live .status-dot {
-  background: var(--accent);
-  box-shadow: 0 0 0 4px rgb(68 159 190 / 12%);
+  background: var(--success);
+  box-shadow: 0 0 0 4px rgb(74 203 120 / 13%);
 }
 
 .status-pill--offline .status-dot {
   background: var(--danger);
+  box-shadow: 0 0 0 4px rgb(211 93 71 / 13%);
 }
 
 main {

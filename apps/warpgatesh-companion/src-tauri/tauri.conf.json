@@ -19,7 +19,10 @@
         "minWidth": 420,
         "minHeight": 560,
         "center": true,
-        "resizable": true
+        "resizable": true,
+        "theme": "Dark",
+        "titleBarStyle": "Transparent",
+        "backgroundColor": "#14141A"
       }
     ],
     "security": {
@@ -34,6 +37,7 @@
   "bundle": {
     "active": true,
     "targets": ["app", "dmg"],
+    "icon": ["icons/icon.icns"],
     "externalBin": [
       "binaries/warpgatesh",
       "binaries/warpgatesh-agent"

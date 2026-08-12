@@ -246,7 +246,12 @@ fn handle_local_request(
     }
 
     match request {
-        "status" => "ok running".to_owned(),
+        "status" => format_status_response(
+            sync_worker.is_some(),
+            next_sync
+                .saturating_duration_since(std::time::Instant::now())
+                .as_secs(),
+        ),
         "sync" => {
             if sync_worker.is_none() {
                 *sync_worker = Some(spawn_synchronization(store));
@@ -265,6 +270,15 @@ fn handle_local_request(
         },
         _ => "error unknown agent command".to_owned(),
     }
+}
+
+fn format_status_response(synchronizing: bool, next_sync_seconds: u64) -> String {
+    let state = if synchronizing {
+        "synchronizing"
+    } else {
+        "idle"
+    };
+    format!("ok running state={state} next_sync_seconds={next_sync_seconds}")
 }
 
 #[cfg(unix)]
@@ -356,6 +370,18 @@ mod tests {
         assert_eq!(
             format_report(&report),
             "Synchronized 12 SSH target(s) from 2 profile(s): +3, -1"
+        );
+    }
+
+    #[test]
+    fn reports_the_live_agent_schedule() {
+        assert_eq!(
+            format_status_response(false, 83),
+            "ok running state=idle next_sync_seconds=83"
+        );
+        assert_eq!(
+            format_status_response(true, 0),
+            "ok running state=synchronizing next_sync_seconds=0"
         );
     }
 }

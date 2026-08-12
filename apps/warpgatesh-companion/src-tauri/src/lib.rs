@@ -1,17 +1,9 @@
 mod commands;
 mod installation;
+mod tray_menu;
 
-use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
-use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{Manager, WindowEvent};
+use tauri::WindowEvent;
 use tauri_plugin_autostart::MacosLauncher;
-
-fn show_main_window(app: &tauri::AppHandle) {
-    if let Some(window) = app.get_webview_window("main") {
-        let _ = window.show();
-        let _ = window.set_focus();
-    }
-}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 /// Starts the `WarpgateSH` desktop companion.
@@ -21,6 +13,9 @@ fn show_main_window(app: &tauri::AppHandle) {
 /// Panics when Tauri cannot initialize or its event loop exits with an error.
 pub fn run() {
     let app = tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _arguments, _cwd| {
+            tray_menu::show_main_window(app);
+        }))
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
             None,
@@ -35,44 +30,10 @@ pub fn run() {
                 }
             }
 
-            let show = MenuItem::with_id(app, "show", "Afficher WarpgateSH", true, None::<&str>)?;
-            let sync =
-                MenuItem::with_id(app, "sync", "Synchroniser maintenant", true, None::<&str>)?;
-            let quit = MenuItem::with_id(app, "quit", "Quitter WarpgateSH", true, None::<&str>)?;
-            let menu = Menu::with_items(
-                app,
-                &[&show, &sync, &PredefinedMenuItem::separator(app)?, &quit],
-            )?;
-            let mut tray = TrayIconBuilder::new()
-                .menu(&menu)
-                .tooltip("WarpgateSH")
-                .show_menu_on_left_click(false)
-                .icon(tauri::include_image!("icons/tray-icon.png"));
-            #[cfg(target_os = "macos")]
-            {
-                tray = tray.icon_as_template(true);
-            }
-            tray.build(app)?;
+            tray_menu::install(app)?;
             Ok(())
         })
-        .on_menu_event(|app, event| match event.id().as_ref() {
-            "show" => show_main_window(app),
-            "sync" => commands::synchronize_from_tray(),
-            "quit" => app.exit(0),
-            _ => {}
-        })
-        .on_tray_icon_event(|app, event| {
-            if matches!(
-                event,
-                TrayIconEvent::Click {
-                    button: MouseButton::Left,
-                    button_state: MouseButtonState::Up,
-                    ..
-                }
-            ) {
-                show_main_window(app);
-            }
-        })
+        .on_menu_event(|app, event| tray_menu::handle_menu_event(app, &event))
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
@@ -104,7 +65,7 @@ pub fn run() {
                 ..
             }
         ) {
-            show_main_window(app);
+            tray_menu::show_main_window(app);
         }
     });
 }

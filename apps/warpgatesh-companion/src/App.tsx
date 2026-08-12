@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { listen } from "@tauri-apps/api/event";
 import {
   addProfile,
   getCompanionState,
@@ -446,6 +447,23 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    let disposed = false;
+    let stopListening: (() => void) | undefined;
+    void listen<View>("warpgatesh:navigate", (event) => {
+      if (event.payload === "access" || event.payload === "profiles" || event.payload === "preferences") {
+        setView(event.payload);
+      }
+    }).then((unlisten) => {
+      if (disposed) unlisten();
+      else stopListening = unlisten;
+    });
+    return () => {
+      disposed = true;
+      stopListening?.();
+    };
+  }, []);
 
   const refresh = useCallback(async () => {
     if (refreshing.current) return;
