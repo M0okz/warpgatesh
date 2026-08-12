@@ -78,6 +78,16 @@ jobs:
       - name: Build, sign and notarize universal DMG
         run: npm run bundle:macos:universal
 
+      - name: Notarize and staple disk image
+        run: |
+          dmg="src-tauri/target/universal-apple-darwin/release/bundle/dmg/WarpgateSH_${GITHUB_REF_NAME#v}_universal.dmg"
+          xcrun notarytool submit "${dmg}" \
+            --apple-id "${APPLE_ID}" \
+            --password "${APPLE_PASSWORD}" \
+            --team-id "${APPLE_TEAM_ID}" \
+            --wait
+          xcrun stapler staple "${dmg}"
+
       - name: Verify Apple distribution checks
         run: |
           bundle="src-tauri/target/universal-apple-darwin/release/bundle/macos/WarpgateSH.app"
