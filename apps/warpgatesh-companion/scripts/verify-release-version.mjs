@@ -21,8 +21,15 @@ const workspaceManifest = readFileSync(
   join(workspaceDirectory, "Cargo.toml"),
   "utf8",
 );
+const companionManifest = readFileSync(
+  join(companionDirectory, "src-tauri", "Cargo.toml"),
+  "utf8",
+);
 const cargoVersion = workspaceManifest.match(
   /\[workspace\.package\][\s\S]*?\nversion\s*=\s*"([^"]+)"/,
+)?.[1];
+const companionCargoVersion = companionManifest.match(
+  /\[package\][\s\S]*?\nversion\s*=\s*"([^"]+)"/,
 )?.[1];
 const tagVersion = tag.slice(1);
 
@@ -30,6 +37,7 @@ for (const [source, version] of [
   ["package.json", packageVersion],
   ["tauri.conf.json", tauriVersion],
   ["Cargo.toml", cargoVersion],
+  ["src-tauri/Cargo.toml", companionCargoVersion],
 ]) {
   if (version !== tagVersion) {
     throw new Error(`${source} declares ${version}; release tag declares ${tagVersion}`);

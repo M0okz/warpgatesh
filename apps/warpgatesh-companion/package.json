@@ -1,11 +1,12 @@
 {
   "name": "warpgatesh-companion",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "test:sidecars": "node --test scripts/prepare-sidecars.test.mjs",
     "prepare:sidecars": "node scripts/prepare-sidecars.mjs",
     "build:bundle": "npm run prepare:sidecars && npm run build",
     "bundle:macos": "tauri build --bundles app,dmg && npm run verify:bundle",

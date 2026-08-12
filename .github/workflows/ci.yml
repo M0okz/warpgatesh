@@ -66,6 +66,9 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Test sidecar packaging plan
+        run: npm run test:sidecars
+
       - name: Prepare bundled CLI and agent
         run: npm run prepare:sidecars
 

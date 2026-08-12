@@ -2,6 +2,7 @@ import { chmodSync, copyFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
+import { planSidecars } from "./sidecar-plan.mjs";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const companionDirectory = dirname(scriptDirectory);
@@ -14,10 +15,13 @@ if (!/^[a-zA-Z0-9_.-]+$/.test(targetTriple)) {
 }
 
 const cargo = process.env.CARGO?.trim() || "cargo";
-const buildTargets =
-  targetTriple === "universal-apple-darwin"
-    ? ["aarch64-apple-darwin", "x86_64-apple-darwin"]
-    : [targetTriple];
+const sidecarPlan = planSidecars(targetTriple, [
+  "warpgatesh",
+  "warpgatesh-agent",
+]);
+const buildTargets = [
+  ...new Set(sidecarPlan.flatMap(({ sourceTargets }) => sourceTargets)),
+];
 
 for (const buildTarget of buildTargets) {
   run(cargo, [
@@ -37,12 +41,12 @@ const extension = process.platform === "win32" ? ".exe" : "";
 const outputDirectory = join(companionDirectory, "src-tauri", "binaries");
 mkdirSync(outputDirectory, { recursive: true });
 
-for (const binary of ["warpgatesh", "warpgatesh-agent"]) {
+for (const { binary, destinationTarget, sourceTargets } of sidecarPlan) {
   const destination = join(
     outputDirectory,
-    `${binary}-${targetTriple}${extension}`,
+    `${binary}-${destinationTarget}${extension}`,
   );
-  const sources = buildTargets.map((buildTarget) =>
+  const sources = sourceTargets.map((buildTarget) =>
     join(
       workspaceDirectory,
       "target",
@@ -51,15 +55,11 @@ for (const binary of ["warpgatesh", "warpgatesh-agent"]) {
       `${binary}${extension}`,
     ),
   );
-  if (targetTriple === "universal-apple-darwin") {
-    run("/usr/bin/lipo", ["-create", ...sources, "-output", destination]);
-  } else {
-    copyFileSync(sources[0], destination);
-  }
+  copyFileSync(sources[0], destination);
   if (process.platform !== "win32") {
     chmodSync(destination, 0o755);
   }
-  console.log(`Prepared ${binary} for ${targetTriple}`);
+  console.log(`Prepared ${binary} for ${destinationTarget}`);
 }
 
 function rustHostTriple() {
