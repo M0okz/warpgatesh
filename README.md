@@ -21,7 +21,6 @@ tools.
 
 ![WarpgateSH terminal demo](docs/assets/warpgatesh-demo.gif)
 
-_The instance, target names, and terminal session shown above are demo data._
 
 ## Why WarpgateSH?
 
