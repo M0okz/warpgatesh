@@ -5,6 +5,10 @@ mod tray_menu;
 use tauri::WindowEvent;
 use tauri_plugin_autostart::MacosLauncher;
 
+fn handle_second_instance(app: &tauri::AppHandle, _arguments: Vec<String>, _cwd: String) {
+    tray_menu::show_main_window(app);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 /// Starts the `WarpgateSH` desktop companion.
 ///
@@ -13,9 +17,7 @@ use tauri_plugin_autostart::MacosLauncher;
 /// Panics when Tauri cannot initialize or its event loop exits with an error.
 pub fn run() {
     let app = tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, _arguments, _cwd| {
-            tray_menu::show_main_window(app);
-        }))
+        .plugin(tauri_plugin_single_instance::init(handle_second_instance))
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
             None,

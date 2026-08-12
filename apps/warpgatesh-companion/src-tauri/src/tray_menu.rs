@@ -70,8 +70,7 @@ pub(crate) fn install(app: &mut tauri::App) -> tauri::Result<()> {
     )?;
     let show = MenuItem::with_id(app, "show", "Ouvrir WarpgateSH", true, None::<&str>)?;
     let profiles = MenuItem::with_id(app, "profiles", "Profils…", true, None::<&str>)?;
-    let preferences =
-        MenuItem::with_id(app, "preferences", "Préférences…", true, None::<&str>)?;
+    let prefs = MenuItem::with_id(app, "preferences", "Préférences…", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quitter WarpgateSH", true, None::<&str>)?;
     let menu = Menu::with_items(
         app,
@@ -84,7 +83,7 @@ pub(crate) fn install(app: &mut tauri::App) -> tauri::Result<()> {
             &PredefinedMenuItem::separator(app)?,
             &show,
             &profiles,
-            &preferences,
+            &prefs,
             &PredefinedMenuItem::separator(app)?,
             &quit,
         ],
