@@ -2,6 +2,7 @@
 
 pub mod api;
 pub mod configuration;
+pub mod diagnostics;
 pub mod error;
 pub mod ipc;
 pub mod keychain;

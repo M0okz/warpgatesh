@@ -2,6 +2,8 @@ import { invoke } from "@tauri-apps/api/core";
 import type {
   CompanionPreferences,
   CompanionState,
+  DiagnosticsExport,
+  DiagnosticsPreview,
   ProfileInspection,
   ProfileRequest,
   TerminalIntegration,
@@ -129,4 +131,25 @@ export async function checkForUpdates(): Promise<UpdateStatus> {
 export async function installUpdate(): Promise<void> {
   if (isDemo) return;
   return invoke<void>("install_update");
+}
+
+export async function previewDiagnostics(): Promise<DiagnosticsPreview> {
+  if (isDemo) {
+    return {
+      logDirectory: "~/Library/Logs/WarpgateSH",
+      retentionDays: 7,
+      totalBytes: 2840,
+      totalEvents: 18,
+      files: [
+        { name: "agent-2026-08-13.jsonl", bytes: 2240, events: 14 },
+        { name: "companion-2026-08-13.jsonl", bytes: 600, events: 4 },
+      ],
+    };
+  }
+  return invoke<DiagnosticsPreview>("preview_diagnostics");
+}
+
+export async function exportDiagnostics(): Promise<DiagnosticsExport> {
+  if (isDemo) return { path: "~/Downloads/WarpgateSH-diagnostics-demo.zip" };
+  return invoke<DiagnosticsExport>("export_diagnostics");
 }

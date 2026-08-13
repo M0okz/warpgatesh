@@ -1051,6 +1051,108 @@ main {
   font-size: 0.63rem;
 }
 
+.diagnostics-panel {
+  padding: 20px;
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgb(20 20 27 / 72%);
+}
+
+.diagnostics-panel__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.diagnostics-panel__heading h2 {
+  margin: 3px 0 0;
+}
+
+.diagnostics-panel__heading p:not(.section-kicker),
+.diagnostics-empty,
+.diagnostics-success {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 0.69rem;
+  line-height: 1.5;
+}
+
+.diagnostics-preview {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.diagnostics-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.diagnostics-summary span {
+  display: grid;
+  gap: 2px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--faint);
+  background: var(--surface-raised);
+  font-size: 0.61rem;
+}
+
+.diagnostics-summary strong {
+  color: var(--ink);
+  font-size: 0.78rem;
+}
+
+.diagnostics-path,
+.diagnostics-success code {
+  overflow: hidden;
+  color: var(--accent-strong);
+  font-size: 0.63rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.diagnostics-files {
+  display: grid;
+  gap: 0;
+  padding: 0;
+  margin: 0;
+  border-block: 1px solid var(--line);
+  list-style: none;
+}
+
+.diagnostics-files li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  color: var(--muted);
+  font-size: 0.62rem;
+}
+
+.diagnostics-files li + li {
+  border-top: 1px solid var(--line);
+}
+
+.diagnostics-files code {
+  overflow: hidden;
+  color: var(--ink);
+  text-overflow: ellipsis;
+}
+
+.diagnostics-preview .button-row {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.diagnostics-success {
+  color: var(--accent-strong);
+}
+
 .danger-zone {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1251,9 +1353,14 @@ main {
   }
 
   .update-panel__heading,
+  .diagnostics-panel__heading,
   .update-actions {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .diagnostics-summary {
+    grid-template-columns: 1fr;
   }
 
   .terminal-control {

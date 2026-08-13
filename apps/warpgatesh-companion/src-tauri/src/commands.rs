@@ -8,6 +8,7 @@ use warpgatesh_core::aliases::is_valid_profile_name;
 use warpgatesh_core::profiles::Profile;
 use warpgatesh_runtime::api::ApiClient;
 use warpgatesh_runtime::configuration::ConfigurationMutation;
+use warpgatesh_runtime::diagnostics::{self, DiagnosticLogger, DiagnosticsPreview};
 use warpgatesh_runtime::ipc;
 use warpgatesh_runtime::ssh::{open_token_page, scan_host_keys};
 use warpgatesh_runtime::storage::{AgentErrorKind, LocalStore, Preferences};
@@ -102,6 +103,12 @@ pub struct ProfileInspection {
     fingerprints: String,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DiagnosticsExport {
+    path: String,
+}
+
 #[tauri::command]
 pub async fn get_companion_state(app: AppHandle) -> Result<CompanionState, String> {
     let store = LocalStore::for_current_user().map_err(display_error)?;
@@ -145,7 +152,27 @@ pub async fn uninstall_warpgatesh(app: AppHandle, request: UninstallRequest) -> 
 #[tauri::command]
 pub async fn sync_now() -> Result<String, String> {
     let store = LocalStore::for_current_user().map_err(display_error)?;
+    DiagnosticLogger::new(&store.paths().logs_directory, "companion").info("sync.requested");
     request_sync(&store)
+}
+
+#[tauri::command]
+pub async fn preview_diagnostics() -> Result<DiagnosticsPreview, String> {
+    let store = LocalStore::for_current_user().map_err(display_error)?;
+    diagnostics::preview(&store).map_err(display_error)
+}
+
+#[tauri::command]
+pub async fn export_diagnostics() -> Result<DiagnosticsExport, String> {
+    let store = LocalStore::for_current_user().map_err(display_error)?;
+    let logger = DiagnosticLogger::new(&store.paths().logs_directory, "companion");
+    logger.info("diagnostics.export-requested");
+    let path = diagnostics::export(&store).map_err(display_error)?;
+    let _ = Command::new("/usr/bin/open").arg("-R").arg(&path).spawn();
+    logger.info("diagnostics.exported");
+    Ok(DiagnosticsExport {
+        path: path.display().to_string(),
+    })
 }
 
 #[tauri::command]

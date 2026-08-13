@@ -131,6 +131,7 @@ pub fn delete_user_data(store: &LocalStore) -> Result<(), RuntimeError> {
 
     uninstall_managed_include(store.paths())?;
     remove_directory_if_exists(&store.paths().ssh_directory)?;
+    remove_directory_if_exists(&store.paths().logs_directory)?;
     remove_directory_if_exists(&store.paths().application_support)?;
     Ok(())
 }

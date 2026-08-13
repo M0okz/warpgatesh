@@ -8,12 +8,14 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+chrono.workspace = true
 glob.workspace = true
 reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 url.workspace = true
 warpgatesh-core = { path = "../warpgatesh-core" }
+zip.workspace = true
 
 [target.'cfg(target_os = "macos")'.dependencies]
 security-framework = "3.7.0"

@@ -1,8 +1,11 @@
+use std::collections::BTreeMap;
 use std::process::ExitCode;
 
+use serde_json::json;
 use warpgatesh_core::schedule::SyncSchedule;
 use warpgatesh_runtime::RuntimeError;
 use warpgatesh_runtime::configuration::{ConfigurationMutation, LocalConfiguration};
+use warpgatesh_runtime::diagnostics::DiagnosticLogger;
 use warpgatesh_runtime::ipc::MUTATION_PREFIX;
 use warpgatesh_runtime::keychain::SystemKeychain;
 use warpgatesh_runtime::ssh::verify_host_keys;
@@ -17,6 +20,9 @@ const LOCAL_COMMAND_LIMIT: u64 = 64 * 1024;
 type SyncWorker = std::thread::JoinHandle<Result<SyncReport, RuntimeError>>;
 
 fn main() -> ExitCode {
+    if let Ok(logger) = DiagnosticLogger::for_current_user("agent") {
+        logger.info("process.started");
+    }
     match std::env::args().nth(1).as_deref() {
         Some("--help" | "-h") => {
             println!("Usage: warpgatesh-agent [--once]");
@@ -39,10 +45,19 @@ fn main() -> ExitCode {
         None => match run_forever() {
             Ok(()) => ExitCode::SUCCESS,
             Err(error) => {
+                record_current_error("process.failed", &error);
                 eprintln!("warpgatesh-agent: {error}");
                 ExitCode::FAILURE
             }
         },
+    }
+}
+
+fn record_current_error(event: &str, error: &RuntimeError) {
+    if let Ok(logger) = DiagnosticLogger::for_current_user("agent") {
+        let mut fields = BTreeMap::new();
+        fields.insert("message".to_owned(), json!(error.to_string()));
+        let _ = logger.record("error", event, fields);
     }
 }
 
@@ -52,6 +67,7 @@ fn synchronize_once() -> Result<SyncReport, RuntimeError> {
 }
 
 fn synchronize_and_record(store: &LocalStore) -> Result<SyncReport, RuntimeError> {
+    let logger = DiagnosticLogger::new(&store.paths().logs_directory, "agent");
     let attempted_at = epoch_seconds();
     let previous_success = store
         .load_agent_status()
@@ -67,17 +83,28 @@ fn synchronize_and_record(store: &LocalStore) -> Result<SyncReport, RuntimeError
                 last_error_kind: None,
                 last_error_message: None,
             })?;
+            let mut fields = BTreeMap::new();
+            fields.insert("profiles".to_owned(), json!(report.profile_count));
+            fields.insert("targets".to_owned(), json!(report.target_count));
+            fields.insert("added".to_owned(), json!(report.added));
+            fields.insert("removed".to_owned(), json!(report.removed));
+            let _ = logger.record("info", "sync.succeeded", fields);
             Ok(report)
         }
         Err(error) => {
+            let kind = error_kind(&error);
             let status = AgentStatus {
                 schema_version: AGENT_STATUS_SCHEMA_VERSION,
                 last_attempt_epoch_seconds: attempted_at,
                 last_success_epoch_seconds: previous_success,
-                last_error_kind: Some(error_kind(&error)),
+                last_error_kind: Some(kind.clone()),
                 last_error_message: Some(error.to_string()),
             };
             let _ = store.save_agent_status(&status);
+            let mut fields = BTreeMap::new();
+            fields.insert("kind".to_owned(), json!(format!("{kind:?}")));
+            fields.insert("message".to_owned(), json!(error.to_string()));
+            let _ = logger.record("error", "sync.failed", fields);
             Err(error)
         }
     }
@@ -163,6 +190,16 @@ fn run_forever() -> Result<(), RuntimeError> {
     println!(
         "warpgatesh-agent: running (default interval: {} seconds)",
         schedule.interval.as_secs()
+    );
+    let mut startup_fields = BTreeMap::new();
+    startup_fields.insert(
+        "interval_seconds".to_owned(),
+        json!(schedule.interval.as_secs()),
+    );
+    let _ = DiagnosticLogger::new(&store.paths().logs_directory, "agent").record(
+        "info",
+        "agent.listening",
+        startup_fields,
     );
 
     loop {

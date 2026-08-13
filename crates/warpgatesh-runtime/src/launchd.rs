@@ -1,7 +1,7 @@
 #[cfg(any(target_os = "macos", test))]
 use std::path::Path;
 
-#[cfg(any(target_os = "macos", test))]
+#[cfg(target_os = "macos")]
 use warpgatesh_core::paths::WarpgatePaths;
 
 #[cfg(any(target_os = "macos", test))]
@@ -33,7 +33,7 @@ pub fn ensure_installed(
         )));
     }
 
-    let property_list = render_property_list(paths, agent_executable)?;
+    let property_list = render_property_list(agent_executable)?;
     let changed = fs::read(&paths.launch_agent).ok().as_deref() != Some(property_list.as_bytes());
     if changed {
         atomic_write(&paths.launch_agent, property_list.as_bytes())?;
@@ -166,13 +166,8 @@ fn path_text(path: &Path) -> Result<&str, RuntimeError> {
 }
 
 #[cfg(any(target_os = "macos", test))]
-fn render_property_list(
-    paths: &WarpgatePaths,
-    agent_executable: &Path,
-) -> Result<String, RuntimeError> {
+fn render_property_list(agent_executable: &Path) -> Result<String, RuntimeError> {
     let executable = xml_path(agent_executable)?;
-    let stdout = xml_path(&paths.agent_stdout_log)?;
-    let stderr = xml_path(&paths.agent_stderr_log)?;
     Ok(format!(
         r#"<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -193,9 +188,9 @@ fn render_property_list(
   <key>ThrottleInterval</key>
   <integer>10</integer>
   <key>StandardOutPath</key>
-  <string>{stdout}</string>
+  <string>/dev/null</string>
   <key>StandardErrorPath</key>
-  <string>{stderr}</string>
+  <string>/dev/null</string>
 </dict>
 </plist>
 "#
@@ -226,16 +221,19 @@ mod tests {
 
     #[test]
     fn renders_a_safe_per_user_launch_agent() {
-        let paths = WarpgatePaths::for_home(Path::new("/Users/A & B"));
-        let plist = render_property_list(
-            &paths,
-            Path::new("/Applications/WarpgateSH.app/Contents/MacOS/warpgatesh-agent"),
-        )
+        let plist = render_property_list(Path::new(
+            "/Applications/WarpgateSH & Tools.app/Contents/MacOS/warpgatesh-agent",
+        ))
         .expect("property list");
 
         assert!(plist.contains("<string>dev.warpgatesh.agent</string>"));
-        assert!(plist.contains("/Users/A &amp; B/"));
-        assert!(plist.contains("agent.log"));
+        assert!(
+            plist.contains(
+                "/Applications/WarpgateSH &amp; Tools.app/Contents/MacOS/warpgatesh-agent"
+            )
+        );
+        assert!(plist.contains("<key>StandardOutPath</key>\n  <string>/dev/null</string>"));
+        assert!(plist.contains("<key>StandardErrorPath</key>\n  <string>/dev/null</string>"));
         assert!(plist.contains("<key>KeepAlive</key>\n  <true/>"));
     }
 }

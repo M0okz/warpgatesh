@@ -9,6 +9,7 @@ use warpgatesh_core::profiles::Profile;
 use warpgatesh_runtime::RuntimeError;
 use warpgatesh_runtime::api::ApiClient;
 use warpgatesh_runtime::configuration::ConfigurationMutation;
+use warpgatesh_runtime::diagnostics;
 use warpgatesh_runtime::ipc;
 #[cfg(target_os = "macos")]
 use warpgatesh_runtime::launchd;
@@ -69,6 +70,7 @@ fn run_management(name: &str, arguments: &[String]) -> Result<(), RuntimeError> 
         }
         "status" => status(arguments),
         "doctor" => doctor(arguments),
+        "diagnostics" => run_diagnostics(arguments),
         "agent" => run_agent(arguments),
         _ => Err(RuntimeError::InvalidInput(format!(
             "unknown management command '{name}'"
@@ -289,6 +291,7 @@ fn doctor(arguments: &[String]) -> Result<(), RuntimeError> {
     );
     println!("Profiles file: {}", store.paths().profiles.display());
     println!("Managed SSH file: {}", store.paths().ssh_config.display());
+    println!("Diagnostics: {}", store.paths().logs_directory.display());
     println!(
         "Configured profiles: {}",
         store.load_profiles()?.profiles.len()
@@ -302,6 +305,35 @@ fn doctor(arguments: &[String]) -> Result<(), RuntimeError> {
         }
     );
     Ok(())
+}
+
+fn run_diagnostics(arguments: &[String]) -> Result<(), RuntimeError> {
+    let store = LocalStore::for_current_user()?;
+    match arguments {
+        [command] if command == "preview" => {
+            let preview = diagnostics::preview(&store)?;
+            println!("Log directory: {}", preview.log_directory);
+            println!("Retention: {} days", preview.retention_days);
+            println!("Files: {}", preview.files.len());
+            println!("Events: {}", preview.total_events);
+            println!("Size: {} bytes", preview.total_bytes);
+            for file in preview.files {
+                println!(
+                    "{}\t{} events\t{} bytes",
+                    file.name, file.events, file.bytes
+                );
+            }
+            Ok(())
+        }
+        [command] if command == "export" => {
+            let path = diagnostics::export(&store)?;
+            println!("Sanitized diagnostics archive: {}", path.display());
+            Ok(())
+        }
+        _ => Err(RuntimeError::InvalidInput(
+            "usage: warpgatesh diagnostics preview | diagnostics export".to_owned(),
+        )),
+    }
 }
 
 fn run_agent(arguments: &[String]) -> Result<(), RuntimeError> {

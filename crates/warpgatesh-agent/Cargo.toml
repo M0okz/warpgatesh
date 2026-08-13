@@ -8,6 +8,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+serde_json.workspace = true
 warpgatesh-core = { path = "../warpgatesh-core" }
 warpgatesh-runtime = { path = "../warpgatesh-runtime" }
 

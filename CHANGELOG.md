@@ -2,6 +2,20 @@
 
 Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
+## 0.1.10 — 2026-08-13
+
+### Nouveauté
+
+- L’agent et le compagnon enregistrent désormais des journaux structurés quotidiens dans `~/Library/Logs/WarpgateSH/`, avec une conservation automatique limitée à sept jours.
+- Les préférences permettent de prévisualiser les fichiers, le nombre d’événements et leur taille, puis de créer une archive ZIP destinée à une issue GitHub.
+- La CLI propose les mêmes fonctions avec `warpgatesh diagnostics preview` et `warpgatesh diagnostics export`.
+
+### Confidentialité
+
+- Les champs sensibles sont expurgés à l’écriture et une seconde fois lors de l’export ; les jetons, mots de passe, clés privées et contenus de configuration SSH ne sont pas journalisés intentionnellement.
+- L’archive n’expose pas le chemin absolu du compte macOS et aucun diagnostic n’est envoyé automatiquement.
+- Les anciennes sorties brutes de `launchd` sont désactivées afin d’éviter des fichiers sans rotation qui grossissent indéfiniment.
+
 ## 0.1.9 — 2026-08-13
 
 ### Correctif

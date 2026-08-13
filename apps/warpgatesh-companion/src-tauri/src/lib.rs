@@ -5,6 +5,7 @@ mod updates;
 
 use tauri::{Manager, WindowEvent};
 use tauri_plugin_autostart::MacosLauncher;
+use warpgatesh_runtime::diagnostics::DiagnosticLogger;
 
 fn handle_second_instance(app: &tauri::AppHandle, _arguments: Vec<String>, _cwd: String) {
     tray_menu::show_main_window(app);
@@ -25,12 +26,18 @@ pub fn run() {
             None,
         ))
         .setup(|app| {
+            let diagnostics =
+                DiagnosticLogger::for_current_user("companion").map_err(std::io::Error::other)?;
+            diagnostics.info("process.started");
             app.manage(updates::UpdateManager::new().map_err(std::io::Error::other)?);
             #[cfg(target_os = "macos")]
             {
                 app.handle()
                     .set_activation_policy(tauri::ActivationPolicy::Accessory)?;
                 if let Err(error) = installation::ensure_bundled_agent() {
+                    let mut fields = std::collections::BTreeMap::new();
+                    fields.insert("message".to_owned(), serde_json::json!(error.to_string()));
+                    let _ = diagnostics.record("error", "agent.install-failed", fields);
                     eprintln!("warpgatesh-companion: could not install the agent: {error}");
                 }
             }
@@ -49,6 +56,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::get_companion_state,
             commands::sync_now,
+            commands::preview_diagnostics,
+            commands::export_diagnostics,
             commands::save_preferences,
             commands::open_token_page_for,
             commands::inspect_profile,

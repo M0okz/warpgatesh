@@ -4514,7 +4514,7 @@ dependencies = [
 
 [[package]]
 name = "warpgatesh-companion"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "semver",
  "serde",
@@ -4531,15 +4531,16 @@ dependencies = [
 
 [[package]]
 name = "warpgatesh-core"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "warpgatesh-runtime"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
+ "chrono",
  "glob",
  "reqwest",
  "security-framework",
@@ -4547,6 +4548,7 @@ dependencies = [
  "serde_json",
  "url",
  "warpgatesh-core",
+ "zip",
 ]
 
 [[package]]

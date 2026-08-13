@@ -107,9 +107,23 @@ $ scp ./backup.tar app-01:/tmp/
 | `warpgatesh status` | Show profile, snapshot, and agent status |
 | `warpgatesh <target>` | Connect to a target through the system OpenSSH client |
 | `warpgatesh doctor` | Diagnose the local installation |
+| `warpgatesh diagnostics preview` | Preview the local diagnostic files and their size |
+| `warpgatesh diagnostics export` | Create a sanitized ZIP archive in Downloads |
 | `warpgatesh agent install` | Install and start the background agent |
 
 Run `warpgatesh help` for the complete built-in reference.
+
+## Local diagnostics
+
+WarpgateSH keeps structured daily logs for the background agent and graphical
+companion in `~/Library/Logs/WarpgateSH/`. Files use the JSON Lines format
+(`agent-YYYY-MM-DD.jsonl` and `companion-YYYY-MM-DD.jsonl`) and are removed after
+seven days.
+
+No telemetry or crash report is uploaded automatically. The app and CLI let
+you preview the files, event count, and total size before creating a sanitized
+ZIP archive for a GitHub issue. API tokens, passwords, private keys, and SSH
+configuration contents are never intentionally recorded.
 
 ## How it works
 

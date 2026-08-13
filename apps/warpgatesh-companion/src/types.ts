@@ -62,6 +62,24 @@ export type UninstallRequest = {
   confirmation: string;
 };
 
+export type DiagnosticFileSummary = {
+  name: string;
+  bytes: number;
+  events: number;
+};
+
+export type DiagnosticsPreview = {
+  logDirectory: string;
+  retentionDays: number;
+  totalBytes: number;
+  totalEvents: number;
+  files: DiagnosticFileSummary[];
+};
+
+export type DiagnosticsExport = {
+  path: string;
+};
+
 export type ProfileRequest = {
   name: string;
   baseUrl: string;

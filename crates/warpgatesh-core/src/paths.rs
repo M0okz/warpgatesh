@@ -8,8 +8,7 @@ pub struct WarpgatePaths {
     pub snapshot: PathBuf,
     pub agent_status: PathBuf,
     pub agent_socket: PathBuf,
-    pub agent_stdout_log: PathBuf,
-    pub agent_stderr_log: PathBuf,
+    pub logs_directory: PathBuf,
     pub launch_agent: PathBuf,
     pub user_ssh_config: PathBuf,
     pub ssh_directory: PathBuf,
@@ -26,6 +25,11 @@ impl WarpgatePaths {
             home.join(".local/share/warpgatesh")
         };
         let ssh_directory = home.join(".ssh/warpgatesh");
+        let logs_directory = if cfg!(target_os = "macos") {
+            home.join("Library/Logs/WarpgateSH")
+        } else {
+            home.join(".local/state/warpgatesh/logs")
+        };
 
         Self {
             profiles: application_support.join("profiles.json"),
@@ -33,8 +37,7 @@ impl WarpgatePaths {
             snapshot: application_support.join("snapshot.json"),
             agent_status: application_support.join("agent-status.json"),
             agent_socket: application_support.join("agent.sock"),
-            agent_stdout_log: application_support.join("agent.log"),
-            agent_stderr_log: application_support.join("agent-error.log"),
+            logs_directory,
             launch_agent: home.join("Library/LaunchAgents/dev.warpgatesh.agent.plist"),
             user_ssh_config: home.join(".ssh/config"),
             ssh_config: ssh_directory.join("config"),
@@ -60,5 +63,21 @@ mod tests {
             paths.known_hosts_directory,
             Path::new("/Users/tester/.ssh/warpgatesh/known_hosts")
         );
+    }
+
+    #[test]
+    fn stores_diagnostics_in_the_platform_log_directory() {
+        let paths = WarpgatePaths::for_home(Path::new("/Users/tester"));
+        if cfg!(target_os = "macos") {
+            assert_eq!(
+                paths.logs_directory,
+                Path::new("/Users/tester/Library/Logs/WarpgateSH")
+            );
+        } else {
+            assert_eq!(
+                paths.logs_directory,
+                Path::new("/Users/tester/.local/state/warpgatesh/logs")
+            );
+        }
     }
 }

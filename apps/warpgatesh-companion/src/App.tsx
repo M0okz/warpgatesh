@@ -9,23 +9,32 @@ import {
   installUpdate,
   openTarget,
   openTokenPage,
+  previewDiagnostics,
   removeProfile,
   renewProfileToken,
   savePreferences,
   synchronizeNow,
   uninstallWarpgateSH,
+  exportDiagnostics,
 } from "./api";
 import type {
   CompanionPreferences,
   CompanionProfile,
   CompanionState,
   CompanionTarget,
+  DiagnosticsPreview,
   ProfileInspection,
   ProfileRequest,
   UpdateStatus,
 } from "./types";
 
 type View = "access" | "profiles" | "preferences";
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} o`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+}
 
 function formatAge(seconds: number | null): string {
   if (seconds === null) return "Jamais synchronisé";
@@ -429,6 +438,7 @@ function PreferencesView({
         onCheck={onCheckForUpdates}
         onInstall={onInstallUpdate}
       />
+      <DiagnosticsPanel />
       <div className="danger-zone">
         <div>
           <p className="section-kicker">Désinstallation</p>
@@ -458,6 +468,89 @@ function PreferencesView({
           </div>
         )}
       </div>
+    </section>
+  );
+}
+
+function DiagnosticsPanel() {
+  const [preview, setPreview] = useState<DiagnosticsPreview | null>(null);
+  const [archivePath, setArchivePath] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function inspect() {
+    setBusy(true);
+    setError(null);
+    setArchivePath(null);
+    try {
+      setPreview(await previewDiagnostics());
+    } catch (reason) {
+      setError(String(reason));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function createArchive() {
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await exportDiagnostics();
+      setArchivePath(result.path);
+      setPreview(await previewDiagnostics());
+    } catch (reason) {
+      setError(String(reason));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="diagnostics-panel" aria-labelledby="diagnostics-title">
+      <div className="diagnostics-panel__heading">
+        <div>
+          <p className="section-kicker">Assistance</p>
+          <h2 id="diagnostics-title">Diagnostics locaux</h2>
+          <p>Journaux structurés conservés sept jours, sans jeton ni mot de passe.</p>
+        </div>
+        {preview === null ? (
+          <button className="button-secondary" type="button" disabled={busy} onClick={() => void inspect()}>
+            Prévisualiser l’export
+          </button>
+        ) : null}
+      </div>
+
+      {preview ? (
+        <div className="diagnostics-preview">
+          <div className="diagnostics-summary">
+            <span><strong>{preview.totalEvents}</strong> événements</span>
+            <span><strong>{preview.files.length}</strong> fichiers</span>
+            <span><strong>{formatBytes(preview.totalBytes)}</strong> au total</span>
+          </div>
+          <code className="diagnostics-path" title={preview.logDirectory}>{preview.logDirectory}</code>
+          {preview.files.length > 0 ? (
+            <ul className="diagnostics-files">
+              {preview.files.map((file) => (
+                <li key={file.name}>
+                  <code>{file.name}</code>
+                  <span>{file.events} événements · {formatBytes(file.bytes)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : <p className="diagnostics-empty">Aucun événement enregistré pour le moment.</p>}
+          <div className="button-row">
+            <button className="button-secondary" type="button" disabled={busy} onClick={() => void inspect()}>
+              Actualiser
+            </button>
+            <button className="button-primary" type="button" disabled={busy} onClick={() => void createArchive()}>
+              Créer l’archive ZIP
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {archivePath ? <p className="diagnostics-success">Archive créée et affichée dans le Finder : <code>{archivePath}</code></p> : null}
+      {error ? <p className="update-message">Export impossible : {error}</p> : null}
     </section>
   );
 }
