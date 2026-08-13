@@ -113,6 +113,18 @@ $ scp ./backup.tar app-01:/tmp/
 
 Run `warpgatesh help` for the complete built-in reference.
 
+## Documentation
+
+- [Install WarpgateSH on macOS](docs/installation.md)
+- [Create a token and connect to a first target](docs/getting-started.md)
+- [Troubleshoot common problems](docs/troubleshooting.md)
+- [Uninstall WarpgateSH](docs/uninstall.md)
+- [Contribute to the project](CONTRIBUTING.md)
+
+The [documentation index](docs/README.md) also links architecture and
+maintainer references. The guides are versioned with the code so corrections
+can be reviewed in the same pull request as behavior changes.
+
 ## Local diagnostics
 
 WarpgateSH keeps structured daily logs for the background agent and graphical
@@ -177,8 +189,9 @@ $ ssh api.staging
 - Diagnostics stay local and are designed to exclude tokens, passwords, and
   private keys.
 
-Please report vulnerabilities privately through
-[GitHub Security Advisories](https://github.com/M0okz/warpgatesh/security/advisories/new).
+Please report suspected vulnerabilities privately through
+[GitHub Security Advisories](https://github.com/M0okz/warpgatesh/security/advisories/new)
+rather than a public issue.
 
 ## Project status
 
@@ -240,6 +253,9 @@ in [docs/releasing-macos.md](docs/releasing-macos.md).
 Issues, documentation improvements, compatibility reports, and pull requests
 are welcome. Before proposing a large change, open an issue so the approach can
 be discussed with the community.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete development setup,
+required checks, project boundaries, and pull-request guidance.
 
 When contributing code, please run the Rust checks above. Changes to the macOS
 companion should also pass:
