@@ -12,7 +12,7 @@ use warpgatesh_runtime::ipc;
 use warpgatesh_runtime::ssh::{open_token_page, scan_host_keys};
 use warpgatesh_runtime::storage::{AgentErrorKind, LocalStore, Preferences};
 
-use crate::installation;
+use crate::{installation, updates};
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -24,6 +24,7 @@ pub struct CompanionState {
     last_sync_age_seconds: Option<u64>,
     preferences: CompanionPreferences,
     terminal_integration: TerminalIntegration,
+    update: updates::UpdateStatus,
     alerts: Vec<CompanionAlert>,
 }
 
@@ -106,7 +107,8 @@ pub async fn get_companion_state(app: AppHandle) -> Result<CompanionState, Strin
     let store = LocalStore::for_current_user().map_err(display_error)?;
     let launches_at_login = app.autolaunch().is_enabled().map_err(display_error)?;
     let terminal = load_terminal_integration()?;
-    load_state(&store, launches_at_login, terminal)
+    let update = updates::status(&app);
+    load_state(&store, launches_at_login, terminal, update)
 }
 
 #[tauri::command]
@@ -321,6 +323,7 @@ fn load_state(
     store: &LocalStore,
     launches_at_login: bool,
     terminal_integration: TerminalIntegration,
+    update: updates::UpdateStatus,
 ) -> Result<CompanionState, String> {
     let catalog = store.load_profiles().map_err(display_error)?;
     let snapshot = store.load_snapshot().map_err(display_error)?;
@@ -388,6 +391,7 @@ fn load_state(
             default_profile: catalog.default_profile,
         },
         terminal_integration,
+        update,
         alerts,
     })
 }
@@ -565,6 +569,16 @@ mod tests {
                 status: "missing".to_owned(),
                 path: "/usr/local/bin/warpgatesh".to_owned(),
             },
+            updates::UpdateStatus {
+                phase: updates::UpdatePhase::Current,
+                channel: updates::UpdateChannel::Direct,
+                current_version: env!("CARGO_PKG_VERSION").to_owned(),
+                available_version: None,
+                notes: None,
+                checked_at_epoch_seconds: Some(epoch_seconds()),
+                progress_percent: None,
+                message: None,
+            },
         )
         .expect("companion state");
         assert_eq!(state.profiles.len(), 1);
@@ -574,6 +588,7 @@ mod tests {
         assert!(!state.agent_synchronizing);
         assert_eq!(state.alerts[0].id, "agent-down");
         assert_eq!(state.terminal_integration.status, "missing");
+        assert_eq!(state.update.phase, updates::UpdatePhase::Current);
     }
 
     #[test]

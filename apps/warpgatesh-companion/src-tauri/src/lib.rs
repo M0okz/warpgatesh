@@ -1,8 +1,9 @@
 mod commands;
 mod installation;
 mod tray_menu;
+mod updates;
 
-use tauri::WindowEvent;
+use tauri::{Manager, WindowEvent};
 use tauri_plugin_autostart::MacosLauncher;
 
 fn handle_second_instance(app: &tauri::AppHandle, _arguments: Vec<String>, _cwd: String) {
@@ -18,11 +19,13 @@ fn handle_second_instance(app: &tauri::AppHandle, _arguments: Vec<String>, _cwd:
 pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(handle_second_instance))
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
             None,
         ))
         .setup(|app| {
+            app.manage(updates::UpdateManager::new().map_err(std::io::Error::other)?);
             #[cfg(target_os = "macos")]
             {
                 app.handle()
@@ -33,6 +36,7 @@ pub fn run() {
             }
 
             tray_menu::install(app)?;
+            updates::start_background_checks(app.handle().clone());
             Ok(())
         })
         .on_menu_event(|app, event| tray_menu::handle_menu_event(app, &event))
@@ -54,6 +58,8 @@ pub fn run() {
             commands::open_target,
             commands::install_command_line_tool,
             commands::uninstall_warpgatesh,
+            updates::check_for_updates,
+            updates::install_update,
         ])
         .build(tauri::generate_context!())
         .expect("error while building the WarpgateSH companion");

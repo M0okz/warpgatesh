@@ -6,6 +6,7 @@ import type {
   ProfileRequest,
   TerminalIntegration,
   UninstallRequest,
+  UpdateStatus,
 } from "./types";
 
 const demoState: CompanionState = {
@@ -39,6 +40,16 @@ const demoState: CompanionState = {
   terminalIntegration: {
     status: "missing",
     path: "/usr/local/bin/warpgatesh",
+  },
+  update: {
+    phase: "available",
+    channel: "direct",
+    currentVersion: "0.1.7",
+    availableVersion: "0.1.8",
+    notes: "Mise à jour signée avec amélioration du menu et de la synchronisation.",
+    checkedAtEpochSeconds: Math.floor(Date.now() / 1000),
+    progressPercent: null,
+    message: null,
   },
   alerts: [],
 };
@@ -108,4 +119,14 @@ export async function installCommandLineTool(): Promise<TerminalIntegration> {
 export async function uninstallWarpgateSH(request: UninstallRequest): Promise<void> {
   if (isDemo) return;
   return invoke<void>("uninstall_warpgatesh", { request });
+}
+
+export async function checkForUpdates(): Promise<UpdateStatus> {
+  if (isDemo) return demoState.update;
+  return invoke<UpdateStatus>("check_for_updates");
+}
+
+export async function installUpdate(): Promise<void> {
+  if (isDemo) return;
+  return invoke<void>("install_update");
 }

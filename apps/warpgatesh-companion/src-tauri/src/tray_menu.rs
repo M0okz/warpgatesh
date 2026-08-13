@@ -1,16 +1,20 @@
+use std::process::Command;
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use tauri::menu::{Menu, MenuEvent, MenuItem, PredefinedMenuItem};
+use tauri::menu::{Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::tray::TrayIconBuilder;
 use tauri::{Emitter, Manager};
 use warpgatesh_runtime::ipc;
 use warpgatesh_runtime::storage::LocalStore;
 
-use crate::commands;
+use crate::{commands, updates};
 
 const AGENT_STATUS_TIMEOUT: Duration = Duration::from_millis(500);
 const STATUS_REFRESH_INTERVAL: Duration = Duration::from_secs(1);
+const GITHUB_REPOSITORY_URL: &str = "https://github.com/M0okz/warpgatesh";
+const GITHUB_DOCUMENTATION_URL: &str = "https://github.com/M0okz/warpgatesh#readme";
+const GITHUB_ISSUES_URL: &str = "https://github.com/M0okz/warpgatesh/issues";
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct AgentRuntimeStatus {
@@ -25,6 +29,19 @@ struct TrayLabels {
     last_sync: String,
     next_sync: String,
     sync_enabled: bool,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct UpdateLabels {
+    status: String,
+    download: String,
+    download_enabled: bool,
+}
+
+struct HelpMenu {
+    submenu: Submenu<tauri::Wry>,
+    update_status: MenuItem<tauri::Wry>,
+    download_update: MenuItem<tauri::Wry>,
 }
 
 pub(crate) fn show_main_window(app: &tauri::AppHandle) {
@@ -71,6 +88,7 @@ pub(crate) fn install(app: &mut tauri::App) -> tauri::Result<()> {
     let show = MenuItem::with_id(app, "show", "Ouvrir WarpgateSH", true, None::<&str>)?;
     let profiles = MenuItem::with_id(app, "profiles", "Profils…", true, None::<&str>)?;
     let prefs = MenuItem::with_id(app, "preferences", "Préférences…", true, None::<&str>)?;
+    let help = build_help_menu(app)?;
     let quit = MenuItem::with_id(app, "quit", "Quitter WarpgateSH", true, None::<&str>)?;
     let menu = Menu::with_items(
         app,
@@ -84,6 +102,7 @@ pub(crate) fn install(app: &mut tauri::App) -> tauri::Result<()> {
             &show,
             &profiles,
             &prefs,
+            &help.submenu,
             &PredefinedMenuItem::separator(app)?,
             &quit,
         ],
@@ -115,7 +134,78 @@ pub(crate) fn install(app: &mut tauri::App) -> tauri::Result<()> {
         }
     });
 
+    let update_app = app.handle().clone();
+    thread::spawn(move || {
+        let mut previous = update_labels_for(&updates::status(&update_app));
+        loop {
+            thread::sleep(STATUS_REFRESH_INTERVAL);
+            let labels = update_labels_for(&updates::status(&update_app));
+            if labels == previous {
+                continue;
+            }
+            let _ = help.update_status.set_text(&labels.status);
+            let _ = help.download_update.set_text(&labels.download);
+            let _ = help.download_update.set_enabled(labels.download_enabled);
+            previous = labels;
+        }
+    });
+
     Ok(())
+}
+
+fn build_help_menu(app: &tauri::App) -> tauri::Result<HelpMenu> {
+    let update_labels = update_labels_for(&updates::status(app.handle()));
+    let github = MenuItem::with_id(app, "github", "GitHub", true, None::<&str>)?;
+    let documentation =
+        MenuItem::with_id(app, "documentation", "Documentation", true, None::<&str>)?;
+    let troubleshooting = MenuItem::with_id(
+        app,
+        "troubleshooting",
+        "Dépannage et signalement",
+        true,
+        None::<&str>,
+    )?;
+    let installed_version = MenuItem::with_id(
+        app,
+        "installed-version",
+        format!("Version installée : {}", env!("CARGO_PKG_VERSION")),
+        false,
+        None::<&str>,
+    )?;
+    let update_status = MenuItem::with_id(
+        app,
+        "update-status",
+        &update_labels.status,
+        false,
+        None::<&str>,
+    )?;
+    let download_update = MenuItem::with_id(
+        app,
+        "download-update",
+        &update_labels.download,
+        update_labels.download_enabled,
+        None::<&str>,
+    )?;
+    let submenu = Submenu::with_items(
+        app,
+        "Aide et assistance",
+        true,
+        &[
+            &github,
+            &documentation,
+            &troubleshooting,
+            &PredefinedMenuItem::separator(app)?,
+            &installed_version,
+            &update_status,
+            &download_update,
+        ],
+    )?;
+
+    Ok(HelpMenu {
+        submenu,
+        update_status,
+        download_update,
+    })
 }
 
 pub(crate) fn handle_menu_event(app: &tauri::AppHandle, event: &MenuEvent) {
@@ -124,9 +214,78 @@ pub(crate) fn handle_menu_event(app: &tauri::AppHandle, event: &MenuEvent) {
         "profiles" => show_view(app, "profiles"),
         "preferences" => show_view(app, "preferences"),
         "sync" => commands::synchronize_from_tray(),
+        "github" => open_external_url(GITHUB_REPOSITORY_URL),
+        "documentation" => open_external_url(GITHUB_DOCUMENTATION_URL),
+        "troubleshooting" => open_external_url(GITHUB_ISSUES_URL),
+        "download-update" => show_view(app, "updates"),
         "quit" => app.exit(0),
         _ => {}
     }
+}
+
+fn update_labels_for(update: &updates::UpdateStatus) -> UpdateLabels {
+    use updates::{UpdateChannel, UpdatePhase};
+
+    let default_download = "Rechercher les mises à jour…".to_owned();
+    match update.phase {
+        UpdatePhase::Idle => UpdateLabels {
+            status: "Mises à jour : en attente".to_owned(),
+            download: default_download,
+            download_enabled: false,
+        },
+        UpdatePhase::Checking => UpdateLabels {
+            status: "Recherche de mise à jour…".to_owned(),
+            download: default_download,
+            download_enabled: false,
+        },
+        UpdatePhase::Current => UpdateLabels {
+            status: "WarpgateSH est à jour".to_owned(),
+            download: default_download,
+            download_enabled: false,
+        },
+        UpdatePhase::Available => {
+            let version = update.available_version.as_deref().unwrap_or("nouvelle");
+            let download = match update.channel {
+                UpdateChannel::Direct => format!("Installer WarpgateSH {version}…"),
+                UpdateChannel::Homebrew => "Mettre à jour avec Homebrew…".to_owned(),
+                UpdateChannel::Unsupported => format!("Télécharger WarpgateSH {version}…"),
+            };
+            UpdateLabels {
+                status: format!("Mise à jour disponible : {version}"),
+                download,
+                download_enabled: true,
+            }
+        }
+        UpdatePhase::Downloading => UpdateLabels {
+            status: format!(
+                "Téléchargement : {} %",
+                update.progress_percent.unwrap_or_default()
+            ),
+            download: "Mise à jour en cours…".to_owned(),
+            download_enabled: false,
+        },
+        UpdatePhase::Installing => UpdateLabels {
+            status: "Installation et redémarrage…".to_owned(),
+            download: "Mise à jour en cours…".to_owned(),
+            download_enabled: false,
+        },
+        UpdatePhase::Error => UpdateLabels {
+            status: "Recherche de mise à jour indisponible".to_owned(),
+            download: default_download,
+            download_enabled: false,
+        },
+    }
+}
+
+fn open_external_url(url: &str) {
+    #[cfg(target_os = "macos")]
+    let _ = Command::new("/usr/bin/open").arg(url).spawn();
+
+    #[cfg(target_os = "linux")]
+    let _ = Command::new("xdg-open").arg(url).spawn();
+
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+    let _ = url;
 }
 
 fn load_labels() -> TrayLabels {
@@ -326,5 +485,40 @@ mod tests {
         assert_eq!(labels.agent, "● Synchronisation en cours…");
         assert_eq!(labels.next_sync, "Prochaine synchro : en cours");
         assert!(!labels.sync_enabled);
+    }
+
+    #[test]
+    fn presents_an_available_direct_update() {
+        let labels = update_labels_for(&updates::UpdateStatus {
+            phase: updates::UpdatePhase::Available,
+            channel: updates::UpdateChannel::Direct,
+            current_version: "0.1.6".to_owned(),
+            available_version: Some("0.1.7".to_owned()),
+            notes: None,
+            checked_at_epoch_seconds: Some(1),
+            progress_percent: None,
+            message: None,
+        });
+
+        assert_eq!(labels.status, "Mise à jour disponible : 0.1.7");
+        assert_eq!(labels.download, "Installer WarpgateSH 0.1.7…");
+        assert!(labels.download_enabled);
+    }
+
+    #[test]
+    fn reports_download_progress_without_allowing_a_second_install() {
+        let labels = update_labels_for(&updates::UpdateStatus {
+            phase: updates::UpdatePhase::Downloading,
+            channel: updates::UpdateChannel::Direct,
+            current_version: "0.1.6".to_owned(),
+            available_version: Some("0.1.7".to_owned()),
+            notes: None,
+            checked_at_epoch_seconds: Some(1),
+            progress_percent: Some(64),
+            message: None,
+        });
+
+        assert_eq!(labels.status, "Téléchargement : 64 %");
+        assert!(!labels.download_enabled);
     }
 }

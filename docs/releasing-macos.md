@@ -20,6 +20,13 @@ Configurer les secrets GitHub Actions suivants :
 - `APPLE_ID` : adresse du compte Apple utilisé pour notariser ;
 - `APPLE_PASSWORD` : mot de passe spécifique à l’application ;
 - `APPLE_TEAM_ID` : identifiant de l’équipe Apple Developer.
+- `TAURI_SIGNING_PRIVATE_KEY` : clé privée de l’updater Tauri, également
+  conservée dans Bitwarden et jamais ajoutée au dépôt ;
+- `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` : mot de passe de cette clé.
+
+La clé publique Tauri est intégrée à `tauri.conf.json`. Cette signature est
+indépendante de la signature Developer ID : Apple valide l’application macOS,
+tandis que l’updater vérifie que l’archive a bien été produite par WarpgateSH.
 
 Le workflow importe le certificat dans un Trousseau temporaire du runner,
 active le Hardened Runtime, signe tous les exécutables, soumet le DMG au service
@@ -31,9 +38,19 @@ notarial Apple, agrafe le ticket et exécute `codesign`, `spctl`, `stapler` et
 1. Aligner les versions dans `Cargo.toml`, `package.json` et
    `src-tauri/tauri.conf.json`.
 2. Exécuter les tests et créer le tag signé `vX.Y.Z`.
-3. Pousser le tag. Le workflow crée une GitHub Release en brouillon avec le DMG
-   et sa somme SHA-256.
+3. Pousser le tag. Le workflow crée une GitHub Release en brouillon avec le DMG,
+   sa somme SHA-256, l’archive de mise à jour `WarpgateSH.app.tar.gz`, sa
+   signature et `latest.json`.
 4. Installer le DMG sur un Mac de test, puis publier manuellement le brouillon.
+
+Le brouillon n’est jamais proposé aux clients. Après publication, l’application
+lit `releases/latest/download/latest.json` au maximum une fois par jour. Elle ne
+télécharge et n’installe une archive qu’après une action explicite de
+l’utilisateur et une vérification réussie de sa signature.
+
+La première version intégrant l’updater doit encore être installée depuis son
+DMG. Les versions suivantes peuvent remplacer ensemble le compagnon, la CLI et
+l’agent, puis redémarrent l’agent `launchd` depuis le nouveau bundle.
 
 Pour tester uniquement l’assemblage universel en local, installer les cibles
 Rust `aarch64-apple-darwin` et `x86_64-apple-darwin`, puis exécuter :
@@ -42,3 +59,7 @@ Rust `aarch64-apple-darwin` et `x86_64-apple-darwin`, puis exécuter :
 cd apps/warpgatesh-companion
 npm run bundle:macos:universal
 ```
+
+Cette commande exige les variables `TAURI_SIGNING_PRIVATE_KEY` et
+`TAURI_SIGNING_PRIVATE_KEY_PASSWORD`. Les builds ordinaires et la CI n’activent
+pas `tauri.release.conf.json` et ne produisent donc pas d’artefacts d’updater.

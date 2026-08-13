@@ -37,7 +37,19 @@ export type CompanionState = {
   lastSyncAgeSeconds: number | null;
   preferences: CompanionPreferences;
   terminalIntegration: TerminalIntegration;
+  update: UpdateStatus;
   alerts: CompanionAlert[];
+};
+
+export type UpdateStatus = {
+  phase: "idle" | "checking" | "current" | "available" | "downloading" | "installing" | "error";
+  channel: "direct" | "homebrew" | "unsupported";
+  currentVersion: string;
+  availableVersion: string | null;
+  notes: string | null;
+  checkedAtEpochSeconds: number | null;
+  progressPercent: number | null;
+  message: string | null;
 };
 
 export type TerminalIntegration = {

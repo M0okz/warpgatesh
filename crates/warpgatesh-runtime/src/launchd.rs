@@ -68,6 +68,24 @@ pub fn is_loaded() -> Result<bool, RuntimeError> {
         .success())
 }
 
+/// Restart the registered per-user macOS agent from its current executable path.
+///
+/// This is used after replacing the containing application bundle so a long-running agent does
+/// not continue executing the previous version from memory.
+///
+/// # Errors
+///
+/// Returns [`RuntimeError`] when the agent is not registered or `launchd` rejects the restart.
+#[cfg(target_os = "macos")]
+pub fn restart() -> Result<(), RuntimeError> {
+    if !is_loaded()? {
+        return Err(RuntimeError::Command(
+            "the WarpgateSH agent is not registered with launchd".to_owned(),
+        ));
+    }
+    run_launchctl(&["kickstart", "-k", &launchd_service()?])
+}
+
 /// Stop and remove the per-user macOS `LaunchAgent`.
 ///
 /// Returns `true` when a loaded service or property list was removed.

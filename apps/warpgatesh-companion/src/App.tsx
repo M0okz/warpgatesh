@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import {
   addProfile,
+  checkForUpdates,
   getCompanionState,
   inspectProfile,
   installCommandLineTool,
+  installUpdate,
   openTarget,
   openTokenPage,
   removeProfile,
@@ -20,6 +22,7 @@ import type {
   CompanionTarget,
   ProfileInspection,
   ProfileRequest,
+  UpdateStatus,
 } from "./types";
 
 type View = "access" | "profiles" | "preferences";
@@ -343,12 +346,16 @@ function PreferencesView({
   busy,
   onSave,
   onInstallCli,
+  onCheckForUpdates,
+  onInstallUpdate,
   onUninstall,
 }: {
   state: CompanionState;
   busy: boolean;
   onSave: (preferences: CompanionPreferences) => Promise<void>;
   onInstallCli: () => Promise<void>;
+  onCheckForUpdates: () => Promise<void>;
+  onInstallUpdate: () => Promise<void>;
   onUninstall: (deleteUserData: boolean, confirmation: string) => Promise<void>;
 }) {
   const [draft, setDraft] = useState(state.preferences);
@@ -416,6 +423,12 @@ function PreferencesView({
         </div>
         <button className="button-primary preferences-save" type="submit" disabled={busy}>Enregistrer les préférences</button>
       </form>
+      <UpdatePanel
+        update={state.update}
+        busy={busy}
+        onCheck={onCheckForUpdates}
+        onInstall={onInstallUpdate}
+      />
       <div className="danger-zone">
         <div>
           <p className="section-kicker">Désinstallation</p>
@@ -445,6 +458,111 @@ function PreferencesView({
           </div>
         )}
       </div>
+    </section>
+  );
+}
+
+function UpdatePanel({
+  update,
+  busy,
+  onCheck,
+  onInstall,
+}: {
+  update: UpdateStatus;
+  busy: boolean;
+  onCheck: () => Promise<void>;
+  onInstall: () => Promise<void>;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const operationActive = update.phase === "checking" || update.phase === "downloading" || update.phase === "installing";
+  const checkedAt = update.checkedAtEpochSeconds
+    ? new Date(update.checkedAtEpochSeconds * 1_000).toLocaleString("fr-FR", {
+        dateStyle: "short",
+        timeStyle: "short",
+      })
+    : "Jamais";
+  const statusLabel = {
+    idle: "Vérification en attente",
+    checking: "Recherche de la dernière version…",
+    current: "WarpgateSH est à jour",
+    available: `WarpgateSH ${update.availableVersion ?? ""} est disponible`,
+    downloading: `Téléchargement sécurisé — ${update.progressPercent ?? 0} %`,
+    installing: "Installation et redémarrage…",
+    error: "La vérification est momentanément indisponible",
+  }[update.phase];
+
+  useEffect(() => {
+    if (update.phase !== "available") setConfirming(false);
+  }, [update.phase]);
+
+  return (
+    <section className="update-panel" id="updates" aria-labelledby="updates-title">
+      <div className="update-panel__heading">
+        <div>
+          <p className="section-kicker">Mises à jour</p>
+          <h2 id="updates-title">Version {update.currentVersion}</h2>
+        </div>
+        <span className={`update-badge update-badge--${update.phase}`}>{statusLabel}</span>
+      </div>
+
+      {operationActive ? (
+        <div
+          className={update.phase === "downloading" ? "update-progress" : "update-progress update-progress--indeterminate"}
+          role="progressbar"
+          aria-label={statusLabel}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={update.phase === "downloading" ? (update.progressPercent ?? 0) : undefined}
+        >
+          <span style={{ width: `${update.phase === "downloading" ? (update.progressPercent ?? 0) : 100}%` }} />
+        </div>
+      ) : null}
+
+      {update.phase === "available" && update.notes ? (
+        <div className="release-notes">
+          <strong>Nouveautés de la version {update.availableVersion}</strong>
+          <p>{update.notes}</p>
+        </div>
+      ) : null}
+
+      {update.message ? <p className="update-message">{update.message}</p> : null}
+
+      {confirming ? (
+        <div className="update-confirmation">
+          <p>
+            La signature sera vérifiée avant l’installation. L’application et l’agent redémarreront ;
+            vos sessions SSH déjà ouvertes ne seront pas interrompues.
+          </p>
+          <div className="button-row">
+            <button className="button-secondary" type="button" disabled={busy} onClick={() => setConfirming(false)}>
+              Annuler
+            </button>
+            <button className="button-primary" type="button" disabled={busy} onClick={() => void onInstall()}>
+              Télécharger et installer
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="update-actions">
+          <span>Dernière vérification : {checkedAt}</span>
+          {update.phase === "available" && update.channel === "direct" ? (
+            <button className="button-primary" type="button" disabled={busy} onClick={() => setConfirming(true)}>
+              Installer {update.availableVersion}…
+            </button>
+          ) : null}
+          {update.phase === "available" && update.channel === "homebrew" ? (
+            <code>brew upgrade --cask warpgatesh</code>
+          ) : null}
+          {update.phase === "available" && update.channel === "unsupported" ? (
+            <span>Réinstallez la dernière release GitHub depuis le menu Aide et assistance.</span>
+          ) : null}
+          {update.phase !== "available" ? (
+            <button className="button-secondary" type="button" disabled={busy || operationActive} onClick={() => void onCheck()}>
+              Vérifier maintenant
+            </button>
+          ) : null}
+        </div>
+      )}
     </section>
   );
 }
@@ -488,10 +606,30 @@ export default function App() {
   useEffect(() => {
     let disposed = false;
     let stopListening: (() => void) | undefined;
-    void listen<View>("warpgatesh:navigate", (event) => {
+    void listen<View | "updates">("warpgatesh:navigate", (event) => {
+      if (event.payload === "updates") {
+        setView("preferences");
+        window.setTimeout(() => document.getElementById("updates")?.scrollIntoView(), 50);
+        return;
+      }
       if (event.payload === "access" || event.payload === "profiles" || event.payload === "preferences") {
         setView(event.payload);
       }
+    }).then((unlisten) => {
+      if (disposed) unlisten();
+      else stopListening = unlisten;
+    });
+    return () => {
+      disposed = true;
+      stopListening?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    let disposed = false;
+    let stopListening: (() => void) | undefined;
+    void listen<UpdateStatus>("warpgatesh:update-state", (event) => {
+      setState((current) => (current ? { ...current, update: event.payload } : current));
     }).then((unlisten) => {
       if (disposed) unlisten();
       else stopListening = unlisten;
@@ -516,7 +654,8 @@ export default function App() {
 
   useEffect(() => {
     void refresh();
-    const refreshInterval = state?.agentSynchronizing ? 1_000 : 5_000;
+    const updateActive = state?.update.phase === "downloading" || state?.update.phase === "installing";
+    const refreshInterval = state?.agentSynchronizing || updateActive ? 1_000 : 5_000;
     const interval = window.setInterval(() => {
       if (document.visibilityState === "visible") void refresh();
     }, refreshInterval);
@@ -532,7 +671,7 @@ export default function App() {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [dismissNotice, refresh, state?.agentSynchronizing]);
+  }, [dismissNotice, refresh, state?.agentSynchronizing, state?.update.phase]);
 
   async function runAction(action: () => Promise<void>, success: string): Promise<boolean> {
     setBusy(true);
@@ -576,6 +715,17 @@ export default function App() {
     }, "La commande warpgatesh est disponible dans le terminal.");
   }
 
+  async function handleCheckForUpdates() {
+    await runAction(async () => {
+      const update = await checkForUpdates();
+      setState((current) => (current ? { ...current, update } : current));
+    }, "Vérification des mises à jour terminée.");
+  }
+
+  async function handleInstallUpdate() {
+    await runAction(installUpdate, "Mise à jour installée. Redémarrage de WarpgateSH…");
+  }
+
   async function handleUninstall(deleteUserData: boolean, confirmation: string) {
     setBusy(true);
     setError(null);
@@ -611,7 +761,7 @@ export default function App() {
         {state === null ? <p className="loading-state">Lecture de l’état local…</p> : null}
         {state && view === "access" ? <AccessView state={state} busy={busy} onSync={() => void handleSync()} onOpen={(alias) => void handleOpen(alias)} onNavigate={setView} /> : null}
         {state && view === "profiles" ? <ProfilesView profiles={state.profiles} busy={busy} onChanged={refresh} runAction={runAction} /> : null}
-        {state && view === "preferences" ? <PreferencesView state={state} busy={busy} onSave={handlePreferences} onInstallCli={handleInstallCli} onUninstall={handleUninstall} /> : null}
+        {state && view === "preferences" ? <PreferencesView state={state} busy={busy} onSave={handlePreferences} onInstallCli={handleInstallCli} onCheckForUpdates={handleCheckForUpdates} onInstallUpdate={handleInstallUpdate} onUninstall={handleUninstall} /> : null}
       </main>
 
       <footer className="profile-footer">
