@@ -2,6 +2,13 @@
 
 Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
+## 0.1.9 — 2026-08-13
+
+### Correctif
+
+- Une installation réalisée depuis le DMG n’est plus confondue avec Homebrew lorsque la CLI intégrée est liée dans `/usr/local/bin`.
+- Le bouton de mise à jour signée reste ainsi disponible pour les installations directes, tandis qu’un Cask Homebrew réellement installé conserve sa commande `brew upgrade --cask warpgatesh`.
+
 ## 0.1.8 — 2026-08-13
 
 ### Amélioration

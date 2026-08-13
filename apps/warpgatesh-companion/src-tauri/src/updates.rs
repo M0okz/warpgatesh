@@ -16,7 +16,11 @@ const CACHE_SCHEMA_VERSION: u32 = 1;
 const CHECK_INTERVAL: Duration = Duration::from_secs(24 * 60 * 60);
 const BACKGROUND_POLL_INTERVAL: Duration = Duration::from_secs(60 * 60);
 const UPDATE_EVENT: &str = "warpgatesh:update-state";
-const HOMEBREW_CLIS: [&str; 2] = ["/opt/homebrew/bin/warpgatesh", "/usr/local/bin/warpgatesh"];
+const INSTALLED_APPLICATION: &str = "/Applications/WarpgateSH.app";
+const HOMEBREW_CASK_ROOTS: [&str; 2] = [
+    "/opt/homebrew/Caskroom/warpgatesh",
+    "/usr/local/Caskroom/warpgatesh",
+];
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -425,37 +429,32 @@ fn detect_update_channel() -> UpdateChannel {
     let Ok(executable) = std::env::current_exe() else {
         return UpdateChannel::Unsupported;
     };
-    let homebrew_clis = HOMEBREW_CLIS.map(Path::new);
-    detect_update_channel_from(&executable, &homebrew_clis)
+    let homebrew_cask_roots = HOMEBREW_CASK_ROOTS.map(Path::new);
+    detect_update_channel_from(
+        &executable,
+        Path::new(INSTALLED_APPLICATION),
+        &homebrew_cask_roots,
+    )
 }
 
-fn detect_update_channel_from(executable: &Path, homebrew_clis: &[&Path]) -> UpdateChannel {
+fn detect_update_channel_from(
+    executable: &Path,
+    installed_application: &Path,
+    homebrew_cask_roots: &[&Path],
+) -> UpdateChannel {
     let inside_applications = executable
         .ancestors()
-        .any(|path| path == Path::new("/Applications/WarpgateSH.app"));
+        .any(|path| path == installed_application);
     if !inside_applications {
         return UpdateChannel::Unsupported;
     }
 
-    let bundled_cli = executable
-        .parent()
-        .map(|directory| directory.join("warpgatesh"));
-    let homebrew_managed = bundled_cli.is_some_and(|bundled| {
-        homebrew_clis
-            .iter()
-            .any(|homebrew_cli| same_file(homebrew_cli, &bundled))
-    });
+    let homebrew_managed = homebrew_cask_roots.iter().any(|root| root.is_dir());
     if homebrew_managed {
         UpdateChannel::Homebrew
     } else {
         UpdateChannel::Direct
     }
-}
-
-fn same_file(left: &Path, right: &Path) -> bool {
-    fs::canonicalize(left)
-        .and_then(|left| fs::canonicalize(right).map(|right| left == right))
-        .unwrap_or(false)
 }
 
 fn lock_recover<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
@@ -509,9 +508,48 @@ mod tests {
         assert_eq!(
             detect_update_channel_from(
                 Path::new("/private/tmp/WarpgateSH.app/Contents/MacOS/warpgatesh-companion"),
-                &[Path::new("/opt/homebrew/bin/warpgatesh")],
+                Path::new("/Applications/WarpgateSH.app"),
+                &[Path::new("/opt/homebrew/Caskroom/warpgatesh")],
             ),
             UpdateChannel::Unsupported
+        );
+    }
+
+    #[test]
+    fn recognizes_a_dmg_install_even_when_the_cli_links_to_the_bundle() {
+        let directory = tempfile::tempdir().expect("temporary directory");
+        let application = directory.path().join("Applications/WarpgateSH.app");
+        let executable = application.join("Contents/MacOS/warpgatesh-companion");
+        let bundled_cli = application.join("Contents/MacOS/warpgatesh");
+        let cli_link = directory.path().join("usr-local-bin-warpgatesh");
+        fs::create_dir_all(executable.parent().expect("executable parent"))
+            .expect("application executable directory");
+        fs::write(&bundled_cli, b"cli").expect("bundled CLI");
+        std::os::unix::fs::symlink(&bundled_cli, &cli_link).expect("managed CLI link");
+
+        assert_eq!(
+            detect_update_channel_from(&executable, &application, &[]),
+            UpdateChannel::Direct
+        );
+        assert_eq!(
+            fs::canonicalize(cli_link).expect("canonical CLI link"),
+            fs::canonicalize(bundled_cli).expect("canonical bundled CLI")
+        );
+    }
+
+    #[test]
+    fn recognizes_an_installed_homebrew_cask() {
+        let directory = tempfile::tempdir().expect("temporary directory");
+        let application = directory.path().join("Applications/WarpgateSH.app");
+        let executable = application.join("Contents/MacOS/warpgatesh-companion");
+        let cask_root = directory.path().join("Caskroom/warpgatesh");
+        fs::create_dir_all(executable.parent().expect("executable parent"))
+            .expect("application executable directory");
+        fs::create_dir_all(&cask_root).expect("Homebrew cask root");
+
+        assert_eq!(
+            detect_update_channel_from(&executable, &application, &[&cask_root]),
+            UpdateChannel::Homebrew
         );
     }
 

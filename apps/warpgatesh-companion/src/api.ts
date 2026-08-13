@@ -44,8 +44,8 @@ const demoState: CompanionState = {
   update: {
     phase: "available",
     channel: "direct",
-    currentVersion: "0.1.8",
-    availableVersion: "0.1.9",
+    currentVersion: "0.1.9",
+    availableVersion: "0.1.10",
     notes: "Mise à jour signée avec amélioration du menu et de la synchronisation.",
     checkedAtEpochSeconds: Math.floor(Date.now() / 1000),
     progressPercent: null,
