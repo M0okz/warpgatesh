@@ -104,7 +104,9 @@ jobs:
           xcrun stapler validate "${bundle}"
           hdiutil verify "${dmg}"
           xcrun stapler validate "${dmg}"
-          shasum -a 256 "${dmg}" > "${dmg}.sha256"
+          dmg_directory="$(dirname "${dmg}")"
+          dmg_name="$(basename "${dmg}")"
+          (cd "${dmg_directory}" && shasum -a 256 "${dmg_name}" > "${dmg_name}.sha256")
 
       - name: Generate signed updater metadata
         env:
