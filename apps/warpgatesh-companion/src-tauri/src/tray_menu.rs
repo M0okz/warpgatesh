@@ -63,7 +63,7 @@ fn show_view(app: &tauri::AppHandle, view: &str) {
 
 pub(crate) fn install(app: &mut tauri::App) -> tauri::Result<()> {
     let labels = load_labels();
-    let agent = MenuItem::with_id(app, "agent-status", &labels.agent, false, None::<&str>)?;
+    let agent = MenuItem::with_id(app, "agent-status", &labels.agent, true, None::<&str>)?;
     let last_sync = MenuItem::with_id(
         app,
         "last-sync-status",
@@ -210,7 +210,7 @@ fn build_help_menu(app: &tauri::App) -> tauri::Result<HelpMenu> {
 
 pub(crate) fn handle_menu_event(app: &tauri::AppHandle, event: &MenuEvent) {
     match event.id().as_ref() {
-        "show" => show_main_window(app),
+        "agent-status" | "show" => show_main_window(app),
         "profiles" => show_view(app, "profiles"),
         "preferences" => show_view(app, "preferences"),
         "sync" => commands::synchronize_from_tray(),
@@ -356,11 +356,11 @@ fn labels_for(
 ) -> TrayLabels {
     let age = last_success.map(|timestamp| now.saturating_sub(timestamp));
     let agent = if !runtime.running {
-        "○ Agent arrêté"
+        "🔴 Agent arrêté"
     } else if runtime.synchronizing {
-        "● Synchronisation en cours…"
+        "🟢 Synchronisation en cours…"
     } else {
-        "● Agent actif"
+        "🟢 Agent actif"
     };
     let last_sync = age.map_or_else(
         || "Dernière synchro : jamais".to_owned(),
@@ -463,7 +463,7 @@ mod tests {
             },
         );
 
-        assert_eq!(labels.agent, "● Agent actif");
+        assert_eq!(labels.agent, "🟢 Agent actif");
         assert_eq!(labels.last_sync, "Dernière synchro : il y a 2 min 05 s");
         assert_eq!(labels.next_sync, "Prochaine synchro : dans 42 s");
         assert!(labels.sync_enabled);
@@ -482,8 +482,26 @@ mod tests {
             },
         );
 
-        assert_eq!(labels.agent, "● Synchronisation en cours…");
+        assert_eq!(labels.agent, "🟢 Synchronisation en cours…");
         assert_eq!(labels.next_sync, "Prochaine synchro : en cours");
+        assert!(!labels.sync_enabled);
+    }
+
+    #[test]
+    fn marks_a_stopped_agent_in_red() {
+        let labels = labels_for(
+            1_000,
+            Some(875),
+            300,
+            &AgentRuntimeStatus {
+                running: false,
+                synchronizing: false,
+                next_sync_seconds: None,
+            },
+        );
+
+        assert_eq!(labels.agent, "🔴 Agent arrêté");
+        assert_eq!(labels.next_sync, "Prochaine synchro : agent arrêté");
         assert!(!labels.sync_enabled);
     }
 

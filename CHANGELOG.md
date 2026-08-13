@@ -2,6 +2,17 @@
 
 Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
+## 0.1.8 — 2026-08-13
+
+### Amélioration
+
+- Le menu de la barre des menus affiche désormais un voyant vert lorsque l’agent répond et un voyant rouge lorsqu’il est arrêté ou indisponible.
+- La ligne d’état de l’agent ouvre WarpgateSH, ce qui la rend utile tout en conservant les informations de synchronisation en lecture seule.
+
+### Mise à jour intégrée
+
+- Cette version est la première destinée à valider le parcours complet de mise à jour signée depuis WarpgateSH 0.1.7, avec consentement explicite, relance de l’application et reprise de l’agent.
+
 ## 0.1.7 — 2026-08-13
 
 ### Nouveautés
