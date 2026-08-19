@@ -1119,6 +1119,7 @@ name = "warpgatesh-cli"
 version = "0.1.10"
 dependencies = [
  "rpassword",
+ "tempfile",
  "warpgatesh-core",
  "warpgatesh-runtime",
 ]
