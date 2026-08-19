@@ -74,9 +74,58 @@ Commands:\n  profile add <name> <url>  Add or replace a Warpgate profile\n  prof
 #[must_use]
 pub fn openssh_arguments(alias: &str, ssh_arguments: &[String]) -> Vec<String> {
     let mut arguments = Vec::with_capacity(ssh_arguments.len() + 1);
-    arguments.extend_from_slice(ssh_arguments);
+    let destination_index = openssh_destination_index(ssh_arguments);
+    arguments.extend_from_slice(&ssh_arguments[..destination_index]);
     arguments.push(alias.to_owned());
+    arguments.extend_from_slice(&ssh_arguments[destination_index..]);
     arguments
+}
+
+fn openssh_destination_index(arguments: &[String]) -> usize {
+    let mut index = 0;
+    while index < arguments.len() {
+        let argument = &arguments[index];
+        if argument == "--" {
+            return (index + 1).min(arguments.len());
+        }
+        if !argument.starts_with('-') || argument == "-" {
+            return index;
+        }
+
+        index += 1;
+        if option_requires_separate_value(argument) && index < arguments.len() {
+            index += 1;
+        }
+    }
+    arguments.len()
+}
+
+fn option_requires_separate_value(argument: &str) -> bool {
+    argument.len() == 2
+        && matches!(
+            argument.as_bytes()[1],
+            b'B' | b'b'
+                | b'c'
+                | b'D'
+                | b'E'
+                | b'e'
+                | b'F'
+                | b'I'
+                | b'i'
+                | b'J'
+                | b'L'
+                | b'l'
+                | b'm'
+                | b'O'
+                | b'o'
+                | b'P'
+                | b'p'
+                | b'Q'
+                | b'R'
+                | b'S'
+                | b'W'
+                | b'w'
+        )
 }
 
 #[cfg(test)]
@@ -125,6 +174,32 @@ mod tests {
         assert_eq!(
             openssh_arguments("dmz-nextcloud-01", &args(&["-L", "8080:localhost:80"])),
             args(&["-L", "8080:localhost:80", "dmz-nextcloud-01"])
+        );
+    }
+
+    #[test]
+    fn puts_a_remote_command_after_the_destination() {
+        assert_eq!(
+            openssh_arguments("dmz-nextcloud-01", &args(&["true"])),
+            args(&["dmz-nextcloud-01", "true"])
+        );
+    }
+
+    #[test]
+    fn separates_openssh_options_from_the_remote_command() {
+        assert_eq!(
+            openssh_arguments(
+                "dmz-nextcloud-01",
+                &args(&["-o", "BatchMode=yes", "-p2222", "printf", "connected",]),
+            ),
+            args(&[
+                "-o",
+                "BatchMode=yes",
+                "-p2222",
+                "dmz-nextcloud-01",
+                "printf",
+                "connected",
+            ])
         );
     }
 }
