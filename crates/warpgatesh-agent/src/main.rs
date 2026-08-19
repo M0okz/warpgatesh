@@ -4,11 +4,12 @@ use std::process::ExitCode;
 use serde_json::json;
 use warpgatesh_core::schedule::SyncSchedule;
 use warpgatesh_runtime::RuntimeError;
+use warpgatesh_runtime::api::ApiClient;
 use warpgatesh_runtime::configuration::{ConfigurationMutation, LocalConfiguration};
 use warpgatesh_runtime::diagnostics::DiagnosticLogger;
 use warpgatesh_runtime::ipc::MUTATION_PREFIX;
-use warpgatesh_runtime::keychain::SystemKeychain;
-use warpgatesh_runtime::ssh::verify_host_keys;
+use warpgatesh_runtime::keychain::{SystemKeychain, TokenStore};
+use warpgatesh_runtime::ssh::{save_host_keys, verify_host_keys};
 use warpgatesh_runtime::storage::{
     AGENT_STATUS_SCHEMA_VERSION, AgentErrorKind, AgentStatus, LocalStore,
 };
@@ -111,15 +112,21 @@ fn synchronize_and_record(store: &LocalStore) -> Result<SyncReport, RuntimeError
 }
 
 fn verify_and_synchronize(store: &LocalStore) -> Result<SyncReport, RuntimeError> {
+    let tokens = SystemKeychain;
     for profile in store.load_profiles()?.profiles {
-        verify_host_keys(
+        let token = tokens.get(&profile.name)?;
+        let metadata = ApiClient::new(&profile.base_url)?.validate(&token)?;
+        let presented = verify_host_keys(
             store.paths(),
             &profile.name,
-            &profile.ssh_host,
-            profile.ssh_port,
+            &metadata.ssh_host,
+            metadata.ssh_port,
         )?;
+        if profile.ssh_host != metadata.ssh_host || profile.ssh_port != metadata.ssh_port {
+            save_host_keys(store.paths(), &profile.name, &presented.known_hosts)?;
+        }
     }
-    synchronize_all(store, &SystemKeychain)
+    synchronize_all(store, &tokens)
 }
 
 fn error_kind(error: &RuntimeError) -> AgentErrorKind {

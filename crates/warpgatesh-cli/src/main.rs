@@ -440,11 +440,7 @@ fn agent_is_running(store: &LocalStore) -> bool {
 
 fn agent_executable() -> Result<std::path::PathBuf, RuntimeError> {
     let current = std::env::current_exe()?;
-    let sibling = current
-        .parent()
-        .unwrap_or_else(|| Path::new("."))
-        .join("warpgatesh-agent");
-    if sibling.is_file() {
+    if let Some(sibling) = sibling_agent_executable(&current) {
         return Ok(sibling);
     }
 
@@ -458,6 +454,12 @@ fn agent_executable() -> Result<std::path::PathBuf, RuntimeError> {
     Err(RuntimeError::Command(
         "warpgatesh-agent is not installed next to the CLI or in PATH".to_owned(),
     ))
+}
+
+fn sibling_agent_executable(current: &Path) -> Option<std::path::PathBuf> {
+    let resolved = std::fs::canonicalize(current).unwrap_or_else(|_| current.to_path_buf());
+    let sibling = resolved.parent()?.join("warpgatesh-agent");
+    sibling.is_file().then_some(sibling)
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -595,6 +597,11 @@ fn execute_ssh(_alias: &str, _ssh_arguments: &[String]) -> ExitCode {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(unix)]
+    use std::fs;
+    #[cfg(unix)]
+    use std::os::unix::fs::symlink;
+
     use super::*;
 
     #[test]
@@ -611,5 +618,25 @@ mod tests {
             "10.60.0.17",
             2222
         ));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn finds_the_bundled_agent_when_the_cli_is_called_through_a_symlink() {
+        let directory = tempfile::TempDir::new().expect("temporary directory");
+        let bundle = directory.path().join("WarpgateSH.app/Contents/MacOS");
+        fs::create_dir_all(&bundle).expect("bundle directory");
+        let cli = bundle.join("warpgatesh");
+        let agent = bundle.join("warpgatesh-agent");
+        fs::write(&cli, []).expect("CLI executable");
+        fs::write(&agent, []).expect("agent executable");
+
+        let link = directory.path().join("warpgatesh");
+        symlink(&cli, &link).expect("CLI symlink");
+
+        assert_eq!(
+            sibling_agent_executable(&link),
+            Some(fs::canonicalize(agent).expect("canonical agent path"))
+        );
     }
 }

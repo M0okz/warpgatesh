@@ -121,7 +121,7 @@ pub fn verify_host_keys(
     profile: &str,
     host: &str,
     port: u16,
-) -> Result<(), RuntimeError> {
+) -> Result<ScannedHostKeys, RuntimeError> {
     let pinned = fs::read_to_string(paths.known_hosts_directory.join(profile))?;
     let presented = scan_host_keys(host, port)?;
     if key_material(&pinned) != key_material(&presented.known_hosts) {
@@ -129,7 +129,7 @@ pub fn verify_host_keys(
             "SSH host keys changed for profile '{profile}' at {host}:{port}; review and add the profile again before synchronizing"
         )));
     }
-    Ok(())
+    Ok(presented)
 }
 
 fn key_material(known_hosts: &str) -> BTreeSet<(&str, &str)> {

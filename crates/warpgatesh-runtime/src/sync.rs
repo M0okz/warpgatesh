@@ -77,6 +77,8 @@ pub fn synchronize_all(
 
         profile.username = metadata.username;
         profile.warpgate_version = metadata.version;
+        profile.ssh_host = metadata.ssh_host;
+        profile.ssh_port = metadata.ssh_port;
 
         let is_default = default_profile.as_deref() == Some(profile.name.as_str());
         rendered.push_str(&render_profile(
@@ -127,6 +129,7 @@ pub fn synchronize_all(
 
     atomic_write(store.paths().ssh_config.as_path(), rendered.as_bytes())?;
     store.save_snapshot(&snapshot)?;
+    store.save_profiles(&catalog)?;
     Ok(SyncReport {
         profile_count: catalog.profiles.len(),
         target_count: snapshot.targets.len(),
@@ -249,10 +252,12 @@ mod tests {
             .expect("saved profiles")
             .profiles
             .remove(0);
-        assert_eq!(saved_profile.ssh_host, "10.60.0.17");
-        assert_eq!(saved_profile.ssh_port, 22);
+        assert_eq!(saved_profile.ssh_host, "ssh.example");
+        assert_eq!(saved_profile.ssh_port, 2222);
         let config = fs::read_to_string(paths.ssh_config).expect("managed config");
         assert!(config.contains("Host db db.lab"));
+        assert!(config.contains("HostName \"ssh.example\""));
+        assert!(config.contains("Port 2222"));
         assert!(!config.contains("Host web"));
         assert_eq!(
             store.load_snapshot().expect("snapshot").unwrap().targets[0].name,

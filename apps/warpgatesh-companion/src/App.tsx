@@ -208,6 +208,7 @@ function ProfileCard({
   onRemove: (name: string) => Promise<void>;
 }) {
   const [renewing, setRenewing] = useState(false);
+  const [confirmingRemoval, setConfirmingRemoval] = useState(false);
   const [token, setToken] = useState("");
 
   return (
@@ -245,10 +246,21 @@ function ProfileCard({
           </div>
         </form>
       ) : (
-        <div className="card-actions">
-          <button type="button" onClick={() => setRenewing(true)}>Renouveler le jeton</button>
-          <button className="text-danger" type="button" onClick={() => void onRemove(profile.name)}>Supprimer</button>
-        </div>
+        <>
+          <div className="card-actions">
+            <button type="button" onClick={() => setRenewing(true)}>Renouveler le jeton</button>
+            <button className="text-danger" type="button" onClick={() => setConfirmingRemoval(true)}>Supprimer</button>
+          </div>
+          {confirmingRemoval ? (
+            <div className="inline-confirm" role="group" aria-label={`Confirmer la suppression du profil ${profile.name}`}>
+              <p>Supprimer ce profil et régénérer les alias SSH sans lui ?</p>
+              <div className="button-row">
+                <button className="button-secondary" type="button" onClick={() => setConfirmingRemoval(false)}>Annuler</button>
+                <button className="button-danger" type="button" disabled={busy} onClick={() => void onRemove(profile.name)}>Confirmer</button>
+              </div>
+            </div>
+          ) : null}
+        </>
       )}
     </article>
   );
@@ -257,12 +269,16 @@ function ProfileCard({
 function ProfilesView({
   profiles,
   busy,
+  synchronizing,
   onChanged,
+  onSynchronize,
   runAction,
 }: {
   profiles: CompanionProfile[];
   busy: boolean;
+  synchronizing: boolean;
   onChanged: () => Promise<void>;
+  onSynchronize: () => void;
   runAction: (action: () => Promise<void>, success: string) => Promise<boolean>;
 }) {
   const [adding, setAdding] = useState(false);
@@ -297,7 +313,6 @@ function ProfilesView({
   }
 
   async function remove(name: string) {
-    if (!window.confirm(`Supprimer le profil « ${name} » et ses alias SSH ?`)) return;
     await runAction(async () => {
       await removeProfile(name);
       await onChanged();
@@ -308,7 +323,12 @@ function ProfilesView({
     <section className="page-panel" aria-labelledby="profiles-title">
       <div className="page-heading">
         <div><p className="section-kicker">Instances</p><h2 id="profiles-title">Profils Warpgate</h2></div>
-        <button className="button-primary button-compact" type="button" onClick={() => setAdding((value) => !value)}>{adding ? "Fermer" : "+ Ajouter"}</button>
+        <div className="page-heading__actions">
+          <button className="button-secondary button-compact" type="button" disabled={synchronizing} onClick={onSynchronize}>
+            {synchronizing ? "Régénération…" : "Régénérer les alias SSH"}
+          </button>
+          <button className="button-primary button-compact" type="button" onClick={() => setAdding((value) => !value)}>{adding ? "Fermer" : "+ Ajouter"}</button>
+        </div>
       </div>
 
       {adding ? (
@@ -853,7 +873,7 @@ export default function App() {
       <main>
         {state === null ? <p className="loading-state">Lecture de l’état local…</p> : null}
         {state && view === "access" ? <AccessView state={state} busy={busy} onSync={() => void handleSync()} onOpen={(alias) => void handleOpen(alias)} onNavigate={setView} /> : null}
-        {state && view === "profiles" ? <ProfilesView profiles={state.profiles} busy={busy} onChanged={refresh} runAction={runAction} /> : null}
+        {state && view === "profiles" ? <ProfilesView profiles={state.profiles} busy={busy} synchronizing={busy || state.agentSynchronizing} onChanged={refresh} onSynchronize={() => void handleSync()} runAction={runAction} /> : null}
         {state && view === "preferences" ? <PreferencesView state={state} busy={busy} onSave={handlePreferences} onInstallCli={handleInstallCli} onCheckForUpdates={handleCheckForUpdates} onInstallUpdate={handleInstallUpdate} onUninstall={handleUninstall} /> : null}
       </main>
 

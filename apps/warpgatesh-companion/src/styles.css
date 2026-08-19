@@ -632,6 +632,13 @@ main {
   margin-bottom: 18px;
 }
 
+.page-heading__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .button-primary,
 .button-secondary {
   min-height: 40px;
@@ -828,6 +835,28 @@ main {
 .inline-form {
   display: grid;
   gap: 10px;
+}
+
+.inline-confirm {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgb(211 93 71 / 35%);
+  border-radius: 8px;
+  background: var(--danger-soft);
+}
+
+.inline-confirm p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.button-danger {
+  border-color: rgb(211 93 71 / 55%);
+  color: var(--danger);
+  background: var(--danger-soft);
 }
 
 .button-row {
