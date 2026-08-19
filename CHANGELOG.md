@@ -2,6 +2,28 @@
 
 Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
+## 0.1.11 — 2026-08-19
+
+### Synchronisation
+
+- L’agent suit désormais les changements d’adresse ou de port SSH annoncés par Warpgate, sans demander de recréer le profil lorsque la clé d’hôte épinglée reste identique.
+- Les profils et les alias SSH enregistrent le nouvel endpoint après une synchronisation réussie.
+
+### Interface
+
+- La page des profils permet de régénérer immédiatement les alias SSH.
+- La suppression d’un profil utilise maintenant une confirmation intégrée, plus claire que la boîte de dialogue système.
+
+### Correctifs CLI
+
+- `warpgatesh <cible> -- <commande>` conserve correctement les options OpenSSH avant la destination et place la commande distante après celle-ci.
+- `warpgatesh agent install` retrouve correctement l’agent inclus dans l’application lorsque la CLI est appelée depuis son lien `/usr/local/bin/warpgatesh`.
+
+### Documentation et diagnostics
+
+- Les guides publics couvrent désormais l’installation, la première connexion, le dépannage, la désinstallation et la contribution.
+- Cette publication inclut également les diagnostics locaux et l’export expurgé préparés pour v0.1.10, qui était restée en brouillon et n’avait pas été proposée aux utilisateurs.
+
 ## 0.1.10 — 2026-08-13
 
 ### Nouveauté
