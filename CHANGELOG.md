@@ -2,6 +2,19 @@
 
 Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
+## 0.1.12 — 2026-08-20
+
+### Mise à jour intégrée
+
+- WarpgateSH recherche désormais automatiquement une nouvelle version toutes les six heures.
+- L’action « Rechercher les mises à jour… » du menu de la barre des menus est de nouveau cliquable et lance immédiatement une vérification forcée.
+
+### Fiabilité de la synchronisation
+
+- Un premier échec transitoire reste silencieux pendant que l’agent réessaie automatiquement.
+- Une alerte est affichée uniquement après deux échecs consécutifs ; toute synchronisation réussie remet le compteur à zéro.
+- Les anciens fichiers d’état de l’agent restent compatibles et sont migrés sans intervention.
+
 ## 0.1.11 — 2026-08-19
 
 ### Synchronisation

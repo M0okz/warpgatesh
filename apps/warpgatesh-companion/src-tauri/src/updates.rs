@@ -13,7 +13,7 @@ use warpgatesh_runtime::launchd;
 use warpgatesh_runtime::storage::{LocalStore, atomic_write};
 
 const CACHE_SCHEMA_VERSION: u32 = 1;
-const CHECK_INTERVAL: Duration = Duration::from_secs(24 * 60 * 60);
+const CHECK_INTERVAL: Duration = Duration::from_secs(6 * 60 * 60);
 const BACKGROUND_POLL_INTERVAL: Duration = Duration::from_secs(60 * 60);
 const UPDATE_EVENT: &str = "warpgatesh:update-state";
 const INSTALLED_APPLICATION: &str = "/Applications/WarpgateSH.app";
@@ -108,7 +108,7 @@ impl UpdateManager {
 
     /// Check the signed Tauri update feed.
     ///
-    /// A background check is skipped when a successful check is less than one day old. Passing
+    /// A background check is skipped when a successful check is less than six hours old. Passing
     /// `force` is reserved for a user-initiated check and never installs anything.
     pub async fn check(&self, app: &AppHandle, force: bool) -> Result<UpdateStatus, String> {
         let snapshot = self.snapshot();
@@ -479,14 +479,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn checks_only_once_per_day_unless_forced_by_the_caller() {
+    fn checks_automatically_every_six_hours_unless_forced_by_the_caller() {
         assert!(check_is_due(None, 100_000));
-        assert!(!check_is_due(Some(100_000), 100_000 + 86_399));
-        assert!(check_is_due(Some(100_000), 100_000 + 86_400));
+        assert!(!check_is_due(Some(100_000), 100_000 + 21_599));
+        assert!(check_is_due(Some(100_000), 100_000 + 21_600));
     }
 
     #[test]
-    fn restores_an_available_release_from_the_daily_cache() {
+    fn restores_an_available_release_from_the_update_cache() {
         let status = status_from_cache(
             "0.1.7",
             UpdateChannel::Direct,

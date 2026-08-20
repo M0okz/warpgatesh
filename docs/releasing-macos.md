@@ -44,7 +44,7 @@ notarial Apple, agrafe le ticket et exécute `codesign`, `spctl`, `stapler` et
 4. Installer le DMG sur un Mac de test, puis publier manuellement le brouillon.
 
 Le brouillon n’est jamais proposé aux clients. Après publication, l’application
-lit `releases/latest/download/latest.json` au maximum une fois par jour. Elle ne
+lit `releases/latest/download/latest.json` au maximum une fois toutes les six heures. Elle ne
 télécharge et n’installe une archive qu’après une action explicite de
 l’utilisateur et une vérification réussie de sa signature.
 
