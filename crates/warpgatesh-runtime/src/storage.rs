@@ -67,6 +67,8 @@ pub struct AgentStatus {
     pub schema_version: u32,
     pub last_attempt_epoch_seconds: u64,
     pub last_success_epoch_seconds: Option<u64>,
+    #[serde(default)]
+    pub consecutive_failures: u32,
     pub last_error_kind: Option<AgentErrorKind>,
     pub last_error_message: Option<String>,
 }
@@ -349,5 +351,21 @@ mod tests {
             store.load_preferences().expect("load preferences"),
             preferences
         );
+    }
+
+    #[test]
+    fn loads_an_agent_status_written_before_failure_counting() {
+        let status: AgentStatus = serde_json::from_str(
+            r#"{
+                "schema_version": 1,
+                "last_attempt_epoch_seconds": 42,
+                "last_success_epoch_seconds": 40,
+                "last_error_kind": "api_unreachable",
+                "last_error_message": "temporary failure"
+            }"#,
+        )
+        .expect("legacy agent status");
+
+        assert_eq!(status.consecutive_failures, 0);
     }
 }

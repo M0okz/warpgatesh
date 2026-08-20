@@ -70,17 +70,18 @@ fn synchronize_once() -> Result<SyncReport, RuntimeError> {
 fn synchronize_and_record(store: &LocalStore) -> Result<SyncReport, RuntimeError> {
     let logger = DiagnosticLogger::new(&store.paths().logs_directory, "agent");
     let attempted_at = epoch_seconds();
-    let previous_success = store
-        .load_agent_status()
-        .ok()
-        .flatten()
+    let previous_status = store.load_agent_status().ok().flatten();
+    let previous_success = previous_status
+        .as_ref()
         .and_then(|status| status.last_success_epoch_seconds);
+    let previous_failures = previous_status.map_or(0, |status| status.consecutive_failures);
     match verify_and_synchronize(store) {
         Ok(report) => {
             store.save_agent_status(&AgentStatus {
                 schema_version: AGENT_STATUS_SCHEMA_VERSION,
                 last_attempt_epoch_seconds: attempted_at,
                 last_success_epoch_seconds: Some(report.synchronized_at_epoch_seconds),
+                consecutive_failures: 0,
                 last_error_kind: None,
                 last_error_message: None,
             })?;
@@ -98,6 +99,7 @@ fn synchronize_and_record(store: &LocalStore) -> Result<SyncReport, RuntimeError
                 schema_version: AGENT_STATUS_SCHEMA_VERSION,
                 last_attempt_epoch_seconds: attempted_at,
                 last_success_epoch_seconds: previous_success,
+                consecutive_failures: previous_failures.saturating_add(1),
                 last_error_kind: Some(kind.clone()),
                 last_error_message: Some(error.to_string()),
             };

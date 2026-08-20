@@ -1107,7 +1107,7 @@ dependencies = [
 
 [[package]]
 name = "warpgatesh-agent"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "serde_json",
  "warpgatesh-core",
@@ -1116,7 +1116,7 @@ dependencies = [
 
 [[package]]
 name = "warpgatesh-cli"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "rpassword",
  "tempfile",
@@ -1126,14 +1126,14 @@ dependencies = [
 
 [[package]]
 name = "warpgatesh-core"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "warpgatesh-runtime"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "chrono",
  "glob",

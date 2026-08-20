@@ -38,6 +38,12 @@ struct UpdateLabels {
     download_enabled: bool,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum UpdateMenuAction {
+    Check,
+    Open,
+}
+
 struct HelpMenu {
     submenu: Submenu<tauri::Wry>,
     update_status: MenuItem<tauri::Wry>,
@@ -217,9 +223,35 @@ pub(crate) fn handle_menu_event(app: &tauri::AppHandle, event: &MenuEvent) {
         "github" => open_external_url(GITHUB_REPOSITORY_URL),
         "documentation" => open_external_url(GITHUB_DOCUMENTATION_URL),
         "troubleshooting" => open_external_url(GITHUB_ISSUES_URL),
-        "download-update" => show_view(app, "updates"),
+        "download-update" => handle_update_menu_action(app),
         "quit" => app.exit(0),
         _ => {}
+    }
+}
+
+fn handle_update_menu_action(app: &tauri::AppHandle) {
+    match update_menu_action_for(&updates::status(app)) {
+        Some(UpdateMenuAction::Check) => {
+            show_view(app, "updates");
+            let app = app.clone();
+            tauri::async_runtime::spawn(async move {
+                let _ = updates::check_for_updates(app).await;
+            });
+        }
+        Some(UpdateMenuAction::Open) => show_view(app, "updates"),
+        None => {}
+    }
+}
+
+fn update_menu_action_for(update: &updates::UpdateStatus) -> Option<UpdateMenuAction> {
+    use updates::UpdatePhase;
+
+    match update.phase {
+        UpdatePhase::Idle | UpdatePhase::Current | UpdatePhase::Error => {
+            Some(UpdateMenuAction::Check)
+        }
+        UpdatePhase::Available => Some(UpdateMenuAction::Open),
+        UpdatePhase::Checking | UpdatePhase::Downloading | UpdatePhase::Installing => None,
     }
 }
 
@@ -227,11 +259,12 @@ fn update_labels_for(update: &updates::UpdateStatus) -> UpdateLabels {
     use updates::{UpdateChannel, UpdatePhase};
 
     let default_download = "Rechercher les mises à jour…".to_owned();
+    let download_enabled = update_menu_action_for(update).is_some();
     match update.phase {
         UpdatePhase::Idle => UpdateLabels {
             status: "Mises à jour : en attente".to_owned(),
             download: default_download,
-            download_enabled: false,
+            download_enabled,
         },
         UpdatePhase::Checking => UpdateLabels {
             status: "Recherche de mise à jour…".to_owned(),
@@ -241,7 +274,7 @@ fn update_labels_for(update: &updates::UpdateStatus) -> UpdateLabels {
         UpdatePhase::Current => UpdateLabels {
             status: "WarpgateSH est à jour".to_owned(),
             download: default_download,
-            download_enabled: false,
+            download_enabled,
         },
         UpdatePhase::Available => {
             let version = update.available_version.as_deref().unwrap_or("nouvelle");
@@ -253,7 +286,7 @@ fn update_labels_for(update: &updates::UpdateStatus) -> UpdateLabels {
             UpdateLabels {
                 status: format!("Mise à jour disponible : {version}"),
                 download,
-                download_enabled: true,
+                download_enabled,
             }
         }
         UpdatePhase::Downloading => UpdateLabels {
@@ -272,7 +305,7 @@ fn update_labels_for(update: &updates::UpdateStatus) -> UpdateLabels {
         UpdatePhase::Error => UpdateLabels {
             status: "Recherche de mise à jour indisponible".to_owned(),
             download: default_download,
-            download_enabled: false,
+            download_enabled,
         },
     }
 }
@@ -524,8 +557,30 @@ mod tests {
     }
 
     #[test]
+    fn allows_a_manual_update_check_when_the_app_is_current() {
+        let status = updates::UpdateStatus {
+            phase: updates::UpdatePhase::Current,
+            channel: updates::UpdateChannel::Direct,
+            current_version: env!("CARGO_PKG_VERSION").to_owned(),
+            available_version: None,
+            notes: None,
+            checked_at_epoch_seconds: Some(1),
+            progress_percent: None,
+            message: None,
+        };
+        let labels = update_labels_for(&status);
+
+        assert_eq!(labels.download, "Rechercher les mises à jour…");
+        assert!(labels.download_enabled);
+        assert_eq!(
+            update_menu_action_for(&status),
+            Some(UpdateMenuAction::Check)
+        );
+    }
+
+    #[test]
     fn reports_download_progress_without_allowing_a_second_install() {
-        let labels = update_labels_for(&updates::UpdateStatus {
+        let status = updates::UpdateStatus {
             phase: updates::UpdatePhase::Downloading,
             channel: updates::UpdateChannel::Direct,
             current_version: "0.1.6".to_owned(),
@@ -534,9 +589,11 @@ mod tests {
             checked_at_epoch_seconds: Some(1),
             progress_percent: Some(64),
             message: None,
-        });
+        };
+        let labels = update_labels_for(&status);
 
         assert_eq!(labels.status, "Téléchargement : 64 %");
         assert!(!labels.download_enabled);
+        assert_eq!(update_menu_action_for(&status), None);
     }
 }

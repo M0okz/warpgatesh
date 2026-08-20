@@ -467,7 +467,11 @@ fn build_alerts(
             action: None,
         });
     }
-    if let Some(status) = store.load_agent_status().map_err(display_error)? {
+    if let Some(status) = store
+        .load_agent_status()
+        .map_err(display_error)?
+        .filter(|status| status.consecutive_failures >= 2)
+    {
         if let (Some(kind), Some(message)) = (status.last_error_kind, status.last_error_message) {
             let (id, title, action) = match kind {
                 AgentErrorKind::Unauthorized => ("token", "Jeton refusé", Some("profiles")),
@@ -555,7 +559,9 @@ mod tests {
     use tempfile::TempDir;
     use warpgatesh_core::paths::WarpgatePaths;
     use warpgatesh_core::profiles::{Profile, ProfileCatalog};
-    use warpgatesh_runtime::storage::{SNAPSHOT_SCHEMA_VERSION, Snapshot, SyncedTarget};
+    use warpgatesh_runtime::storage::{
+        AgentStatus, SNAPSHOT_SCHEMA_VERSION, Snapshot, SyncedTarget,
+    };
 
     use super::*;
 
@@ -634,5 +640,43 @@ mod tests {
                 synchronizing: false,
             }
         );
+    }
+
+    #[test]
+    fn hides_the_first_sync_failure_and_reports_the_second() {
+        let home = TempDir::new().expect("temporary home");
+        let store = LocalStore::new(WarpgatePaths::for_home(home.path()));
+        let preferences = Preferences::default();
+
+        store
+            .save_agent_status(&AgentStatus {
+                schema_version: warpgatesh_runtime::storage::AGENT_STATUS_SCHEMA_VERSION,
+                last_attempt_epoch_seconds: epoch_seconds(),
+                last_success_epoch_seconds: Some(epoch_seconds().saturating_sub(60)),
+                consecutive_failures: 1,
+                last_error_kind: Some(AgentErrorKind::ApiUnreachable),
+                last_error_message: Some("temporary failure".to_owned()),
+            })
+            .expect("first failed attempt");
+        assert!(
+            build_alerts(&store, true, Some(60), &preferences)
+                .expect("alerts after first failure")
+                .is_empty()
+        );
+
+        store
+            .save_agent_status(&AgentStatus {
+                schema_version: warpgatesh_runtime::storage::AGENT_STATUS_SCHEMA_VERSION,
+                last_attempt_epoch_seconds: epoch_seconds(),
+                last_success_epoch_seconds: Some(epoch_seconds().saturating_sub(90)),
+                consecutive_failures: 2,
+                last_error_kind: Some(AgentErrorKind::ApiUnreachable),
+                last_error_message: Some("second failure".to_owned()),
+            })
+            .expect("second failed attempt");
+        let alerts = build_alerts(&store, true, Some(90), &preferences)
+            .expect("alerts after second failure");
+        assert_eq!(alerts.len(), 1);
+        assert_eq!(alerts[0].id, "api");
     }
 }
