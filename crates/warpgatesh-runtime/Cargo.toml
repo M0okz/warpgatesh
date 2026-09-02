@@ -20,6 +20,9 @@ zip.workspace = true
 [target.'cfg(target_os = "macos")'.dependencies]
 security-framework = "3.7.0"
 
+[target.'cfg(target_os = "linux")'.dependencies]
+keyring = { version = "3.6.3", default-features = false, features = ["crypto-rust", "sync-secret-service", "vendored"] }
+
 [dev-dependencies]
 tempfile = "3.27.0"
 

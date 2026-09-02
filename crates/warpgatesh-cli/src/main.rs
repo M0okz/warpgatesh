@@ -7,12 +7,11 @@ use warpgatesh_cli::{CliCommand, HELP, openssh_arguments, parse};
 use warpgatesh_core::aliases::is_valid_profile_name;
 use warpgatesh_core::profiles::Profile;
 use warpgatesh_runtime::RuntimeError;
+use warpgatesh_runtime::agent_service;
 use warpgatesh_runtime::api::ApiClient;
 use warpgatesh_runtime::configuration::ConfigurationMutation;
 use warpgatesh_runtime::diagnostics;
 use warpgatesh_runtime::ipc;
-#[cfg(target_os = "macos")]
-use warpgatesh_runtime::launchd;
 use warpgatesh_runtime::ssh::{open_token_page, scan_host_keys};
 use warpgatesh_runtime::storage::LocalStore;
 
@@ -361,14 +360,27 @@ fn run_agent(arguments: &[String]) -> Result<(), RuntimeError> {
                 ))
             }
         }
+        [command] if command == "uninstall" => {
+            let store = LocalStore::for_current_user()?;
+            let removed = agent_service::uninstall(store.paths())?;
+            println!(
+                "Background agent {}.",
+                if removed {
+                    "stopped and uninstalled"
+                } else {
+                    "was not installed"
+                }
+            );
+            Ok(())
+        }
         _ => Err(RuntimeError::InvalidInput(
-            "usage: warpgatesh agent install | agent status".to_owned(),
+            "usage: warpgatesh agent install | agent status | agent uninstall".to_owned(),
         )),
     }
 }
 
 fn request_synchronization() -> Result<(), RuntimeError> {
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
     {
         use std::time::Duration;
 
@@ -380,12 +392,12 @@ fn request_synchronization() -> Result<(), RuntimeError> {
         Ok(())
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
     run_agent_once()
 }
 
 fn request_configuration_mutation(mutation: &ConfigurationMutation) -> Result<(), RuntimeError> {
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
     {
         use std::time::Duration;
 
@@ -399,7 +411,7 @@ fn request_configuration_mutation(mutation: &ConfigurationMutation) -> Result<()
         Ok(())
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
     {
         let _ = mutation;
         Err(RuntimeError::Command(
@@ -408,7 +420,7 @@ fn request_configuration_mutation(mutation: &ConfigurationMutation) -> Result<()
     }
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "linux"))]
 fn ensure_agent_available(store: &LocalStore) -> Result<(), RuntimeError> {
     if !agent_is_running(store) {
         ensure_persistent_agent()?;
@@ -416,14 +428,20 @@ fn ensure_agent_available(store: &LocalStore) -> Result<(), RuntimeError> {
     Ok(())
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "linux"))]
 fn ensure_persistent_agent() -> Result<bool, RuntimeError> {
     let store = LocalStore::for_current_user()?;
     let executable = agent_executable()?;
-    launchd::ensure_installed(store.paths(), &executable)
+    let installed = agent_service::ensure_installed(store.paths(), &executable)?;
+    ipc::request_with_retry(
+        &store.paths().agent_socket,
+        "status",
+        std::time::Duration::from_secs(10),
+    )?;
+    Ok(installed)
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(not(any(target_os = "macos", target_os = "linux")))]
 fn ensure_persistent_agent() -> Result<bool, RuntimeError> {
     let _ = agent_executable()?;
     Ok(false)
@@ -439,21 +457,39 @@ fn agent_is_running(store: &LocalStore) -> bool {
 }
 
 fn agent_executable() -> Result<std::path::PathBuf, RuntimeError> {
+    #[cfg(target_os = "linux")]
+    if let Some(executable) = agent_executable_in_path() {
+        return Ok(executable);
+    }
+
     let current = std::env::current_exe()?;
     if let Some(sibling) = sibling_agent_executable(&current) {
         return Ok(sibling);
     }
 
+    #[cfg(not(target_os = "linux"))]
+    if let Some(executable) = agent_executable_in_path() {
+        return Ok(executable);
+    }
+
+    Err(RuntimeError::Command(
+        "warpgatesh-agent is not installed next to the CLI or in PATH".to_owned(),
+    ))
+}
+
+fn agent_executable_in_path() -> Option<std::path::PathBuf> {
     let path = std::env::var_os("PATH").unwrap_or_default();
     for directory in std::env::split_paths(&path) {
         let candidate = directory.join("warpgatesh-agent");
         if candidate.is_file() {
-            return Ok(candidate);
+            return Some(resolve_agent_executable(candidate));
         }
     }
-    Err(RuntimeError::Command(
-        "warpgatesh-agent is not installed next to the CLI or in PATH".to_owned(),
-    ))
+    None
+}
+
+fn resolve_agent_executable(candidate: std::path::PathBuf) -> std::path::PathBuf {
+    std::fs::canonicalize(&candidate).unwrap_or(candidate)
 }
 
 fn sibling_agent_executable(current: &Path) -> Option<std::path::PathBuf> {
@@ -462,7 +498,7 @@ fn sibling_agent_executable(current: &Path) -> Option<std::path::PathBuf> {
     sibling.is_file().then_some(sibling)
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(not(any(target_os = "macos", target_os = "linux")))]
 fn run_agent_once() -> Result<(), RuntimeError> {
     let executable = agent_executable()?;
     let status = Command::new(&executable)
@@ -637,6 +673,27 @@ mod tests {
         assert_eq!(
             sibling_agent_executable(&link),
             Some(fs::canonicalize(agent).expect("canonical agent path"))
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn resolves_an_agent_symlink_to_its_versioned_executable() {
+        let directory = tempfile::TempDir::new().expect("temporary directory");
+        let versioned_agent = directory
+            .path()
+            .join("Cellar/warpgatesh/HEAD/bin/warpgatesh-agent");
+        fs::create_dir_all(versioned_agent.parent().expect("agent parent"))
+            .expect("agent directory");
+        fs::write(&versioned_agent, []).expect("agent executable");
+
+        let link = directory.path().join("bin/warpgatesh-agent");
+        fs::create_dir_all(link.parent().expect("link parent")).expect("link directory");
+        symlink(&versioned_agent, &link).expect("agent symlink");
+
+        assert_eq!(
+            resolve_agent_executable(link),
+            fs::canonicalize(versioned_agent).expect("canonical agent path")
         );
     }
 }

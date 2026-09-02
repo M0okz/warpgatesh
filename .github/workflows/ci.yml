@@ -86,3 +86,14 @@ jobs:
 
       - name: Verify bundled CLI and agent
         run: npm run verify:bundle
+
+  homebrew:
+    name: Homebrew Formula
+    runs-on: macos-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Check Formula style
+        run: brew style Formula/warpgatesh.rb

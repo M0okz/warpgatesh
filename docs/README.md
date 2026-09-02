@@ -6,6 +6,7 @@ your Warpgate user synchronized with standard OpenSSH aliases.
 ## User guides
 
 - [Install WarpgateSH on macOS](installation.md)
+- [Install the CLI and agent on Linux](installation-linux.md)
 - [Create a token and connect to a first target](getting-started.md)
 - [Troubleshoot common problems](troubleshooting.md)
 - [Uninstall WarpgateSH](uninstall.md)

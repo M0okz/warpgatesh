@@ -1,6 +1,5 @@
 use crate::RuntimeError;
 
-#[cfg(target_os = "macos")]
 const SERVICE: &str = "dev.warpgatesh.api-token";
 
 pub trait TokenStore {
@@ -53,7 +52,39 @@ impl TokenStore for SystemKeychain {
     }
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(target_os = "linux")]
+impl TokenStore for SystemKeychain {
+    fn set(&self, profile: &str, token: &str) -> Result<(), RuntimeError> {
+        linux_entry(profile)?
+            .set_password(token)
+            .map_err(|error| linux_error(&error))
+    }
+
+    fn get(&self, profile: &str) -> Result<String, RuntimeError> {
+        linux_entry(profile)?
+            .get_password()
+            .map_err(|error| linux_error(&error))
+    }
+
+    fn delete(&self, profile: &str) -> Result<(), RuntimeError> {
+        match linux_entry(profile)?.delete_credential() {
+            Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
+            Err(error) => Err(linux_error(&error)),
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn linux_entry(profile: &str) -> Result<keyring::Entry, RuntimeError> {
+    keyring::Entry::new(SERVICE, profile).map_err(|error| linux_error(&error))
+}
+
+#[cfg(target_os = "linux")]
+fn linux_error(error: &keyring::Error) -> RuntimeError {
+    RuntimeError::Keychain(format!("Linux Secret Service: {error}"))
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "linux")))]
 impl TokenStore for SystemKeychain {
     fn set(&self, _profile: &str, _token: &str) -> Result<(), RuntimeError> {
         Err(unsupported())
@@ -68,7 +99,7 @@ impl TokenStore for SystemKeychain {
     }
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(not(any(target_os = "macos", target_os = "linux")))]
 fn unsupported() -> RuntimeError {
-    RuntimeError::Keychain("native Linux secret storage is not implemented yet".to_owned())
+    RuntimeError::Keychain("native secret storage is not supported on this platform".to_owned())
 }

@@ -47,10 +47,13 @@ not replace Terraform, Ansible, or the
 
 ## Quick start
 
-WarpgateSH currently targets **macOS 13 or newer**, on both Apple silicon and
-Intel Macs. Download the universal DMG from the
+The complete desktop experience currently targets **macOS 13 or newer**, on
+both Apple silicon and Intel Macs. Download the universal DMG from the
 [latest release](https://github.com/M0okz/warpgatesh/releases/latest), move
 WarpgateSH to Applications, and open it.
+
+The CLI and per-user synchronization agent are also available as an early Linux
+beta through Homebrew/Linuxbrew. See [Install WarpgateSH on Linux](docs/installation-linux.md).
 
 The graphical companion can install the bundled CLI from its preferences. It
 never needs to stay open: synchronization is handled independently by a
@@ -116,6 +119,7 @@ Run `warpgatesh help` for the complete built-in reference.
 ## Documentation
 
 - [Install WarpgateSH on macOS](docs/installation.md)
+- [Install the CLI and agent on Linux](docs/installation-linux.md)
 - [Create a token and connect to a first target](docs/getting-started.md)
 - [Troubleshoot common problems](docs/troubleshooting.md)
 - [Uninstall WarpgateSH](docs/uninstall.md)
@@ -128,7 +132,8 @@ can be reviewed in the same pull request as behavior changes.
 ## Local diagnostics
 
 WarpgateSH keeps structured daily logs for the background agent and graphical
-companion in `~/Library/Logs/WarpgateSH/`. Files use the JSON Lines format
+companion in the platform log directory (`~/Library/Logs/WarpgateSH/` on macOS
+or `~/.local/state/warpgatesh/logs/` on Linux). Files use the JSON Lines format
 (`agent-YYYY-MM-DD.jsonl` and `companion-YYYY-MM-DD.jsonl`) and are removed after
 seven days.
 
@@ -147,7 +152,7 @@ WarpgateSH agent ──► atomic local snapshot
        │                    │
        │                    └─► ~/.ssh/warpgatesh/config
        │
-       ├─► macOS Keychain (personal API tokens)
+       ├─► native secret store (Keychain or Secret Service)
        └─► pinned Warpgate SSH host keys
                                 │
 warpgatesh <target> ────────────┴─► /usr/bin/ssh
@@ -178,8 +183,8 @@ $ ssh api.staging
 
 ## Security and privacy
 
-- Personal API tokens are stored in the macOS Keychain, not in Git, shell
-  configuration, or generated SSH files.
+- Personal API tokens are stored in the macOS Keychain or Linux Secret Service,
+  not in Git, shell configuration, or generated SSH files.
 - Warpgate SSH host keys are explicitly approved and pinned per profile.
 - Generated files are replaced atomically only after a complete successful
   synchronization.
@@ -204,6 +209,7 @@ The project currently includes:
 - the `warpgatesh` command-line client;
 - a per-user synchronization agent;
 - a lightweight macOS menu-bar companion;
+- an early Linux CLI and systemd user-agent port;
 - signed, notarized universal macOS release artifacts;
 - multi-profile target synchronization and deterministic SSH aliases.
 
