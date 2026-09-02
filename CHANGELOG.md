@@ -2,6 +2,25 @@
 
 Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
+## 0.1.13 — 2026-09-02
+
+### Linux en bêta
+
+- La CLI `warpgatesh` et l’agent de synchronisation fonctionnent désormais sous Linux avec un service `systemd --user` qui ne demande aucun accès administrateur.
+- Les jetons Warpgate sont conservés dans le service de secrets natif du bureau, via Secret Service, et ne sont jamais écrits dans les fichiers de configuration.
+- Les alias OpenSSH, la synchronisation automatique, `warpgatesh sync` et la connexion directe à une cible conservent le même comportement que sous macOS.
+
+### Distribution Homebrew
+
+- Le Tap public `M0okz/warpgatesh` permet d’installer la CLI et l’agent sur macOS ou Linux avec Homebrew/Linuxbrew.
+- L’installation de l’agent attend désormais que son canal de communication soit réellement disponible, ce qui évite un faux échec lors du premier démarrage.
+- Une mise à niveau Homebrew actualise le chemin versionné de l’agent et redémarre correctement son service utilisateur.
+
+### Administration et documentation
+
+- La nouvelle commande `warpgatesh agent uninstall` arrête et retire proprement le service d’arrière-plan sans supprimer les profils ni les jetons.
+- Le guide Linux couvre les prérequis, l’installation, les mises à niveau et la désinstallation.
+
 ## 0.1.12 — 2026-08-20
 
 ### Mise à jour intégrée

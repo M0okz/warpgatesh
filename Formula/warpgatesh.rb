@@ -14,10 +14,13 @@ class Warpgatesh < Formula
   end
 
   def caveats
-    <<~EOS
+    message = <<~EOS
       Start the per-user synchronization agent after installation:
         warpgatesh agent install
+    EOS
+    return message unless OS.linux?
 
+    message + <<~EOS
       Linux requires a desktop Secret Service provider such as GNOME Keyring
       or KWallet, plus a working systemd user session.
     EOS

@@ -10,17 +10,20 @@ agent. The graphical companion remains macOS-only during this first Linux beta.
 - `xdg-open` for opening the Warpgate token page;
 - a Secret Service provider, such as GNOME Keyring or KWallet.
 
+On `x86_64`, the current Homebrew/Linuxbrew runtime requires SSSE3. Proxmox
+guests using the legacy `kvm64` CPU model need a newer model such as
+`x86-64-v2-AES` before Homebrew itself can run.
+
 WarpgateSH stores API tokens through the freedesktop Secret Service API. Tokens
 are not written to its JSON configuration or generated SSH files.
 
-## Install the development Formula
+## Install from the official tap
 
-Until the first stable Linux artifact is published, install the Formula from
-the project tap at its latest development revision:
+Add the project tap and install the latest stable version:
 
 ```sh
 brew tap M0okz/warpgatesh
-brew install --HEAD M0okz/warpgatesh/warpgatesh
+brew install M0okz/warpgatesh/warpgatesh
 warpgatesh agent install
 ```
 
@@ -38,10 +41,11 @@ warpgatesh doctor
 
 Then continue with [Create a token and connect](getting-started.md).
 
-## Upgrade a development installation
+## Upgrade
 
 ```sh
-brew upgrade --fetch-HEAD M0okz/warpgatesh/warpgatesh
+brew update
+brew upgrade M0okz/warpgatesh/warpgatesh
 warpgatesh agent install
 ```
 
