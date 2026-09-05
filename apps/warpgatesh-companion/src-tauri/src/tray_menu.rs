@@ -4,7 +4,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use tauri::menu::{Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::tray::TrayIconBuilder;
-use tauri::{Emitter, Manager};
+use tauri::{Emitter, Listener, Manager};
 use warpgatesh_runtime::ipc;
 use warpgatesh_runtime::storage::LocalStore;
 
@@ -141,19 +141,11 @@ pub(crate) fn install(app: &mut tauri::App) -> tauri::Result<()> {
     });
 
     let update_app = app.handle().clone();
-    thread::spawn(move || {
-        let mut previous = update_labels_for(&updates::status(&update_app));
-        loop {
-            thread::sleep(STATUS_REFRESH_INTERVAL);
-            let labels = update_labels_for(&updates::status(&update_app));
-            if labels == previous {
-                continue;
-            }
-            let _ = help.update_status.set_text(&labels.status);
-            let _ = help.download_update.set_text(&labels.download);
-            let _ = help.download_update.set_enabled(labels.download_enabled);
-            previous = labels;
-        }
+    app.listen(updates::UPDATE_EVENT, move |_| {
+        let labels = update_labels_for(&updates::status(&update_app));
+        let _ = help.update_status.set_text(&labels.status);
+        let _ = help.download_update.set_text(&labels.download);
+        let _ = help.download_update.set_enabled(labels.download_enabled);
     });
 
     Ok(())

@@ -9,13 +9,16 @@ use semver::Version;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_updater::UpdaterExt;
+use warpgatesh_runtime::diagnostics::DiagnosticLogger;
 use warpgatesh_runtime::launchd;
 use warpgatesh_runtime::storage::{LocalStore, atomic_write};
+
+use crate::relaunch::RelaunchPlan;
 
 const CACHE_SCHEMA_VERSION: u32 = 1;
 const CHECK_INTERVAL: Duration = Duration::from_secs(6 * 60 * 60);
 const BACKGROUND_POLL_INTERVAL: Duration = Duration::from_secs(60 * 60);
-const UPDATE_EVENT: &str = "warpgatesh:update-state";
+pub(crate) const UPDATE_EVENT: &str = "warpgatesh:update-state";
 const INSTALLED_APPLICATION: &str = "/Applications/WarpgateSH.app";
 const HOMEBREW_CASK_ROOTS: [&str; 2] = [
     "/opt/homebrew/Caskroom/warpgatesh",
@@ -68,6 +71,7 @@ pub struct UpdateManager {
     state: Arc<Mutex<UpdateStatus>>,
     operation_active: Arc<AtomicBool>,
     cache_path: PathBuf,
+    diagnostics: DiagnosticLogger,
 }
 
 struct OperationGuard(Arc<AtomicBool>);
@@ -98,6 +102,7 @@ impl UpdateManager {
             state: Arc::new(Mutex::new(state)),
             operation_active: Arc::new(AtomicBool::new(false)),
             cache_path,
+            diagnostics: DiagnosticLogger::new(&store.paths().logs_directory, "companion"),
         })
     }
 
@@ -202,8 +207,8 @@ impl UpdateManager {
     /// # Errors
     ///
     /// Returns an error when no update is available, this installation is externally managed, the
-    /// signature is invalid, the archive cannot be installed, or the background agent cannot be
-    /// restarted from the updated bundle.
+    /// signature is invalid, the archive cannot be installed, or the companion relaunch cannot be
+    /// scheduled. An agent restart failure is logged without preventing the companion relaunch.
     pub async fn install(&self, app: &AppHandle) -> Result<(), String> {
         match self.snapshot().channel {
             UpdateChannel::Direct => {}
@@ -223,6 +228,17 @@ impl UpdateManager {
         let Some(_guard) = self.begin_operation() else {
             return Err("Une opération de mise à jour est déjà en cours.".to_owned());
         };
+
+        let relaunch = RelaunchPlan::prepare(app).map_err(|error| self.fail(app, error))?;
+        self.publish(
+            app,
+            UpdateStatus {
+                phase: UpdatePhase::Checking,
+                progress_percent: None,
+                message: None,
+                ..self.snapshot()
+            },
+        );
 
         let updater = app
             .updater()
@@ -245,14 +261,12 @@ impl UpdateManager {
             return Err("WarpgateSH est déjà à jour.".to_owned());
         };
 
-        let available_version = update.version.clone();
-        let notes = update.body.clone();
         self.publish(
             app,
             UpdateStatus {
                 phase: UpdatePhase::Downloading,
-                available_version: Some(available_version.clone()),
-                notes: notes.clone(),
+                available_version: Some(update.version.clone()),
+                notes: update.body.clone(),
                 progress_percent: Some(0),
                 message: None,
                 ..self.snapshot()
@@ -286,25 +300,43 @@ impl UpdateManager {
             app,
             UpdateStatus {
                 phase: UpdatePhase::Installing,
-                available_version: Some(available_version),
-                notes,
                 progress_percent: Some(100),
                 message: None,
                 ..self.snapshot()
             },
         );
-        update
-            .install(bytes)
+        tauri::async_runtime::spawn_blocking(move || update.install(bytes))
+            .await
+            .map_err(|error| self.fail(app, format!("Installation interrompue : {error}")))?
             .map_err(|error| self.fail(app, format!("Installation impossible : {error}")))?;
 
-        launchd::restart().map_err(|error| {
-            self.fail(
+        self.restart_installed_application(app, relaunch).await
+    }
+
+    async fn restart_installed_application(
+        &self,
+        app: &AppHandle,
+        relaunch: RelaunchPlan,
+    ) -> Result<(), String> {
+        let agent_restart = tauri::async_runtime::spawn_blocking(launchd::restart).await;
+        let agent_error = match agent_restart {
+            Ok(Ok(())) => None,
+            Ok(Err(error)) => Some(error.to_string()),
+            Err(error) => Some(error.to_string()),
+        };
+        if let Some(error) = agent_error {
+            // Reopening the companion also ensures the bundled agent is registered.
+            // An independent agent failure must not strand the old companion in memory.
+            self.publish(
                 app,
-                format!("Mise à jour installée, mais l’agent n’a pas redémarré : {error}"),
-            )
-        })?;
-        app.request_restart();
-        Ok(())
+                UpdateStatus {
+                    message: Some(format!("L’agent n’a pas redémarré : {error}. Vérifiez son état après la réouverture de WarpgateSH.")),
+                    ..self.snapshot()
+                },
+            );
+        }
+        self.diagnostics.info("update.relaunch-requested");
+        relaunch.restart(app).map_err(|error| self.fail(app, error))
     }
 
     fn begin_operation(&self) -> Option<OperationGuard> {
@@ -315,7 +347,30 @@ impl UpdateManager {
     }
 
     fn publish(&self, app: &AppHandle, status: UpdateStatus) {
-        *lock_recover(&self.state) = status.clone();
+        let changed = {
+            let mut previous = lock_recover(&self.state);
+            let changed = previous.phase != status.phase || previous.message != status.message;
+            *previous = status.clone();
+            changed
+        };
+        if changed {
+            let fields = std::collections::BTreeMap::from([
+                ("phase".to_owned(), serde_json::json!(status.phase)),
+                (
+                    "version".to_owned(),
+                    serde_json::json!(status.available_version),
+                ),
+                ("message".to_owned(), serde_json::json!(status.message)),
+            ]);
+            let level = if status.phase == UpdatePhase::Error {
+                "error"
+            } else {
+                "info"
+            };
+            let _ = self
+                .diagnostics
+                .record(level, "update.state-changed", fields);
+        }
         let _ = app.emit(UPDATE_EVENT, status);
     }
 

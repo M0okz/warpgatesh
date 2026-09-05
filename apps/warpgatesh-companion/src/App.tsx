@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
+import { isTauri } from "@tauri-apps/api/core";
+import { createRefreshQueue } from "./state-refresh";
 import {
   addProfile,
   checkForUpdates,
@@ -681,12 +683,13 @@ function UpdatePanel({
 }
 
 export default function App() {
-  const refreshing = useRef(false);
+  const latestUpdate = useRef<UpdateStatus | null>(null);
   const noticeTimeout = useRef<number | null>(null);
   const [view, setView] = useState<View>("access");
   const [state, setState] = useState<CompanionState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const dismissNotice = useCallback(() => {
@@ -717,12 +720,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!isTauri()) return;
     let disposed = false;
     let stopListening: (() => void) | undefined;
+    let navigationTimeout: number | undefined;
     void listen<View | "updates">("warpgatesh:navigate", (event) => {
       if (event.payload === "updates") {
         setView("preferences");
-        window.setTimeout(() => document.getElementById("updates")?.scrollIntoView(), 50);
+        window.clearTimeout(navigationTimeout);
+        navigationTimeout = window.setTimeout(() => document.getElementById("updates")?.scrollIntoView(), 50);
         return;
       }
       if (event.payload === "access" || event.payload === "profiles" || event.payload === "preferences") {
@@ -731,21 +737,28 @@ export default function App() {
     }).then((unlisten) => {
       if (disposed) unlisten();
       else stopListening = unlisten;
+    }).catch((reason: unknown) => {
+      if (!disposed) setError(String(reason));
     });
     return () => {
       disposed = true;
+      window.clearTimeout(navigationTimeout);
       stopListening?.();
     };
   }, []);
 
   useEffect(() => {
+    if (!isTauri()) return;
     let disposed = false;
     let stopListening: (() => void) | undefined;
     void listen<UpdateStatus>("warpgatesh:update-state", (event) => {
+      latestUpdate.current = event.payload;
       setState((current) => (current ? { ...current, update: event.payload } : current));
     }).then((unlisten) => {
       if (disposed) unlisten();
       else stopListening = unlisten;
+    }).catch((reason: unknown) => {
+      if (!disposed) setError(String(reason));
     });
     return () => {
       disposed = true;
@@ -753,22 +766,23 @@ export default function App() {
     };
   }, []);
 
-  const refresh = useCallback(async () => {
-    if (refreshing.current) return;
-    refreshing.current = true;
-    try {
-      setState(await getCompanionState());
-    } catch (reason) {
-      setError(String(reason));
-    } finally {
-      refreshing.current = false;
-    }
-  }, []);
+  const refresh = useMemo(() => createRefreshQueue(
+    async () => {
+      const updateAtStart = latestUpdate.current;
+      const snapshot = await getCompanionState();
+      return { snapshot, updateAtStart };
+    },
+    ({ snapshot, updateAtStart }) => {
+      const update = latestUpdate.current;
+      setState(update && update !== updateAtStart ? { ...snapshot, update } : snapshot);
+      setLoadError(null);
+    },
+    (reason) => setLoadError(String(reason)),
+  ), []);
 
   useEffect(() => {
-    void refresh();
-    const updateActive = state?.update.phase === "downloading" || state?.update.phase === "installing";
-    const refreshInterval = state?.agentSynchronizing || updateActive ? 1_000 : 5_000;
+    if (document.visibilityState === "visible") void refresh();
+    const refreshInterval = state?.agentSynchronizing ? 1_000 : 5_000;
     const interval = window.setInterval(() => {
       if (document.visibilityState === "visible") void refresh();
     }, refreshInterval);
@@ -784,7 +798,7 @@ export default function App() {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [dismissNotice, refresh, state?.agentSynchronizing, state?.update.phase]);
+  }, [dismissNotice, refresh, state?.agentSynchronizing]);
 
   async function runAction(action: () => Promise<void>, success: string): Promise<boolean> {
     setBusy(true);
@@ -805,7 +819,7 @@ export default function App() {
   async function handleSync() {
     await runAction(async () => {
       await synchronizeNow();
-      await refresh();
+      await refresh(true);
     }, "Synchronisation demandée à l’agent.");
   }
 
@@ -817,20 +831,21 @@ export default function App() {
   async function handlePreferences(preferences: CompanionPreferences) {
     await runAction(async () => {
       await savePreferences(preferences);
-      await refresh();
+      await refresh(true);
     }, "Préférences enregistrées.");
   }
 
   async function handleInstallCli() {
     await runAction(async () => {
       await installCommandLineTool();
-      await refresh();
+      await refresh(true);
     }, "La commande warpgatesh est disponible dans le terminal.");
   }
 
   async function handleCheckForUpdates() {
     await runAction(async () => {
       const update = await checkForUpdates();
+      latestUpdate.current = update;
       setState((current) => (current ? { ...current, update } : current));
     }, "Vérification des mises à jour terminée.");
   }
@@ -867,13 +882,13 @@ export default function App() {
         ))}
       </nav>
 
-      {error ? <div className="error-banner" role="alert"><span>Action impossible</span><p>{error}</p></div> : null}
+      {error || loadError ? <div className="error-banner" role="alert"><span>{error ? "Action impossible" : "État local indisponible"}</span><p>{error ?? loadError}</p></div> : null}
       {notice ? <div className="notice-banner" role="status">{notice}</div> : null}
 
       <main>
         {state === null ? <p className="loading-state">Lecture de l’état local…</p> : null}
         {state && view === "access" ? <AccessView state={state} busy={busy} onSync={() => void handleSync()} onOpen={(alias) => void handleOpen(alias)} onNavigate={setView} /> : null}
-        {state && view === "profiles" ? <ProfilesView profiles={state.profiles} busy={busy} synchronizing={busy || state.agentSynchronizing} onChanged={refresh} onSynchronize={() => void handleSync()} runAction={runAction} /> : null}
+        {state && view === "profiles" ? <ProfilesView profiles={state.profiles} busy={busy} synchronizing={busy || state.agentSynchronizing} onChanged={() => refresh(true)} onSynchronize={() => void handleSync()} runAction={runAction} /> : null}
         {state && view === "preferences" ? <PreferencesView state={state} busy={busy} onSave={handlePreferences} onInstallCli={handleInstallCli} onCheckForUpdates={handleCheckForUpdates} onInstallUpdate={handleInstallUpdate} onUninstall={handleUninstall} /> : null}
       </main>
 

@@ -66,6 +66,12 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Test state refresh coordination
+        run: npm run test:state
+
+      - name: Test updater manifest
+        run: npm run test:updater-manifest
+
       - name: Test sidecar packaging plan
         run: npm run test:sidecars
 

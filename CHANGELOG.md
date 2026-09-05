@@ -2,6 +2,14 @@
 
 Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
+## 0.1.14 — 2026-09-06
+
+- Après une mise à jour, macOS rouvre le paquet installé une fois l’ancienne instance terminée. Un échec du redémarrage de l’agent ne bloque plus la réouverture du compagnon.
+- Les opérations réseau, disque et système du compagnon s’exécutent sur des threads adaptés aux appels bloquants ; l’inspection d’un profil ne provoque plus de panique du moteur asynchrone.
+- Un enregistrement effectué pendant une lecture de l’état attend désormais un nouvel instantané. Les réponses anciennes ne remplacent plus une progression de mise à jour reçue entre-temps.
+- Le menu suit les mises à jour par événements ; le téléchargement ne déclenche plus de lecture complète de l’état chaque seconde. Les erreurs de lecture temporaires disparaissent au retour à la normale.
+- Les étapes et erreurs de mise à jour sont conservées dans les diagnostics locaux, sans journaliser les notes de version ni chaque pourcentage de téléchargement.
+
 ## 0.1.13 — 2026-09-02
 
 ### Linux en bêta

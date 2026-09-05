@@ -111,68 +111,86 @@ pub struct DiagnosticsExport {
 
 #[tauri::command]
 pub async fn get_companion_state(app: AppHandle) -> Result<CompanionState, String> {
-    let store = LocalStore::for_current_user().map_err(display_error)?;
-    let launches_at_login = app.autolaunch().is_enabled().map_err(display_error)?;
-    let terminal = load_terminal_integration()?;
-    let update = updates::status(&app);
-    load_state(&store, launches_at_login, terminal, update)
+    run_blocking(move || {
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        let launches_at_login = app.autolaunch().is_enabled().map_err(display_error)?;
+        let terminal = load_terminal_integration()?;
+        let update = updates::status(&app);
+        load_state(&store, launches_at_login, terminal, update)
+    })
+    .await
 }
 
 #[tauri::command]
 pub async fn install_command_line_tool() -> Result<TerminalIntegration, String> {
-    installation::install_cli()
-        .map(|status| terminal_integration(&status))
-        .map_err(display_error)
+    run_blocking(move || {
+        installation::install_cli()
+            .map(|status| terminal_integration(&status))
+            .map_err(display_error)
+    })
+    .await
 }
 
 #[tauri::command]
 pub async fn uninstall_warpgatesh(app: AppHandle, request: UninstallRequest) -> Result<(), String> {
-    if request.confirmation.trim() != "DÉSINSTALLER" {
-        return Err("Saisissez DÉSINSTALLER pour confirmer.".to_owned());
-    }
+    run_blocking(move || {
+        if request.confirmation.trim() != "DÉSINSTALLER" {
+            return Err("Saisissez DÉSINSTALLER pour confirmer.".to_owned());
+        }
 
-    if app.autolaunch().is_enabled().map_err(display_error)? {
-        app.autolaunch().disable().map_err(display_error)?;
-    }
-    let store = LocalStore::for_current_user().map_err(display_error)?;
-    installation::uninstall_components(&store).map_err(display_error)?;
-    if request.delete_user_data {
-        installation::delete_user_data(&store).map_err(display_error)?;
-    }
-    installation::move_application_to_trash().map_err(display_error)?;
+        if app.autolaunch().is_enabled().map_err(display_error)? {
+            app.autolaunch().disable().map_err(display_error)?;
+        }
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        installation::uninstall_components(&store).map_err(display_error)?;
+        if request.delete_user_data {
+            installation::delete_user_data(&store).map_err(display_error)?;
+        }
+        installation::move_application_to_trash().map_err(display_error)?;
 
-    let handle = app.clone();
-    std::thread::spawn(move || {
-        std::thread::sleep(Duration::from_millis(150));
-        handle.exit(0);
-    });
-    Ok(())
+        let handle = app.clone();
+        std::thread::spawn(move || {
+            std::thread::sleep(Duration::from_millis(150));
+            handle.exit(0);
+        });
+        Ok(())
+    })
+    .await
 }
 
 #[tauri::command]
 pub async fn sync_now() -> Result<String, String> {
-    let store = LocalStore::for_current_user().map_err(display_error)?;
-    DiagnosticLogger::new(&store.paths().logs_directory, "companion").info("sync.requested");
-    request_sync(&store)
+    run_blocking(move || {
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        DiagnosticLogger::new(&store.paths().logs_directory, "companion").info("sync.requested");
+        request_sync(&store)
+    })
+    .await
 }
 
 #[tauri::command]
 pub async fn preview_diagnostics() -> Result<DiagnosticsPreview, String> {
-    let store = LocalStore::for_current_user().map_err(display_error)?;
-    diagnostics::preview(&store).map_err(display_error)
+    run_blocking(move || {
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        diagnostics::preview(&store).map_err(display_error)
+    })
+    .await
 }
 
 #[tauri::command]
 pub async fn export_diagnostics() -> Result<DiagnosticsExport, String> {
-    let store = LocalStore::for_current_user().map_err(display_error)?;
-    let logger = DiagnosticLogger::new(&store.paths().logs_directory, "companion");
-    logger.info("diagnostics.export-requested");
-    let path = diagnostics::export(&store).map_err(display_error)?;
-    let _ = Command::new("/usr/bin/open").arg("-R").arg(&path).spawn();
-    logger.info("diagnostics.exported");
-    Ok(DiagnosticsExport {
-        path: path.display().to_string(),
+    run_blocking(move || {
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        let logger = DiagnosticLogger::new(&store.paths().logs_directory, "companion");
+        logger.info("diagnostics.export-requested");
+        let path = diagnostics::export(&store).map_err(display_error)?;
+        let _ = Command::new("/usr/bin/open").arg("-R").arg(&path).spawn();
+        logger.info("diagnostics.exported");
+        Ok(DiagnosticsExport {
+            path: path.display().to_string(),
+        })
     })
+    .await
 }
 
 #[tauri::command]
@@ -180,170 +198,199 @@ pub async fn save_preferences(
     app: AppHandle,
     preferences: CompanionPreferences,
 ) -> Result<(), String> {
-    let store = LocalStore::for_current_user().map_err(display_error)?;
-    let catalog = store.load_profiles().map_err(display_error)?;
-    if let Some(default) = &preferences.default_profile {
-        if catalog.find(default).is_none() {
-            return Err(format!("Le profil « {default} » n’existe pas."));
+    run_blocking(move || {
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        let catalog = store.load_profiles().map_err(display_error)?;
+        if let Some(default) = &preferences.default_profile {
+            if catalog.find(default).is_none() {
+                return Err(format!("Le profil « {default} » n’existe pas."));
+            }
         }
-    }
 
-    if preferences.launch_companion_at_login {
-        app.autolaunch().enable().map_err(display_error)?;
-    } else {
-        app.autolaunch().disable().map_err(display_error)?;
-    }
-    let persisted = Preferences {
-        sync_interval_seconds: preferences.sync_interval_seconds,
-        launch_companion_at_login: preferences.launch_companion_at_login,
-        ..Preferences::default()
-    };
-    request_configuration(
-        &store,
-        &ConfigurationMutation::SavePreferences {
-            preferences: persisted,
-            default_profile: preferences.default_profile,
-        },
-    )?;
-    Ok(())
+        if preferences.launch_companion_at_login {
+            app.autolaunch().enable().map_err(display_error)?;
+        } else {
+            app.autolaunch().disable().map_err(display_error)?;
+        }
+        let persisted = Preferences {
+            sync_interval_seconds: preferences.sync_interval_seconds,
+            launch_companion_at_login: preferences.launch_companion_at_login,
+            ..Preferences::default()
+        };
+        request_configuration(
+            &store,
+            &ConfigurationMutation::SavePreferences {
+                preferences: persisted,
+                default_profile: preferences.default_profile,
+            },
+        )?;
+        Ok(())
+    })
+    .await
 }
 
 #[tauri::command]
 pub async fn open_token_page_for(base_url: String) -> Result<(), String> {
-    let client = ApiClient::new(&base_url).map_err(display_error)?;
-    let page = client.token_page_url().map_err(display_error)?;
-    open_token_page(page.as_str()).map_err(display_error)
+    run_blocking(move || {
+        let client = ApiClient::new(&base_url).map_err(display_error)?;
+        let page = client.token_page_url().map_err(display_error)?;
+        open_token_page(page.as_str()).map_err(display_error)
+    })
+    .await
 }
 
 #[tauri::command]
 pub async fn inspect_profile(request: ProfileRequest) -> Result<ProfileInspection, String> {
-    validate_profile_request(&request)?;
-    let client = ApiClient::new(request.base_url.trim()).map_err(display_error)?;
-    let metadata = client
-        .validate(request.token.trim())
-        .map_err(display_error)?;
-    let ssh_host = request
-        .ssh_host
-        .as_deref()
-        .map(str::trim)
-        .filter(|host| !host.is_empty())
-        .unwrap_or(&metadata.ssh_host)
-        .to_owned();
-    let ssh_port = request.ssh_port.unwrap_or(metadata.ssh_port);
-    let host_keys = scan_host_keys(&ssh_host, ssh_port).map_err(display_error)?;
-    Ok(ProfileInspection {
-        normalized_base_url: client.base_url().as_str().to_owned(),
-        username: metadata.username,
-        warpgate_version: metadata.version,
-        ssh_host,
-        ssh_port,
-        fingerprints: host_keys.fingerprints,
+    run_blocking(move || {
+        validate_profile_request(&request)?;
+        let client = ApiClient::new(request.base_url.trim()).map_err(display_error)?;
+        let metadata = client
+            .validate(request.token.trim())
+            .map_err(display_error)?;
+        let ssh_host = request
+            .ssh_host
+            .as_deref()
+            .map(str::trim)
+            .filter(|host| !host.is_empty())
+            .unwrap_or(&metadata.ssh_host)
+            .to_owned();
+        let ssh_port = request.ssh_port.unwrap_or(metadata.ssh_port);
+        let host_keys = scan_host_keys(&ssh_host, ssh_port).map_err(display_error)?;
+        Ok(ProfileInspection {
+            normalized_base_url: client.base_url().as_str().to_owned(),
+            username: metadata.username,
+            warpgate_version: metadata.version,
+            ssh_host,
+            ssh_port,
+            fingerprints: host_keys.fingerprints,
+        })
     })
+    .await
 }
 
 #[tauri::command]
 pub async fn add_profile(request: ProfileRequest) -> Result<(), String> {
-    validate_profile_request(&request)?;
-    let client = ApiClient::new(request.base_url.trim()).map_err(display_error)?;
-    let metadata = client
-        .validate(request.token.trim())
-        .map_err(display_error)?;
-    let ssh_host = request
-        .ssh_host
-        .as_deref()
-        .map(str::trim)
-        .filter(|host| !host.is_empty())
-        .unwrap_or(&metadata.ssh_host)
-        .to_owned();
-    let ssh_port = request.ssh_port.unwrap_or(metadata.ssh_port);
-    let host_keys = scan_host_keys(&ssh_host, ssh_port).map_err(display_error)?;
-    let store = LocalStore::for_current_user().map_err(display_error)?;
-    request_configuration(
-        &store,
-        &ConfigurationMutation::SaveProfile {
-            profile: Profile {
-                name: request.name.clone(),
-                base_url: client.base_url().as_str().to_owned(),
-                username: metadata.username,
-                warpgate_version: metadata.version,
-                ssh_host,
-                ssh_port,
+    run_blocking(move || {
+        validate_profile_request(&request)?;
+        let client = ApiClient::new(request.base_url.trim()).map_err(display_error)?;
+        let metadata = client
+            .validate(request.token.trim())
+            .map_err(display_error)?;
+        let ssh_host = request
+            .ssh_host
+            .as_deref()
+            .map(str::trim)
+            .filter(|host| !host.is_empty())
+            .unwrap_or(&metadata.ssh_host)
+            .to_owned();
+        let ssh_port = request.ssh_port.unwrap_or(metadata.ssh_port);
+        let host_keys = scan_host_keys(&ssh_host, ssh_port).map_err(display_error)?;
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        request_configuration(
+            &store,
+            &ConfigurationMutation::SaveProfile {
+                profile: Profile {
+                    name: request.name.clone(),
+                    base_url: client.base_url().as_str().to_owned(),
+                    username: metadata.username,
+                    warpgate_version: metadata.version,
+                    ssh_host,
+                    ssh_port,
+                },
+                token: request.token.trim().to_owned(),
+                known_hosts: host_keys.known_hosts,
             },
-            token: request.token.trim().to_owned(),
-            known_hosts: host_keys.known_hosts,
-        },
-    )?;
-    Ok(())
+        )?;
+        Ok(())
+    })
+    .await
 }
 
 #[tauri::command]
 pub async fn renew_profile_token(name: String, token: String) -> Result<(), String> {
-    if token.trim().is_empty() {
-        return Err("Le jeton API est requis.".to_owned());
-    }
-    let store = LocalStore::for_current_user().map_err(display_error)?;
-    let catalog = store.load_profiles().map_err(display_error)?;
-    let existing = catalog
-        .find(&name)
-        .cloned()
-        .ok_or_else(|| format!("Le profil « {name} » n’existe pas."))?;
-    let client = ApiClient::new(&existing.base_url).map_err(display_error)?;
-    let metadata = client.validate(token.trim()).map_err(display_error)?;
-    request_configuration(
-        &store,
-        &ConfigurationMutation::RenewToken {
-            name,
-            token: token.trim().to_owned(),
-            username: metadata.username,
-            warpgate_version: metadata.version,
-        },
-    )?;
-    Ok(())
+    run_blocking(move || {
+        if token.trim().is_empty() {
+            return Err("Le jeton API est requis.".to_owned());
+        }
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        let catalog = store.load_profiles().map_err(display_error)?;
+        let existing = catalog
+            .find(&name)
+            .cloned()
+            .ok_or_else(|| format!("Le profil « {name} » n’existe pas."))?;
+        let client = ApiClient::new(&existing.base_url).map_err(display_error)?;
+        let metadata = client.validate(token.trim()).map_err(display_error)?;
+        request_configuration(
+            &store,
+            &ConfigurationMutation::RenewToken {
+                name,
+                token: token.trim().to_owned(),
+                username: metadata.username,
+                warpgate_version: metadata.version,
+            },
+        )?;
+        Ok(())
+    })
+    .await
 }
 
 #[tauri::command]
 pub async fn remove_profile(name: String) -> Result<(), String> {
-    let store = LocalStore::for_current_user().map_err(display_error)?;
-    request_configuration(&store, &ConfigurationMutation::RemoveProfile { name })?;
-    Ok(())
+    run_blocking(move || {
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        request_configuration(&store, &ConfigurationMutation::RemoveProfile { name })?;
+        Ok(())
+    })
+    .await
 }
 
 #[tauri::command]
 pub async fn open_target(alias: String) -> Result<(), String> {
-    let store = LocalStore::for_current_user().map_err(display_error)?;
-    let snapshot = store
-        .load_snapshot()
+    run_blocking(move || {
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        let snapshot = store
+            .load_snapshot()
+            .map_err(display_error)?
+            .ok_or_else(|| "Aucune cible SSH synchronisée n’est disponible.".to_owned())?;
+        let known = snapshot.targets.iter().any(|target| {
+            target.qualified_alias == alias || target.short_alias.as_deref() == Some(alias.as_str())
+        });
+        if !known {
+            return Err("L’alias SSH sélectionné n’est pas dans l’instantané local.".to_owned());
+        }
+
+        #[cfg(target_os = "macos")]
+        let status = Command::new("/usr/bin/open")
+            .arg(format!("ssh://{alias}"))
+            .status()
+            .map_err(display_error)?;
+
+        #[cfg(target_os = "linux")]
+        let status = Command::new("xdg-open")
+            .arg(format!("ssh://{alias}"))
+            .status()
+            .map_err(display_error)?;
+
+        #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+        return Err(
+            "L’ouverture de cibles SSH n’est pas prise en charge sur cette plateforme.".to_owned(),
+        );
+
+        if status.success() {
+            Ok(())
+        } else {
+            Err(format!("Le terminal s’est arrêté avec le statut {status}."))
+        }
+    })
+    .await
+}
+
+async fn run_blocking<T: Send + 'static>(
+    operation: impl FnOnce() -> Result<T, String> + Send + 'static,
+) -> Result<T, String> {
+    tauri::async_runtime::spawn_blocking(operation)
+        .await
         .map_err(display_error)?
-        .ok_or_else(|| "Aucune cible SSH synchronisée n’est disponible.".to_owned())?;
-    let known = snapshot.targets.iter().any(|target| {
-        target.qualified_alias == alias || target.short_alias.as_deref() == Some(alias.as_str())
-    });
-    if !known {
-        return Err("L’alias SSH sélectionné n’est pas dans l’instantané local.".to_owned());
-    }
-
-    #[cfg(target_os = "macos")]
-    let status = Command::new("/usr/bin/open")
-        .arg(format!("ssh://{alias}"))
-        .status()
-        .map_err(display_error)?;
-
-    #[cfg(target_os = "linux")]
-    let status = Command::new("xdg-open")
-        .arg(format!("ssh://{alias}"))
-        .status()
-        .map_err(display_error)?;
-
-    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
-    return Err(
-        "L’ouverture de cibles SSH n’est pas prise en charge sur cette plateforme.".to_owned(),
-    );
-
-    if status.success() {
-        Ok(())
-    } else {
-        Err(format!("Le terminal s’est arrêté avec le statut {status}."))
-    }
 }
 
 fn load_state(
@@ -564,6 +611,25 @@ mod tests {
     };
 
     use super::*;
+
+    #[test]
+    fn profile_inspection_reports_a_connection_error_without_panicking_in_the_async_runtime() {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("local port");
+        let address = listener.local_addr().expect("local address");
+        drop(listener);
+        let result = tauri::async_runtime::block_on(tauri::async_runtime::spawn(async move {
+            inspect_profile(ProfileRequest {
+                name: "test".to_owned(),
+                base_url: format!("http://{address}"),
+                token: "test-token".to_owned(),
+                ssh_host: None,
+                ssh_port: None,
+            })
+            .await
+        }));
+        assert!(result.is_ok(), "the native command panicked: {result:?}");
+        assert!(result.expect("command completed").is_err());
+    }
 
     #[test]
     fn maps_the_local_snapshot_without_exposing_secrets() {

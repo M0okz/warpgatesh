@@ -1,5 +1,6 @@
 mod commands;
 mod installation;
+mod relaunch;
 mod tray_menu;
 mod updates;
 

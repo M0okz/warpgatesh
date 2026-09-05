@@ -115,6 +115,19 @@ This is expected fail-safe behavior. Connections use the last successful local
 snapshot and never wait for a live API request. Fix the reported token, network,
 host-key, or compatibility error, then request another synchronization.
 
+## The application does not reopen after an update
+
+Open **WarpgateSH** from Applications and check the version in **Préférences**.
+The version that was running performs the relaunch, so an older version can
+still require a manual reopen when first updating to a release containing the
+relaunch fix.
+
+If the agent is stopped, use `warpgatesh agent install` and check its status.
+When reporting a recurrence, include the old and new versions and the local
+diagnostics. New releases record `update.state-changed` and
+`update.relaunch-requested` alongside `process.started` so the installation and
+relaunch steps can be distinguished.
+
 ## Collect diagnostics for an issue
 
 Preview the local files before exporting:

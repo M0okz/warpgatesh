@@ -1,11 +1,13 @@
 {
   "name": "warpgatesh-companion",
   "private": true,
-  "version": "0.1.13",
+  "version": "0.1.14",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "test:state": "node --test scripts/state-refresh.test.mjs",
+    "test:relaunch": "cargo build --manifest-path src-tauri/Cargo.toml --example relaunch_probe --locked && python3 scripts/test-macos-relaunch.py",
     "test:sidecars": "node --test scripts/prepare-sidecars.test.mjs",
     "test:updater-manifest": "node --test scripts/updater-manifest.test.mjs",
     "prepare:sidecars": "node scripts/prepare-sidecars.mjs",

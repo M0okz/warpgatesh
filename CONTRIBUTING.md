@@ -54,12 +54,22 @@ cargo clippy --workspace --all-targets -- -D warnings
 cd apps/warpgatesh-companion
 npm ci
 npm run build
+npm run test:state
 npm run test:sidecars
 npm run test:updater-manifest
 cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
 cargo test --manifest-path src-tauri/Cargo.toml
 cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 ```
+
+For changes to the macOS update/relaunch flow, run `npm run test:relaunch` from
+`apps/warpgatesh-companion` in a graphical macOS session. This test creates two
+temporary bundles signed ad hoc with the hardened runtime, replaces the first
+with a different executable, and verifies that a visible window opens after the
+old process exits. It uses a separate bundle identifier and does not load user
+profiles, install agents, or modify `/Applications/WarpgateSH.app`. Release
+signing, notarization, and the updater download/signature check still require
+their release validations.
 
 Add or update tests for behavior changes. Documentation-only changes do not
 need synthetic code tests, but all Markdown links and commands should still be
