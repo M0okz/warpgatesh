@@ -5,7 +5,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use warpgatesh_cli::{CliCommand, HELP, openssh_arguments, parse};
 use warpgatesh_core::aliases::is_valid_profile_name;
-use warpgatesh_core::profiles::Profile;
+use warpgatesh_core::profiles::{Profile, SshAuthentication};
 use warpgatesh_runtime::RuntimeError;
 use warpgatesh_runtime::agent_service;
 use warpgatesh_runtime::api::ApiClient;
@@ -82,8 +82,9 @@ fn run_profile(arguments: &[String]) -> Result<(), RuntimeError> {
         [command, name, url] if command == "add" => add_profile(name, url),
         [command] if command == "list" => list_profiles(),
         [command, name] if command == "default" => set_default_profile(name),
+        [command, name, mode] if command == "ssh-auth" => set_ssh_authentication(name, mode),
         _ => Err(RuntimeError::InvalidInput(
-            "usage: warpgatesh profile add <name> <url> | profile list | profile default <name>"
+            "usage: warpgatesh profile add <name> <url> | profile list | profile default <name> | profile ssh-auth <name> <auto|in-browser>"
                 .to_owned(),
         )),
     }
@@ -159,6 +160,7 @@ fn add_profile(name: &str, url: &str) -> Result<(), RuntimeError> {
             warpgate_version: metadata.version,
             ssh_host,
             ssh_port,
+            ssh_authentication: warpgatesh_core::profiles::SshAuthentication::Auto,
         },
         token,
         known_hosts: host_keys.known_hosts,
@@ -210,10 +212,31 @@ fn list_profiles() -> Result<(), RuntimeError> {
             " "
         };
         println!(
-            "{marker} {}\t{}\t{}",
-            profile.name, profile.username, profile.base_url
+            "{marker} {}\t{}\t{}\tssh-auth={}",
+            profile.name,
+            profile.username,
+            profile.base_url,
+            profile.ssh_authentication.cli_name()
         );
     }
+    Ok(())
+}
+
+fn set_ssh_authentication(name: &str, mode: &str) -> Result<(), RuntimeError> {
+    let authentication = match mode {
+        "auto" => SshAuthentication::Auto,
+        "in-browser" => SshAuthentication::InBrowser,
+        _ => {
+            return Err(RuntimeError::InvalidInput(
+                "SSH authentication must be 'auto' or 'in-browser'".to_owned(),
+            ));
+        }
+    };
+    request_configuration_mutation(&ConfigurationMutation::SetSshAuthentication {
+        name: name.to_owned(),
+        authentication,
+    })?;
+    println!("SSH authentication for profile '{name}' set to {mode}; synchronization requested.");
     Ok(())
 }
 

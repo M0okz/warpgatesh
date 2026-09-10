@@ -6,6 +6,25 @@ use crate::aliases::is_valid_profile_name;
 
 pub const PROFILE_SCHEMA_VERSION: u32 = 1;
 
+/// Client-side SSH authentication preference, independent of the API token.
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SshAuthentication {
+    #[default]
+    Auto,
+    InBrowser,
+}
+
+impl SshAuthentication {
+    #[must_use]
+    pub const fn cli_name(self) -> &'static str {
+        match self {
+            Self::Auto => "auto",
+            Self::InBrowser => "in-browser",
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Profile {
     pub name: String,
@@ -14,6 +33,8 @@ pub struct Profile {
     pub warpgate_version: Option<String>,
     pub ssh_host: String,
     pub ssh_port: u16,
+    #[serde(default)]
+    pub ssh_authentication: SshAuthentication,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -141,6 +162,7 @@ mod tests {
             warpgate_version: Some("0.27.0".to_owned()),
             ssh_host: "ssh.warpgate.example".to_owned(),
             ssh_port: 2222,
+            ssh_authentication: crate::profiles::SshAuthentication::Auto,
         }
     }
 

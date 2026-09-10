@@ -94,6 +94,37 @@ Only the default profile receives short aliases. Change it with:
 warpgatesh profile default production
 ```
 
+## Keep browser authentication consistent
+
+For a profile whose Warpgate account uses in-browser SSH approval:
+
+```sh
+warpgatesh profile ssh-auth production in-browser
+```
+
+The background agent stores this preference in the profile and requests a new
+synchronization. Every generated alias, including new targets, uses
+`keyboard-interactive` without offering SSH keys or passwords. The preference
+survives automatic synchronization, token renewal and re-enrollment from the
+companion. `warpgatesh profile list` shows the selected mode.
+
+Existing profiles keep `auto`, which preserves the usual OpenSSH methods. To
+restore it:
+
+```sh
+warpgatesh profile ssh-auth production auto
+```
+
+Use `in-browser` only when the server account supports that method. This is a
+client preference: it does not change server authentication requirements, the
+approval duration, or the server's “all targets” button. A remembered approval
+may still require confirmation after a change of source address or identity.
+
+The CLI and background agent must both include this feature. Older agents do
+not support the preference and can discard it when saving profiles; upgrade the
+complete application before configuring it. Personal SSH rules loaded earlier
+still take precedence over generated aliases.
+
 ## Renew an expired token
 
 Create a new personal token in Warpgate, then use the profile action in the

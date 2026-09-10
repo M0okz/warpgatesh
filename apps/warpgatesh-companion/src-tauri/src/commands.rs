@@ -296,6 +296,7 @@ pub async fn add_profile(request: ProfileRequest) -> Result<(), String> {
                     warpgate_version: metadata.version,
                     ssh_host,
                     ssh_port,
+                    ssh_authentication: warpgatesh_core::profiles::SshAuthentication::Auto,
                 },
                 token: request.token.trim().to_owned(),
                 known_hosts: host_keys.known_hosts,
@@ -642,6 +643,7 @@ mod tests {
                 warpgate_version: Some("0.27.1".to_owned()),
                 ssh_host: "10.60.0.17".to_owned(),
                 ssh_port: 2222,
+                ssh_authentication: warpgatesh_core::profiles::SshAuthentication::Auto,
             })
             .expect("profile");
         store.save_profiles(&catalog).expect("save profiles");

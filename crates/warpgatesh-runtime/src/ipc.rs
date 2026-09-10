@@ -230,6 +230,7 @@ mod tests {
                 warpgate_version: None,
                 ssh_host: "ssh.example".to_owned(),
                 ssh_port: 2222,
+                ssh_authentication: warpgatesh_core::profiles::SshAuthentication::Auto,
             },
             token: "secret".to_owned(),
             known_hosts: "ssh.example ssh-ed25519 AAAA\n".to_owned(),
