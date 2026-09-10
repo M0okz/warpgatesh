@@ -582,12 +582,10 @@ fn request_configuration(
     .map_err(display_error)
 }
 
-pub(crate) fn synchronize_from_tray() {
-    std::thread::spawn(|| {
-        if let Ok(store) = LocalStore::for_current_user() {
-            let _ = request_sync(&store);
-        }
-    });
+pub(crate) fn synchronize_from_tray() -> Result<String, String> {
+    let store = LocalStore::for_current_user().map_err(display_error)?;
+    DiagnosticLogger::new(&store.paths().logs_directory, "companion").info("sync.requested");
+    request_sync(&store)
 }
 
 fn epoch_seconds() -> u64 {

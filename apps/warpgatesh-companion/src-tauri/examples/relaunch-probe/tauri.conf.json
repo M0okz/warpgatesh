@@ -1,6 +1,6 @@
 {
   "productName": "WarpgateSH Relaunch Probe",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "identifier": "dev.warpgatesh.relaunch-probe",
   "build": { "frontendDist": "." },
   "app": { "windows": [{ "label": "main", "title": "WarpgateSH Relaunch Probe", "visible": false }] },

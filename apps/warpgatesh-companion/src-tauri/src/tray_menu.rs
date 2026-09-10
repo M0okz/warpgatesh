@@ -1,4 +1,5 @@
 use std::process::Command;
+use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -11,7 +12,8 @@ use warpgatesh_runtime::storage::LocalStore;
 use crate::{commands, updates};
 
 const AGENT_STATUS_TIMEOUT: Duration = Duration::from_millis(500);
-const STATUS_REFRESH_INTERVAL: Duration = Duration::from_secs(1);
+const STATUS_REFRESH_INTERVAL: Duration = Duration::from_millis(250);
+const ANIMATION_INTERVAL: Duration = Duration::from_millis(80);
 const GITHUB_REPOSITORY_URL: &str = "https://github.com/M0okz/warpgatesh";
 const GITHUB_DOCUMENTATION_URL: &str = "https://github.com/M0okz/warpgatesh#readme";
 const GITHUB_ISSUES_URL: &str = "https://github.com/M0okz/warpgatesh/issues";
@@ -20,15 +22,84 @@ const GITHUB_ISSUES_URL: &str = "https://github.com/M0okz/warpgatesh/issues";
 struct AgentRuntimeStatus {
     running: bool,
     synchronizing: bool,
-    next_sync_seconds: Option<u64>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct TrayLabels {
     agent: String,
     last_sync: String,
-    next_sync: String,
+    synchronizing: bool,
+    sync: String,
     sync_enabled: bool,
+}
+
+struct SyncRequests(mpsc::SyncSender<()>);
+
+impl TrayLabels {
+    fn set_synchronizing(&mut self) {
+        "🟢 Synchronisation en cours…".clone_into(&mut self.agent);
+        self.synchronizing = true;
+        "Synchronisation en cours…".clone_into(&mut self.sync);
+        self.sync_enabled = false;
+    }
+}
+
+const SPINNER_FRAMES: usize = 12;
+
+#[derive(Debug, Eq, PartialEq)]
+enum SyncIcon {
+    Idle,
+    Spinner(usize),
+}
+
+#[derive(Default)]
+struct SyncAnimation {
+    next_frame: usize,
+    active: bool,
+}
+
+impl SyncAnimation {
+    fn advance(&mut self, synchronizing: bool) -> Option<SyncIcon> {
+        if synchronizing {
+            self.active = true;
+            let frame = self.next_frame;
+            self.next_frame = (frame + 1) % SPINNER_FRAMES;
+            Some(SyncIcon::Spinner(frame))
+        } else if self.active {
+            self.active = false;
+            self.next_frame = 0;
+            Some(SyncIcon::Idle)
+        } else {
+            None
+        }
+    }
+}
+
+fn spinner_frames() -> Vec<tauri::image::Image<'static>> {
+    // Template masks stay legible in both menu-bar appearances. Generate these
+    // small frames once; no decoding or drawing is needed on animation ticks.
+    const SIZE: u32 = 44;
+    (0..12_u32)
+        .map(|frame| {
+            let mut rgba = Vec::new();
+            for y in 0..SIZE {
+                for x in 0..SIZE {
+                    let mut alpha = 0;
+                    for dot in 0..12_u32 {
+                        let angle = f64::from(dot) * std::f64::consts::TAU / 12.0;
+                        let dx = f64::from(x) + 0.5 - (22.0 + 14.0 * angle.sin());
+                        let dy = f64::from(y) + 0.5 - (22.0 - 14.0 * angle.cos());
+                        if dx * dx + dy * dy <= 6.25 {
+                            let age = (frame + 12 - dot) % 12;
+                            alpha = u8::try_from(255 - age * 18).unwrap_or(0);
+                        }
+                    }
+                    rgba.extend_from_slice(&[0, 0, 0, alpha]);
+                }
+            }
+            tauri::image::Image::new_owned(rgba, SIZE, SIZE)
+        })
+        .collect()
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -77,20 +148,7 @@ pub(crate) fn install(app: &mut tauri::App) -> tauri::Result<()> {
         false,
         None::<&str>,
     )?;
-    let next_sync = MenuItem::with_id(
-        app,
-        "next-sync-status",
-        &labels.next_sync,
-        false,
-        None::<&str>,
-    )?;
-    let sync = MenuItem::with_id(
-        app,
-        "sync",
-        "Synchroniser maintenant",
-        labels.sync_enabled,
-        None::<&str>,
-    )?;
+    let sync = MenuItem::with_id(app, "sync", &labels.sync, labels.sync_enabled, None::<&str>)?;
     let show = MenuItem::with_id(app, "show", "Ouvrir WarpgateSH", true, None::<&str>)?;
     let profiles = MenuItem::with_id(app, "profiles", "Profils…", true, None::<&str>)?;
     let prefs = MenuItem::with_id(app, "preferences", "Préférences…", true, None::<&str>)?;
@@ -101,7 +159,6 @@ pub(crate) fn install(app: &mut tauri::App) -> tauri::Result<()> {
         &[
             &agent,
             &last_sync,
-            &next_sync,
             &PredefinedMenuItem::separator(app)?,
             &sync,
             &PredefinedMenuItem::separator(app)?,
@@ -122,23 +179,10 @@ pub(crate) fn install(app: &mut tauri::App) -> tauri::Result<()> {
     {
         tray = tray.icon_as_template(true);
     }
-    tray.build(app)?;
-
-    thread::spawn(move || {
-        let mut previous = labels;
-        loop {
-            thread::sleep(STATUS_REFRESH_INTERVAL);
-            let labels = load_labels();
-            if labels == previous {
-                continue;
-            }
-            let _ = agent.set_text(&labels.agent);
-            let _ = last_sync.set_text(&labels.last_sync);
-            let _ = next_sync.set_text(&labels.next_sync);
-            let _ = sync.set_enabled(labels.sync_enabled);
-            previous = labels;
-        }
-    });
+    let tray = tray.build(app)?;
+    let animation_sender = start_icon_animation(tray, labels.synchronizing);
+    let sender = start_status_refresh(agent, last_sync, sync, labels, animation_sender);
+    app.manage(SyncRequests(sender));
 
     let update_app = app.handle().clone();
     app.listen(updates::UPDATE_EVENT, move |_| {
@@ -149,6 +193,85 @@ pub(crate) fn install(app: &mut tauri::App) -> tauri::Result<()> {
     });
 
     Ok(())
+}
+
+fn start_icon_animation(tray: tauri::tray::TrayIcon, synchronizing: bool) -> mpsc::Sender<bool> {
+    let (animation_sender, animation_receiver) = mpsc::channel();
+    let _ = animation_sender.send(synchronizing);
+    thread::spawn(move || {
+        let frames = spinner_frames();
+        let mut animation = SyncAnimation::default();
+        loop {
+            // Sleep until a state change when idle; only wake at frame rate
+            // while synchronization is actually running.
+            let synchronizing = if animation.active {
+                match animation_receiver.recv_timeout(ANIMATION_INTERVAL) {
+                    Ok(active) => active,
+                    Err(mpsc::RecvTimeoutError::Timeout) => true,
+                    Err(mpsc::RecvTimeoutError::Disconnected) => break,
+                }
+            } else {
+                let Ok(active) = animation_receiver.recv() else {
+                    break;
+                };
+                active
+            };
+            if let Some(frame) = animation.advance(synchronizing) {
+                let icon = match frame {
+                    SyncIcon::Spinner(index) => frames[index].clone(),
+                    SyncIcon::Idle => tauri::include_image!("icons/tray-icon.png"),
+                };
+                let _ = tray.set_icon_with_as_template(Some(icon), true);
+            }
+        }
+    });
+
+    animation_sender
+}
+
+fn start_status_refresh(
+    agent: MenuItem<tauri::Wry>,
+    last_sync: MenuItem<tauri::Wry>,
+    sync: MenuItem<tauri::Wry>,
+    labels: TrayLabels,
+    animation_sender: mpsc::Sender<bool>,
+) -> mpsc::SyncSender<()> {
+    let (sender, receiver) = mpsc::sync_channel(1);
+    thread::spawn(move || {
+        let apply = |labels: &TrayLabels| {
+            let _ = animation_sender.send(labels.synchronizing);
+            let _ = agent.set_text(&labels.agent);
+            let _ = last_sync.set_text(&labels.last_sync);
+            let _ = sync.set_text(&labels.sync);
+            let _ = sync.set_enabled(labels.sync_enabled);
+        };
+        let mut previous = labels;
+        let mut request_failed = false;
+        loop {
+            match receiver.recv_timeout(STATUS_REFRESH_INTERVAL) {
+                Ok(()) if previous.sync_enabled => {
+                    let mut busy = previous.clone();
+                    busy.set_synchronizing();
+                    apply(&busy);
+                    request_failed = commands::synchronize_from_tray().is_err();
+                    previous = busy;
+                }
+                Err(mpsc::RecvTimeoutError::Disconnected) => break,
+                _ => {}
+            }
+            let mut labels = load_labels();
+            if labels.synchronizing {
+                request_failed = false;
+            } else if request_failed {
+                "🔴 Synchronisation impossible".clone_into(&mut labels.agent);
+            }
+            if labels != previous {
+                apply(&labels);
+                previous = labels;
+            }
+        }
+    });
+    sender
 }
 
 fn build_help_menu(app: &tauri::App) -> tauri::Result<HelpMenu> {
@@ -211,7 +334,9 @@ pub(crate) fn handle_menu_event(app: &tauri::AppHandle, event: &MenuEvent) {
         "agent-status" | "show" => show_main_window(app),
         "profiles" => show_view(app, "profiles"),
         "preferences" => show_view(app, "preferences"),
-        "sync" => commands::synchronize_from_tray(),
+        "sync" => {
+            let _ = app.state::<SyncRequests>().0.try_send(());
+        }
         "github" => open_external_url(GITHUB_REPOSITORY_URL),
         "documentation" => open_external_url(GITHUB_DOCUMENTATION_URL),
         "troubleshooting" => open_external_url(GITHUB_ISSUES_URL),
@@ -318,10 +443,14 @@ fn load_labels() -> TrayLabels {
         return TrayLabels {
             agent: "○ État de l’agent indisponible".to_owned(),
             last_sync: "Dernière synchro : inconnue".to_owned(),
-            next_sync: "Prochaine synchro : inconnue".to_owned(),
+            synchronizing: false,
+            sync: "Synchroniser maintenant".to_owned(),
             sync_enabled: false,
         };
     };
+    // Query first, then read the committed success timestamp so completion
+    // cannot leave the menu displaying the previous snapshot for another tick.
+    let runtime = query_agent(&store);
     let now = epoch_seconds();
     let last_success = store
         .load_agent_status()
@@ -335,11 +464,7 @@ fn load_labels() -> TrayLabels {
                 .flatten()
                 .map(|snapshot| snapshot.synchronized_at_epoch_seconds)
         });
-    let interval = store
-        .load_preferences()
-        .map_or(5 * 60, |preferences| preferences.sync_interval_seconds);
-    let runtime = query_agent(&store);
-    labels_for(now, last_success, interval, &runtime)
+    labels_for(now, last_success, &runtime)
 }
 
 fn query_agent(store: &LocalStore) -> AgentRuntimeStatus {
@@ -352,7 +477,6 @@ fn query_agent(store: &LocalStore) -> AgentRuntimeStatus {
         Err(_) => AgentRuntimeStatus {
             running: false,
             synchronizing: false,
-            next_sync_seconds: None,
         },
     }
 }
@@ -361,54 +485,37 @@ fn parse_agent_status(response: &str) -> AgentRuntimeStatus {
     let mut status = AgentRuntimeStatus {
         running: response.starts_with("running"),
         synchronizing: false,
-        next_sync_seconds: None,
     };
     for field in response.split_whitespace().skip(1) {
         if let Some(value) = field.strip_prefix("state=") {
             status.synchronizing = value == "synchronizing";
-        } else if let Some(value) = field.strip_prefix("next_sync_seconds=") {
-            status.next_sync_seconds = value.parse().ok();
         }
     }
     status
 }
 
-fn labels_for(
-    now: u64,
-    last_success: Option<u64>,
-    interval: u64,
-    runtime: &AgentRuntimeStatus,
-) -> TrayLabels {
+fn labels_for(now: u64, last_success: Option<u64>, runtime: &AgentRuntimeStatus) -> TrayLabels {
     let age = last_success.map(|timestamp| now.saturating_sub(timestamp));
-    let agent = if !runtime.running {
-        "🔴 Agent arrêté"
-    } else if runtime.synchronizing {
-        "🟢 Synchronisation en cours…"
-    } else {
+    let agent = if runtime.running {
         "🟢 Agent actif"
+    } else {
+        "🔴 Agent arrêté"
     };
     let last_sync = age.map_or_else(
         || "Dernière synchro : jamais".to_owned(),
         |seconds| format!("Dernière synchro : {}", format_age(seconds)),
     );
-    let fallback_remaining = age.map(|seconds| interval.saturating_sub(seconds));
-    let next_sync = if !runtime.running {
-        "Prochaine synchro : agent arrêté".to_owned()
-    } else if runtime.synchronizing {
-        "Prochaine synchro : en cours".to_owned()
-    } else {
-        match runtime.next_sync_seconds.or(fallback_remaining) {
-            Some(0) => "Prochaine synchro : imminente".to_owned(),
-            Some(seconds) => format!("Prochaine synchro : dans {}", format_duration(seconds)),
-            None => "Prochaine synchro : en attente".to_owned(),
-        }
-    };
-    TrayLabels {
+    let mut labels = TrayLabels {
         agent: agent.to_owned(),
         last_sync,
-        next_sync,
-        sync_enabled: runtime.running && !runtime.synchronizing,
+        synchronizing: false,
+        sync: "Synchroniser maintenant".to_owned(),
+        sync_enabled: runtime.running,
+    };
+    if runtime.running && runtime.synchronizing {
+        labels.set_synchronizing();
     }
+    labels
 }
 
 fn format_age(seconds: u64) -> String {
@@ -450,7 +557,6 @@ mod tests {
             AgentRuntimeStatus {
                 running: true,
                 synchronizing: false,
-                next_sync_seconds: Some(83),
             }
         );
         assert_eq!(
@@ -458,7 +564,6 @@ mod tests {
             AgentRuntimeStatus {
                 running: true,
                 synchronizing: true,
-                next_sync_seconds: Some(0),
             }
         );
     }
@@ -470,7 +575,6 @@ mod tests {
             AgentRuntimeStatus {
                 running: true,
                 synchronizing: false,
-                next_sync_seconds: None,
             }
         );
     }
@@ -480,17 +584,16 @@ mod tests {
         let labels = labels_for(
             1_000,
             Some(875),
-            300,
             &AgentRuntimeStatus {
                 running: true,
                 synchronizing: false,
-                next_sync_seconds: Some(42),
             },
         );
 
         assert_eq!(labels.agent, "🟢 Agent actif");
         assert_eq!(labels.last_sync, "Dernière synchro : il y a 2 min 05 s");
-        assert_eq!(labels.next_sync, "Prochaine synchro : dans 42 s");
+        assert_eq!(labels.sync, "Synchroniser maintenant");
+        assert!(!labels.synchronizing);
         assert!(labels.sync_enabled);
     }
 
@@ -499,16 +602,16 @@ mod tests {
         let labels = labels_for(
             1_000,
             None,
-            300,
             &AgentRuntimeStatus {
                 running: true,
                 synchronizing: true,
-                next_sync_seconds: Some(0),
             },
         );
 
         assert_eq!(labels.agent, "🟢 Synchronisation en cours…");
-        assert_eq!(labels.next_sync, "Prochaine synchro : en cours");
+        assert_eq!(labels.sync, "Synchronisation en cours…");
+        assert_eq!(labels.last_sync, "Dernière synchro : jamais");
+        assert!(labels.synchronizing);
         assert!(!labels.sync_enabled);
     }
 
@@ -517,17 +620,65 @@ mod tests {
         let labels = labels_for(
             1_000,
             Some(875),
-            300,
             &AgentRuntimeStatus {
                 running: false,
                 synchronizing: false,
-                next_sync_seconds: None,
             },
         );
 
         assert_eq!(labels.agent, "🔴 Agent arrêté");
-        assert_eq!(labels.next_sync, "Prochaine synchro : agent arrêté");
+        assert!(!labels.synchronizing);
         assert!(!labels.sync_enabled);
+    }
+
+    #[test]
+    fn refreshes_the_last_success_after_completion_and_keeps_it_on_failure() {
+        let busy = parse_agent_status("running state=synchronizing");
+        let idle = parse_agent_status("running state=idle");
+        assert_eq!(
+            labels_for(1_000, Some(875), &busy).last_sync,
+            "Dernière synchro : il y a 2 min 05 s"
+        );
+        let completed = labels_for(1_001, Some(1_001), &idle);
+        assert_eq!(completed.last_sync, "Dernière synchro : à l’instant");
+        assert!(completed.sync_enabled);
+        assert!(!completed.synchronizing);
+        assert_eq!(
+            labels_for(1_001, Some(875), &idle).last_sync,
+            "Dernière synchro : il y a 2 min 06 s"
+        );
+    }
+
+    #[test]
+    fn animates_only_while_busy_and_restores_the_idle_icon() {
+        let mut animation = SyncAnimation::default();
+        assert_eq!(animation.advance(false), None);
+        for frame in 0..SPINNER_FRAMES {
+            assert_eq!(animation.advance(true), Some(SyncIcon::Spinner(frame)));
+        }
+        assert_eq!(animation.advance(true), Some(SyncIcon::Spinner(0)));
+        assert_eq!(animation.advance(false), Some(SyncIcon::Idle));
+        assert_eq!(animation.advance(false), None);
+        assert_eq!(animation.advance(true), Some(SyncIcon::Spinner(0)));
+    }
+
+    #[test]
+    fn spinner_frames_are_distinct_transparent_template_masks() {
+        let frames = spinner_frames();
+        assert_eq!(frames.len(), SPINNER_FRAMES);
+        for (index, frame) in frames.iter().enumerate() {
+            assert_eq!((frame.width(), frame.height()), (44, 44));
+            assert_eq!(frame.rgba().len(), 44 * 44 * 4);
+            assert!(
+                frame
+                    .rgba()
+                    .chunks_exact(4)
+                    .all(|pixel| pixel[..3] == [0, 0, 0])
+            );
+            assert!(frame.rgba().chunks_exact(4).any(|pixel| pixel[3] == 255));
+            assert_eq!(frame.rgba()[3], 0);
+            assert_ne!(frame.rgba(), frames[(index + 1) % SPINNER_FRAMES].rgba());
+        }
     }
 
     #[test]

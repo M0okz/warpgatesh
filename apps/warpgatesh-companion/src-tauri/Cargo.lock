@@ -4782,7 +4782,7 @@ dependencies = [
 
 [[package]]
 name = "warpgatesh-companion"
-version = "0.1.14"
+version = "0.1.15"
 dependencies = [
  "semver",
  "serde",
@@ -4799,14 +4799,14 @@ dependencies = [
 
 [[package]]
 name = "warpgatesh-core"
-version = "0.1.14"
+version = "0.1.15"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "warpgatesh-runtime"
-version = "0.1.14"
+version = "0.1.15"
 dependencies = [
  "chrono",
  "glob",

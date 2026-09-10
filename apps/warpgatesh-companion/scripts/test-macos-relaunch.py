@@ -34,7 +34,7 @@ def run_probe():
                 "CFBundleIdentifier": "dev.warpgatesh.relaunch-probe",
                 "CFBundleName": "WarpgateSH Relaunch Probe",
                 "CFBundlePackageType": "APPL",
-                "CFBundleShortVersionString": "0.1.14",
+                "CFBundleShortVersionString": "0.1.15",
                 "LSUIElement": True,
             }))
             subprocess.run([

@@ -2,6 +2,12 @@
 
 Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
+## 0.1.15 — 2026-09-10
+
+- Le menu de la barre système conserve la dernière synchronisation réussie et retire le compte à rebours de la suivante.
+- Un indicateur tourne dans la barre des menus pendant les synchronisations manuelles et automatiques, puis l’icône habituelle réapparaît.
+- L’état et la dernière réussite sont actualisés dès la fin de la synchronisation. L’action manuelle est désactivée pendant le travail et signale une demande impossible.
+
 ## 0.1.14 — 2026-09-06
 
 - Après une mise à jour, macOS rouvre le paquet installé une fois l’ancienne instance terminée. Un échec du redémarrage de l’agent ne bloque plus la réouverture du compagnon.
