@@ -1,7 +1,7 @@
 use std::fs;
 
 use serde::{Deserialize, Serialize};
-use warpgatesh_core::profiles::Profile;
+use warpgatesh_core::profiles::{Profile, SshAuthentication};
 
 use crate::RuntimeError;
 use crate::keychain::TokenStore;
@@ -21,6 +21,10 @@ pub enum ConfigurationMutation {
         token: String,
         username: String,
         warpgate_version: Option<String>,
+    },
+    SetSshAuthentication {
+        name: String,
+        authentication: SshAuthentication,
     },
     RemoveProfile {
         name: String,
@@ -77,6 +81,10 @@ impl<'a, T: TokenStore> LocalConfiguration<'a, T> {
                 username,
                 warpgate_version,
             } => self.renew_token(&name, &token, username, warpgate_version),
+            ConfigurationMutation::SetSshAuthentication {
+                name,
+                authentication,
+            } => self.set_ssh_authentication(&name, authentication),
             ConfigurationMutation::RemoveProfile { name } => self.remove_profile(&name),
             ConfigurationMutation::SavePreferences {
                 preferences,
@@ -87,7 +95,7 @@ impl<'a, T: TokenStore> LocalConfiguration<'a, T> {
 
     fn save_profile(
         &self,
-        profile: Profile,
+        mut profile: Profile,
         token: &str,
         known_hosts: &str,
     ) -> Result<(), RuntimeError> {
@@ -98,6 +106,10 @@ impl<'a, T: TokenStore> LocalConfiguration<'a, T> {
         }
         let name = profile.name.clone();
         let mut catalog = self.store.load_profiles()?;
+        // Re-enrollment refreshes credentials and metadata, not local preferences.
+        if let Some(existing) = catalog.find(&name) {
+            profile.ssh_authentication = existing.ssh_authentication;
+        }
         catalog.upsert(profile)?;
         self.tokens.set(&name, token.trim())?;
         save_host_keys(self.store.paths(), &name, known_hosts)?;
@@ -129,6 +141,21 @@ impl<'a, T: TokenStore> LocalConfiguration<'a, T> {
             ..existing
         })?;
         self.tokens.set(name, token.trim())?;
+        self.store.save_profiles(&catalog)
+    }
+
+    fn set_ssh_authentication(
+        &self,
+        name: &str,
+        authentication: SshAuthentication,
+    ) -> Result<(), RuntimeError> {
+        let mut catalog = self.store.load_profiles()?;
+        let mut profile = catalog
+            .find(name)
+            .cloned()
+            .ok_or_else(|| RuntimeError::InvalidInput(format!("unknown profile '{name}'")))?;
+        profile.ssh_authentication = authentication;
+        catalog.upsert(profile)?;
         self.store.save_profiles(&catalog)
     }
 
@@ -220,6 +247,7 @@ mod tests {
             warpgate_version: Some("0.27.1".to_owned()),
             ssh_host: "ssh.warpgate.example".to_owned(),
             ssh_port: 2222,
+            ssh_authentication: warpgatesh_core::profiles::SshAuthentication::Auto,
         }
     }
 
@@ -262,5 +290,92 @@ mod tests {
             })
             .expect("remove profile");
         assert!(store.load_profiles().expect("profiles").profiles.is_empty());
+    }
+    #[test]
+    fn retains_authentication_preference_on_token_renewal_and_reenrollment() {
+        let home = TempDir::new().expect("temporary home");
+        let store = LocalStore::new(WarpgatePaths::for_home(home.path()));
+        let tokens = MemoryTokens::default();
+        let configuration = LocalConfiguration::new(&store, &tokens);
+        let enroll = || ConfigurationMutation::SaveProfile {
+            profile: profile("lab"),
+            token: "secret".to_owned(),
+            known_hosts: "ssh.example ssh-ed25519 AAAA\n".to_owned(),
+        };
+        configuration.apply(enroll()).expect("enroll");
+        let mutation = ConfigurationMutation::from_json(
+            r#"{"type":"set_ssh_authentication","name":"lab","authentication":"in_browser"}"#,
+        )
+        .expect("IPC mutation");
+        configuration.apply(mutation).expect("set preference");
+        configuration
+            .apply(ConfigurationMutation::RenewToken {
+                name: "lab".to_owned(),
+                token: "renewed".to_owned(),
+                username: "gregory".to_owned(),
+                warpgate_version: Some("0.28.0".to_owned()),
+            })
+            .expect("renew token");
+        assert_eq!(
+            store
+                .load_profiles()
+                .unwrap()
+                .find("lab")
+                .unwrap()
+                .ssh_authentication,
+            SshAuthentication::InBrowser
+        );
+        configuration
+            .apply(enroll())
+            .expect("re-enroll from older UI");
+        assert_eq!(
+            store
+                .load_profiles()
+                .unwrap()
+                .find("lab")
+                .unwrap()
+                .ssh_authentication,
+            SshAuthentication::InBrowser
+        );
+        configuration
+            .apply(ConfigurationMutation::SetSshAuthentication {
+                name: "lab".to_owned(),
+                authentication: SshAuthentication::Auto,
+            })
+            .expect("restore automatic authentication");
+        assert_eq!(
+            store
+                .load_profiles()
+                .unwrap()
+                .find("lab")
+                .unwrap()
+                .ssh_authentication,
+            SshAuthentication::Auto
+        );
+    }
+
+    #[test]
+    fn rejects_unknown_profile_without_creating_a_catalog() {
+        let home = TempDir::new().expect("temporary home");
+        let store = LocalStore::new(WarpgatePaths::for_home(home.path()));
+        let tokens = MemoryTokens::default();
+        assert!(
+            LocalConfiguration::new(&store, &tokens)
+                .apply(ConfigurationMutation::SetSshAuthentication {
+                    name: "missing".to_owned(),
+                    authentication: SshAuthentication::InBrowser,
+                })
+                .is_err()
+        );
+        assert!(!store.paths().profiles.exists());
+    }
+    #[test]
+    fn legacy_profiles_keep_automatic_authentication() {
+        let legacy = r#"{"name":"lab","base_url":"https://warpgate.example/",
+            "username":"alice","ssh_host":"ssh.example","ssh_port":2222}"#;
+        let profile: Profile = serde_json::from_str(legacy).expect("legacy profile");
+        assert_eq!(profile.ssh_authentication, SshAuthentication::Auto);
+        let invalid = legacy.replace("2222}", "2222,\"ssh_authentication\":\"typo\"}");
+        assert!(serde_json::from_str::<Profile>(&invalid).is_err());
     }
 }

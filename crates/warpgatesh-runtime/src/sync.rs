@@ -197,11 +197,17 @@ mod tests {
     }
 
     fn mock_warpgate() -> (String, thread::JoinHandle<()>) {
+        mock_warpgate_targets(
+            r#"[{"id":"target-1","name":"db","kind":"Ssh"},{"id":"target-2","name":"web","kind":"Http"}]"#,
+        )
+    }
+
+    fn mock_warpgate_targets(targets: &'static str) -> (String, thread::JoinHandle<()>) {
         let listener = TcpListener::bind("127.0.0.1:0").expect("mock listener");
         let address = listener.local_addr().expect("mock address");
         let responses = [
             r#"{"version":"0.27.0","username":"gregory","external_hosts":{"ssh":"ssh.example"},"ports":{"ssh":2222}}"#,
-            r#"[{"id":"target-1","name":"db","kind":"Ssh"},{"id":"target-2","name":"web","kind":"Http"}]"#,
+            targets,
         ];
         let handle = thread::spawn(move || {
             for body in responses {
@@ -234,6 +240,7 @@ mod tests {
                 warpgate_version: None,
                 ssh_host: "10.60.0.17".to_owned(),
                 ssh_port: 22,
+                ssh_authentication: warpgatesh_core::profiles::SshAuthentication::Auto,
             })
             .expect("profile");
         store.save_profiles(&catalog).expect("save profiles");
@@ -263,5 +270,68 @@ mod tests {
             store.load_snapshot().expect("snapshot").unwrap().targets[0].name,
             "db"
         );
+    }
+    #[test]
+    fn preserves_browser_authentication_across_regeneration() {
+        let home = TempDir::new().expect("temporary home");
+        let paths = WarpgatePaths::for_home(home.path());
+        let store = LocalStore::new(paths.clone());
+        let tokens = MemoryTokens::default();
+        tokens.set("lab", "secret").expect("test token");
+        atomic_write(&paths.known_hosts_directory.join("lab"), b"pinned-key\n")
+            .expect("pinned key");
+
+        for round in 0..2 {
+            let (base_url, server) = mock_warpgate_targets(if round == 0 {
+                r#"[{"id":"target-1","name":"db","kind":"Ssh"}]"#
+            } else {
+                r#"[{"id":"target-1","name":"db","kind":"Ssh"},{"id":"target-2","name":"new-host","kind":"Ssh"}]"#
+            });
+            let mut saved = if round == 0 {
+                serde_json::json!({
+                    "schema_version": 1, "default_profile": "lab",
+                    "profiles": [{"name": "lab", "base_url": base_url,
+                        "username": "pending", "warpgate_version": null,
+                        "ssh_host": "ssh.example", "ssh_port": 2222,
+                        "ssh_authentication": "in_browser"}]
+                })
+            } else {
+                serde_json::from_slice(&fs::read(&paths.profiles).expect("profiles"))
+                    .expect("profile JSON")
+            };
+            saved["profiles"][0]["base_url"] = serde_json::json!(base_url);
+            atomic_write(&paths.profiles, &serde_json::to_vec(&saved).expect("JSON"))
+                .expect("persist catalog");
+            synchronize_all(&store, &tokens).expect("synchronization");
+            server.join().expect("mock server");
+            let persisted: serde_json::Value =
+                serde_json::from_slice(&fs::read(&paths.profiles).expect("profiles"))
+                    .expect("profile JSON");
+            assert_eq!(persisted["profiles"][0]["ssh_authentication"], "in_browser");
+            let rendered = fs::read_to_string(&paths.ssh_config).expect("managed config");
+            assert!(rendered.contains("PreferredAuthentications keyboard-interactive\n"));
+            assert!(rendered.contains("PubkeyAuthentication no\n"));
+            assert!(!rendered.contains("PubkeyAuthentication yes\n"));
+            if round == 1 {
+                assert!(rendered.contains("Host new-host new-host.lab\n"));
+                assert_eq!(rendered.matches("PubkeyAuthentication no\n").count(), 2);
+                // Verify effective OpenSSH behavior, not only generated text.
+                for alias in ["db", "db.lab", "new-host", "new-host.lab"] {
+                    let output = std::process::Command::new("/usr/bin/ssh")
+                        .args(["-G", "-F"])
+                        .arg(&paths.ssh_config)
+                        .arg(alias)
+                        .output()
+                        .expect("OpenSSH client");
+                    assert!(output.status.success());
+                    let effective = String::from_utf8(output.stdout).expect("SSH settings");
+                    assert!(effective.contains("preferredauthentications keyboard-interactive\n"));
+                    assert!(effective.lines().any(|line| matches!(
+                        line,
+                        "pubkeyauthentication false" | "pubkeyauthentication no"
+                    )));
+                }
+            }
+        }
     }
 }

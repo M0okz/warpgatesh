@@ -321,6 +321,7 @@ mod tests {
                 warpgate_version: Some("0.27.0".to_owned()),
                 ssh_host: "ssh.warpgate.example".to_owned(),
                 ssh_port: 2222,
+                ssh_authentication: warpgatesh_core::profiles::SshAuthentication::Auto,
             })
             .expect("valid profile");
 

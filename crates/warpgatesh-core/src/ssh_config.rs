@@ -3,7 +3,7 @@ use std::fmt::{self, Write as _};
 use std::hash::BuildHasher;
 
 use crate::aliases::{AliasError, Target, allocate_aliases};
-use crate::profiles::Profile;
+use crate::profiles::{Profile, SshAuthentication};
 
 pub const SSH_INCLUDE_LINE: &str = "Include ~/.ssh/warpgatesh/config";
 
@@ -87,6 +87,15 @@ pub fn render_profile<S: BuildHasher>(
     let known_hosts = format!("~/.ssh/warpgatesh/known_hosts/{}", profile.name);
     let mut output = format!("# Profile {}\n", profile.name);
 
+    let authentication = match profile.ssh_authentication {
+        SshAuthentication::Auto => {
+            "  KbdInteractiveAuthentication yes\n  PasswordAuthentication yes\n  PubkeyAuthentication yes\n"
+        }
+        SshAuthentication::InBrowser => {
+            "  PreferredAuthentications keyboard-interactive\n  KbdInteractiveAuthentication yes\n  PasswordAuthentication no\n  PubkeyAuthentication no\n"
+        }
+    };
+
     for (target, aliases) in targets.iter().zip(aliases) {
         let mut host_aliases = Vec::with_capacity(2);
         if let Some(short) = aliases.short {
@@ -102,7 +111,7 @@ pub fn render_profile<S: BuildHasher>(
 
         write!(
             output,
-            "\nHost {}\n  HostName {host_name}\n  Port {}\n  User {user}\n  UserKnownHostsFile {known_hosts}\n  StrictHostKeyChecking yes\n  KbdInteractiveAuthentication yes\n  PasswordAuthentication yes\n  PubkeyAuthentication yes\n",
+            "\nHost {}\n  HostName {host_name}\n  Port {}\n  User {user}\n  UserKnownHostsFile {known_hosts}\n  StrictHostKeyChecking yes\n{authentication}",
             host_aliases.join(" "),
             profile.ssh_port,
         )
@@ -136,6 +145,7 @@ mod tests {
             warpgate_version: Some("0.27.0".to_owned()),
             ssh_host: "ssh.warpgate.example".to_owned(),
             ssh_port: 2222,
+            ssh_authentication: crate::profiles::SshAuthentication::Auto,
         }
     }
 
