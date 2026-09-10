@@ -2,7 +2,7 @@
 
 Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
-## Unreleased
+## 0.1.16 — 2026-09-10
 
 - Une préférence d’authentification SSH par profil permet de conserver la validation navigateur après chaque régénération des alias, y compris pour les nouvelles cibles. Elle se règle avec `warpgatesh profile ssh-auth <profil> in-browser` et survit au renouvellement du jeton ainsi qu’au réenrôlement du profil. Les profils existants conservent le mode automatique.
 
