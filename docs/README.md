@@ -18,6 +18,7 @@ reference. These guides provide the complete public onboarding path.
 
 - [Contributing](../CONTRIBUTING.md)
 - [Changelog](../CHANGELOG.md)
+- [Warpgate API compatibility and upgrade checks](warpgate-api-compatibility.md)
 - [macOS release procedure](releasing-macos.md)
 - [Architecture decisions](adr/)
 

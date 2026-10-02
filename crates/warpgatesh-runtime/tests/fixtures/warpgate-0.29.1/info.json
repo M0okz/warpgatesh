@@ -1,0 +1,29 @@
+{
+  "ports": {
+    "ssh": 2222,
+    "http": 443
+  },
+  "password_login_mode": "Enabled",
+  "authorized_via_ticket": false,
+  "authorized_via_sso_with_single_logout": false,
+  "own_credential_management_allowed": true,
+  "ticket_self_service_enabled": false,
+  "ticket_require_description": false,
+  "ticket_request_show_all_targets": false,
+  "target_click_action": "Connect",
+  "open_targets_in_new_tab": "DefaultOn",
+  "web_clients_enabled": false,
+  "has_ldap": false,
+  "needs_mfa_setup": false,
+  "otp_setup_enforced": false,
+  "should_prompt_analytics": false,
+  "banner": "",
+  "show_session_menu": true,
+  "version": "0.29.1",
+  "username": "alice",
+  "external_host": "gateway.example.test",
+  "external_hosts": {
+    "ssh": "ssh.example.test",
+    "http": "gateway.example.test"
+  }
+}

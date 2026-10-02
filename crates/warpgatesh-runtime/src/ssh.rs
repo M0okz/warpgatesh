@@ -135,6 +135,7 @@ pub fn verify_host_keys(
 fn key_material(known_hosts: &str) -> BTreeSet<(&str, &str)> {
     known_hosts
         .lines()
+        .filter(|line| !line.trim_start().starts_with('#'))
         .filter_map(|line| {
             let mut fields = line.split_whitespace();
             let _hosts = fields.next()?;
@@ -331,6 +332,29 @@ mod tests {
             "Host example\n  User gregory\n"
         );
         assert!(!uninstall_managed_include(&paths).expect("second uninstall"));
+    }
+
+    #[test]
+    fn ignores_scan_banner_changes_when_comparing_pinned_keys() {
+        let pinned = "# gateway:2222 SSH-2.0-russh_0.62.5\n\
+                      gateway ssh-ed25519 AAAA\n\
+                      gateway ssh-rsa BBBB\n";
+        let presented = "   # gateway:2222 SSH-2.0-russh_0.63.3\n\n\
+                         gateway ssh-rsa BBBB\n\
+                         gateway ssh-ed25519 AAAA\n";
+
+        assert_eq!(key_material(pinned), key_material(presented));
+        assert_eq!(key_material(pinned).len(), 2);
+    }
+
+    #[test]
+    fn still_detects_changed_keys_when_scan_banners_match() {
+        let pinned = "# gateway:2222 SSH-2.0-russh_0.63.3\n\
+                      gateway ssh-ed25519 AAAA\n";
+        let presented = "# gateway:2222 SSH-2.0-russh_0.63.3\n\
+                         gateway ssh-ed25519 CHANGED\n";
+
+        assert_ne!(key_material(pinned), key_material(presented));
     }
 
     #[test]
