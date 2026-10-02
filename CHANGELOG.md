@@ -2,6 +2,11 @@
 
 Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
+## Non publié
+
+- Les changements de bannière SSH dans les commentaires de `ssh-keyscan` ne sont plus signalés comme une rotation des clés hôtes. Les modifications du matériel des clés restent refusées.
+- Des tests de contrat couvrent les API utilisateur Warpgate 0.27.5, 0.28.6 et 0.29.1, ainsi que la conservation de l’état local en cas de réponse invalide ou d’erreur HTTP.
+
 ## 0.1.16 — 2026-09-10
 
 - Une préférence d’authentification SSH par profil permet de conserver la validation navigateur après chaque régénération des alias, y compris pour les nouvelles cibles. Elle se règle avec `warpgatesh profile ssh-auth <profil> in-browser` et survit au renouvellement du jeton ainsi qu’au réenrôlement du profil. Les profils existants conservent le mode automatique.
