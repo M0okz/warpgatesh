@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#111217" />
+    <title>WarpgateSH — Your SSH access. Always in sync.</title>
+    <meta
+      name="description"
+      content="Turn your Warpgate SSH targets into familiar local aliases. A free, open-source CLI and optional macOS companion, powered by your existing OpenSSH tools."
+    />
+    <meta
+      property="og:title"
+      content="WarpgateSH — Your SSH access. Always in sync."
+    />
+    <meta
+      property="og:description"
+      content="Your Warpgate targets, at home in your terminal. Free, open source, and built around OpenSSH."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://warpgatesh.homeblack.fr/" />
+    <link rel="canonical" href="https://warpgatesh.homeblack.fr/" />
+    <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="header wrap">
+      <a class="brand" href="./" aria-label="WarpgateSH home"
+        ><img
+          src="assets/app-icon.svg"
+          width="36"
+          height="36"
+          alt=""
+        />Warpgate<span>SH</span></a
+      >
+      <button
+        class="menu-button"
+        data-menu
+        aria-expanded="false"
+        aria-controls="navigation"
+      >
+        Menu
+      </button>
+      <nav id="navigation" aria-label="Main navigation">
+        <a href="#companion">The app</a><a href="#cli">The CLI</a
+        ><a href="docs/">Docs</a>
+        <a
+          class="github"
+          href="https://github.com/M0okz/warpgatesh"
+          aria-label="WarpgateSH on GitHub"
+          ><svg
+            viewBox="0 0 24 24"
+            width="21"
+            height="21"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.86c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.64-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.99 1.03-2.69-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.03A9.58 9.58 0 0 1 12 6.82c.85 0 1.71.12 2.51.34 1.91-1.3 2.75-1.03 2.75-1.03.55 1.38.2 2.4.1 2.65.64.7 1.03 1.6 1.03 2.69 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"
+            /></svg
+        ></a>
+        <a
+          class="button small"
+          href="https://github.com/M0okz/warpgatesh/releases/latest"
+          ><span aria-hidden="true">↓</span> Get the Mac app</a
+        >
+      </nav>
+    </header>
+    <main id="main">
+      <section class="hero wrap" aria-labelledby="hero-title">
+        <a class="release" href="https://github.com/M0okz/warpgatesh/releases"
+          ><span class="dot"></span> Meet your Warpgate companion
+          <span aria-hidden="true">↗</span></a
+        >
+        <h1 id="hero-title">
+          Your SSH access.<br /><span>Always in sync.</span>
+        </h1>
+        <p class="lead">
+          Your Warpgate targets, at home in your terminal.<br
+            class="desktop-break"
+          />
+          Add an instance once. Connect the way you already do.
+        </p>
+        <div class="actions">
+          <a
+            class="button"
+            href="https://github.com/M0okz/warpgatesh/releases/latest"
+            ><span aria-hidden="true">↓</span> Get the Mac app</a
+          ><a class="text-link" href="#cli"
+            ><span class="prompt-icon" aria-hidden="true">›_</span> Prefer the
+            terminal? <span aria-hidden="true">→</span></a
+          >
+        </div>
+        <p class="fine">
+          Free & open source <span>·</span> macOS 13+ <span>·</span> Apple
+          silicon & Intel
+        </p>
+        <figure class="product-stage">
+          <figcaption class="stage-caption">
+            <span class="dot"></span> One familiar command. All your SSH
+            targets.
+          </figcaption>
+          <div class="terminal hero-terminal">
+            <div class="window-bar">
+              <span class="traffic" aria-hidden="true"
+                ><i></i><i></i><i></i></span
+              ><span>warpgatesh — terminal</span
+              ><span class="window-tag">OpenSSH, underneath.</span>
+            </div>
+            <div class="terminal-body">
+              <p>
+                <span class="shell">~</span>
+                <span class="dollar">$</span> warpgatesh ls
+              </p>
+              <div class="terminal-table">
+                <span class="table-head">TARGET</span
+                ><span class="table-head">PROFILE</span
+                ><span class="table-head">ALIAS</span><span>app-01</span
+                ><span class="dim">production</span
+                ><span class="cyan">app-01</span><span>db-primary</span
+                ><span class="dim">production</span
+                ><span class="cyan">db-primary</span><span>app-01</span
+                ><span class="dim">staging</span
+                ><span class="cyan">app-01.staging</span>
+              </div>
+              <p class="terminal-command">
+                <span class="shell">~</span> <span class="dollar">$</span> ssh
+                app-01
+              </p>
+              <p class="dim">Connecting through Warpgate…</p>
+              <p class="success">Welcome to app-01.</p>
+              <p>
+                <span class="cyan">app-01</span> <span class="dollar">$</span>
+                <span class="cursor" aria-hidden="true"></span>
+              </p>
+            </div>
+          </div>
+          <div class="sync-note">
+            <span class="sync-symbol" aria-hidden="true">↻</span>
+            <div>
+              <strong>Quietly up to date.</strong
+              ><span>Your agent takes care of the sync.</span>
+            </div>
+            <span class="dot"></span>
+          </div>
+          <p class="fine demo-note">
+            Illustrative session with example targets.
+          </p>
+        </figure>
+      </section>
+      <section class="tools wrap" aria-label="OpenSSH-compatible tools">
+        <p>Keep your tools. Keep your habits.</p>
+        <div>
+          <span>ssh</span><span>scp</span><span>sftp</span><span>rsync</span
+          ><span>VS Code <small>Remote SSH</small></span>
+        </div>
+        <p class="fine">
+          Standard OpenSSH aliases. Ready for tools that read your SSH
+          configuration.
+        </p>
+      </section>
+      <section class="feature wrap" id="companion">
+        <div class="feature-copy">
+          <p class="eyebrow">01 / A little closer</p>
+          <h2>Your targets.<br />A glance away.</h2>
+          <p>
+            Find a target, check your connection, or manage your profiles. The
+            optional Mac companion keeps the everyday things within reach.
+          </p>
+          <ul class="check-list">
+            <li>Your SSH targets in one place</li>
+            <li>Multiple Warpgate profiles</li>
+            <li>Quick access from the menu bar</li>
+          </ul>
+          <p class="fine">
+            Close the window. The background agent keeps working.
+          </p>
+        </div>
+        <figure class="companion-figure">
+          <div class="mac-menu" aria-hidden="true">
+            <span>⌘</span><span>Finder</span><span>File</span><span>Edit</span
+            ><span class="menu-end">›_ &nbsp; ◷</span>
+          </div>
+          <div class="companion">
+            <div class="companion-head">
+              <img src="assets/app-icon.svg" width="42" height="42" alt="" />
+              <div>
+                <strong>WarpgateSH</strong
+                ><span>Access, without the busywork.</span>
+              </div>
+              <span class="status-pill"><span class="dot"></span> In sync</span>
+            </div>
+            <div class="mock-tabs">
+              <span class="selected">SSH access</span><span>Profiles</span
+              ><span>Preferences</span>
+            </div>
+            <div class="route">
+              <span>Mac</span><i></i><span class="cyan">Warpgate</span><i></i
+              ><span>Target</span>
+            </div>
+            <div class="mock-metrics">
+              <div><strong>3</strong><span>targets</span></div>
+              <div><strong>2</strong><span>profiles</span></div>
+              <div>
+                <strong class="cyan">Just now</strong><span>last sync</span>
+              </div>
+            </div>
+            <div class="target-heading">AVAILABLE TARGETS <span>3</span></div>
+            <div class="mock-target">
+              <div>app-01<small>app-01.production</small></div>
+              <span>P</span>
+            </div>
+            <div class="mock-target">
+              <div>db-primary<small>db-primary.production</small></div>
+              <span>P</span>
+            </div>
+            <div class="mock-target">
+              <div>app-01<small>app-01.staging</small></div>
+              <span>S</span>
+            </div>
+          </div>
+          <figcaption class="fine">
+            Companion illustration · Example profiles and targets.
+          </figcaption>
+        </figure>
+      </section>
+      <section class="feature reverse wrap">
+        <div class="feature-copy">
+          <p class="eyebrow">02 / Built around your workflow</p>
+          <h2>Less config.<br />More connecting.</h2>
+          <p>
+            No more copying target names or maintaining a second list of SSH
+            destinations. WarpgateSH discovers the SSH targets available to your
+            Warpgate user and gives them local aliases.
+          </p>
+          <div class="detail">
+            <h3>One instance or several</h3>
+            <p>
+              Use short aliases for your default profile and qualified aliases
+              to move between production and staging.
+            </p>
+          </div>
+          <div class="detail">
+            <h3>Your configuration stays yours</h3>
+            <p>
+              One managed include. An isolated configuration directory. Your
+              existing SSH entries take precedence.
+            </p>
+          </div>
+        </div>
+        <div class="config-panel">
+          <div class="file-label">
+            <span aria-hidden="true">⌘</span> ~/.ssh/config
+            <span>YOUR CONFIG</span>
+          </div>
+          <pre><code><span class="dim"># Your existing SSH configuration</span>
+Host personal-server
+    HostName server.example.com
+
+<span class="dim"># Managed by WarpgateSH</span>
+<span class="cyan">Include ~/.ssh/warpgatesh/config</span></code></pre>
+          <div class="alias-pair">
+            <code>ssh app-01<span class="cyan">.production</span></code
+            ><code>ssh app-01<span class="cyan">.staging</span></code>
+          </div>
+          <div class="panel-foot">
+            <span class="dot"></span> Separate profiles. Unambiguous aliases.
+          </div>
+        </div>
+      </section>
+      <section class="resilience wrap">
+        <p class="eyebrow">03 / Quiet by design</p>
+        <h2>A small client.<br />A clear set of boundaries.</h2>
+        <div class="principles">
+          <article>
+            <span class="principle-icon" aria-hidden="true">↻</span>
+            <h3>A snapshot you can rely on</h3>
+            <p>
+              A failed sync keeps the last complete local snapshot. Connecting
+              never waits for a new synchronization. Your Warpgate instance
+              still needs to be reachable for SSH.
+            </p>
+          </article>
+          <article>
+            <span class="principle-icon" aria-hidden="true">⌘</span>
+            <h3>Your system. Your SSH.</h3>
+            <p>
+              Every connection goes through your system’s OpenSSH client.
+              Warpgate keeps control of authentication, authorization, and
+              auditing.
+            </p>
+          </article>
+          <article>
+            <span class="principle-icon" aria-hidden="true">◇</span>
+            <h3>Personal by default</h3>
+            <p>
+              API tokens stay in the platform secret store. No telemetry or
+              automatic crash uploads. Diagnostic exports are yours to review
+              and share.
+            </p>
+          </article>
+        </div>
+      </section>
+      <section class="cli-section" id="cli">
+        <div class="wrap">
+          <div class="cli-intro">
+            <p class="eyebrow">04 / At home in your terminal</p>
+            <h2>Same access.<br />Your kind of interface.</h2>
+            <p>
+              The CLI comes with the Mac app. Install it from Preferences.<br />On
+              Linux, get the CLI and background agent through Homebrew.
+            </p>
+          </div>
+          <div class="command-grid">
+            <article>
+              <span class="command-number">01</span>
+              <h3>Add your Warpgate instance</h3>
+              <p>
+                Create a profile, add your personal API token, and verify the
+                SSH host keys.
+              </p>
+              <div class="copy-line">
+                <code id="cmd-profile"
+                  >warpgatesh profile add lab https://warpgate.example.com</code
+                ><button
+                  data-copy="cmd-profile"
+                  aria-label="Copy add profile command"
+                >
+                  Copy
+                </button>
+              </div>
+            </article>
+            <article>
+              <span class="command-number">02</span>
+              <h3>Find your targets</h3>
+              <p>
+                Get the latest snapshot and see which SSH targets are available
+                to you.
+              </p>
+              <div class="copy-line">
+                <code id="cmd-sync">warpgatesh sync</code
+                ><button
+                  data-copy="cmd-sync"
+                  aria-label="Copy synchronization command"
+                >
+                  Copy
+                </button>
+              </div>
+              <div class="copy-line">
+                <code id="cmd-list">warpgatesh ls</code
+                ><button
+                  data-copy="cmd-list"
+                  aria-label="Copy list targets command"
+                >
+                  Copy
+                </button>
+              </div>
+            </article>
+            <article>
+              <span class="command-number">03</span>
+              <h3>Connect as usual</h3>
+              <p>
+                Use the CLI or a standard SSH alias. Your familiar tools do the
+                rest.
+              </p>
+              <div class="copy-line">
+                <code id="cmd-connect">warpgatesh app-01</code
+                ><button
+                  data-copy="cmd-connect"
+                  aria-label="Copy connection command"
+                >
+                  Copy
+                </button>
+              </div>
+              <div class="copy-line">
+                <code id="cmd-ssh">ssh app-01</code
+                ><button data-copy="cmd-ssh" aria-label="Copy SSH command">
+                  Copy
+                </button>
+              </div>
+            </article>
+            <article>
+              <span class="command-number">LINUX BETA</span>
+              <h3>Bring it to Linux</h3>
+              <p>
+                CLI and per-user systemd agent. Requires OpenSSH and a Secret
+                Service provider.
+              </p>
+              <div class="copy-line">
+                <code id="cmd-brew"
+                  >brew install M0okz/warpgatesh/warpgatesh</code
+                ><button
+                  data-copy="cmd-brew"
+                  aria-label="Copy Linux installation command"
+                >
+                  Copy
+                </button>
+              </div>
+              <a class="inline-link" href="docs/installation-linux.html"
+                >Read the Linux setup guide
+                <span aria-hidden="true">↗</span></a
+              >
+            </article>
+          </div>
+          <div class="cli-links">
+            <a href="docs/getting-started.html"
+              >Read the getting started guide
+              <span aria-hidden="true">→</span></a
+            ><a href="https://github.com/M0okz/warpgatesh#commands"
+              >Explore all commands <span aria-hidden="true">↗</span></a
+            >
+          </div>
+        </div>
+      </section>
+      <section class="open-source wrap">
+        <img
+          src="assets/app-icon.svg"
+          width="80"
+          height="80"
+          loading="lazy"
+          alt=""
+        />
+        <p class="eyebrow">Community built. Open by nature.</p>
+        <h2>A familiar workflow.<br />An open book.</h2>
+        <p>
+          Free to use. Apache 2.0 licensed. Read the source,<br
+            class="desktop-break"
+          />
+          report an issue, or help make SSH access a little simpler.
+        </p>
+        <div class="actions">
+          <a
+            class="button"
+            href="https://github.com/M0okz/warpgatesh/releases/latest"
+            ><span aria-hidden="true">↓</span> Get the Mac app</a
+          ><a class="text-link" href="https://github.com/M0okz/warpgatesh"
+            >Explore the source <span aria-hidden="true">↗</span></a
+          >
+        </div>
+        <p class="fine">Signed & notarized universal macOS download.</p>
+      </section>
+      <section class="faq wrap" aria-labelledby="faq-title">
+        <h2 id="faq-title">A few things to know.</h2>
+        <div>
+          <details>
+            <summary>Do I need WarpgateSH to use Warpgate?</summary>
+            <p>
+              No. Warpgate works with standard protocol clients. WarpgateSH is
+              an optional, independent community client that keeps your
+              authorized SSH targets available as local aliases. It is not
+              affiliated with or endorsed by the Warpgate maintainers.
+            </p>
+          </details>
+          <details>
+            <summary>How do I install the Mac app?</summary>
+            <p>
+              Download the universal DMG from the
+              <a href="https://github.com/M0okz/warpgatesh/releases/latest"
+                >latest release</a
+              >, drag WarpgateSH into Applications, and open it. macOS 13 or
+              newer is required. The CLI can be installed from Preferences. See
+              the <a href="docs/installation.html">macOS installation guide</a>.
+            </p>
+          </details>
+          <details>
+            <summary>Does the app need to stay open?</summary>
+            <p>
+              No. A per-user background agent keeps your targets synchronized
+              independently of the graphical companion. You can close its window
+              and keep using your SSH tools.
+            </p>
+          </details>
+          <details>
+            <summary>Does my API token authenticate SSH connections?</summary>
+            <p>
+              No. Your personal API token is used to synchronize the targets
+              available to your Warpgate user. SSH authentication remains
+              separate and is handled by OpenSSH and your Warpgate instance.
+            </p>
+          </details>
+          <details>
+            <summary>What happens if synchronization fails?</summary>
+            <p>
+              Your last complete local snapshot stays in place, and its age
+              remains visible. A failed sync does not replace valid aliases with
+              an empty list. SSH connections still require network access to
+              Warpgate and valid authorization.
+            </p>
+          </details>
+          <details>
+            <summary>Can I use it on Linux or Windows?</summary>
+            <p>
+              The Linux CLI and background agent are available as an early beta
+              via Homebrew. The graphical companion currently targets macOS.
+              Windows is not currently supported. See the
+              <a href="docs/installation-linux.html">Linux installation guide</a
+              >.
+            </p>
+          </details>
+        </div>
+      </section>
+    </main>
+    <footer class="footer wrap">
+      <div>
+        <a class="brand" href="./"
+          ><img
+            src="assets/app-icon.svg"
+            width="28"
+            height="28"
+            alt=""
+          />Warpgate<span>SH</span></a
+        >
+        <p>
+          An independent community companion for
+          <a href="https://warpgate.null.page/">Warpgate</a>.<br />Not
+          affiliated with or endorsed by the Warpgate project.
+        </p>
+      </div>
+      <nav aria-label="Footer">
+        <a href="https://github.com/M0okz/warpgatesh">GitHub</a
+        ><a href="docs/">Documentation</a
+        ><a href="https://github.com/M0okz/warpgatesh/releases">Releases</a
+        ><a href="https://github.com/M0okz/warpgatesh/blob/main/LICENSE"
+          >Apache 2.0</a
+        >
+      </nav>
+    </footer>
+    <p class="sr-only" role="status" aria-live="polite"></p>
+  </body>
+</html>

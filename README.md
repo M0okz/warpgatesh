@@ -118,6 +118,7 @@ Run `warpgatesh help` for the complete built-in reference.
 
 ## Documentation
 
+- [Product website source and local preview](apps/warpgatesh-site/README.md)
 - [Install WarpgateSH on macOS](docs/installation.md)
 - [Install the CLI and agent on Linux](docs/installation-linux.md)
 - [Create a token and connect to a first target](docs/getting-started.md)
