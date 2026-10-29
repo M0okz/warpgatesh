@@ -71,6 +71,7 @@ fn run_management(name: &str, arguments: &[String]) -> Result<(), RuntimeError> 
         "doctor" => doctor(arguments),
         "diagnostics" => run_diagnostics(arguments),
         "agent" => run_agent(arguments),
+        "shell" => warpgatesh_cli::shell::run(arguments),
         _ => Err(RuntimeError::InvalidInput(format!(
             "unknown management command '{name}'"
         ))),
