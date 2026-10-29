@@ -99,6 +99,30 @@ $ scp ./backup.tar app-01:/tmp/
 
 ## Commands
 
+### Optional zsh integration
+
+To connect by typing a target name directly, explicitly enable the integration:
+
+```console
+$ warpgatesh shell install zsh
+```
+
+Open a new terminal. With your normal zsh completion enabled, type `app-` and
+press Tab to complete a target, then Enter to connect. Both short and qualified
+aliases are available. SSH arguments can be passed directly, for example
+`app-01 -L 8080:localhost:80`.
+
+The integration refreshes from the local snapshot before each prompt, without
+network access. Existing commands, aliases and personal functions take priority.
+Management command names such as `sync` require the target's qualified alias.
+It does not initialize or change your completion system.
+
+`warpgatesh shell uninstall zsh` removes the startup block; open a new terminal
+afterward. Both commands honor `ZDOTDIR`. For a symlinked or manually managed
+startup file, add `eval "$(warpgatesh shell init zsh)"` yourself instead.
+
+### Reference
+
 | Command | Purpose |
 | --- | --- |
 | `warpgatesh profile add <name> <url>` | Add or replace a Warpgate profile |
@@ -106,6 +130,9 @@ $ scp ./backup.tar app-01:/tmp/
 | `warpgatesh profile default <name>` | Choose which profile provides short aliases |
 | `warpgatesh login <profile>` | Replace a personal API token |
 | `warpgatesh ls` | List synchronized SSH targets and their aliases |
+| `warpgatesh shell install zsh` | Enable direct target commands in new zsh sessions |
+| `warpgatesh shell uninstall zsh` | Remove the managed zsh startup block |
+| `warpgatesh shell init zsh` | Print the integration for manual loading |
 | `warpgatesh sync` | Request an immediate synchronization |
 | `warpgatesh status` | Show profile, snapshot, and agent status |
 | `warpgatesh <target>` | Connect to a target through the system OpenSSH client |
@@ -118,6 +145,7 @@ Run `warpgatesh help` for the complete built-in reference.
 
 ## Documentation
 
+- [Product website source and local preview](apps/warpgatesh-site/README.md)
 - [Install WarpgateSH on macOS](docs/installation.md)
 - [Install the CLI and agent on Linux](docs/installation-linux.md)
 - [Create a token and connect to a first target](docs/getting-started.md)

@@ -1,0 +1,39 @@
+name: Website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/warpgatesh-site/**
+      - docs/**
+      - .github/workflows/site.yml
+  pull_request:
+    paths:
+      - apps/warpgatesh-site/**
+      - docs/**
+      - .github/workflows/site.yml
+
+permissions:
+  contents: read
+
+jobs:
+  website:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/warpgatesh-site
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/warpgatesh-site/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - run: npm run check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: warpgatesh-site
+          path: apps/warpgatesh-site/dist
+          if-no-files-found: error

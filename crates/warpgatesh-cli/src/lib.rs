@@ -1,5 +1,7 @@
 use std::fmt;
 
+pub mod shell;
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum CliCommand {
     Help,
@@ -40,12 +42,11 @@ pub fn parse(arguments: impl IntoIterator<Item = String>) -> Result<CliCommand, 
     match first.as_str() {
         "-h" | "--help" | "help" => Ok(CliCommand::Help),
         "-V" | "--version" | "version" => Ok(CliCommand::Version),
-        "login" | "ls" | "sync" | "status" | "profile" | "agent" | "doctor" | "diagnostics" => {
-            Ok(CliCommand::Management {
-                name: first,
-                arguments: arguments.collect(),
-            })
-        }
+        "login" | "ls" | "sync" | "status" | "profile" | "agent" | "doctor" | "diagnostics"
+        | "shell" => Ok(CliCommand::Management {
+            name: first,
+            arguments: arguments.collect(),
+        }),
         value if value.starts_with('-') => Err(ParseError(format!("unknown option '{value}'"))),
         alias => {
             let remaining: Vec<String> = arguments.collect();
@@ -69,7 +70,7 @@ pub fn parse(arguments: impl IntoIterator<Item = String>) -> Result<CliCommand, 
 
 pub const HELP: &str = "WarpgateSH — unofficial community client for Warpgate\n\n\
 Usage:\n  warpgatesh <target> [-- <ssh arguments>]\n  warpgatesh <command> [arguments]\n\n\
-Commands:\n  profile add <name> <url>  Add or replace a Warpgate profile\n  profile list              List configured profiles\n  profile default <name>    Select the profile providing short aliases\n  profile ssh-auth <name> <auto|in-browser>  Select SSH authentication\n  login <profile>           Replace a personal API token\n  ls                        List synchronized SSH targets\n  sync                      Request an immediate synchronization\n  status                    Show profile and snapshot status\n  agent install             Install and start the background agent\n  agent status              Show whether the background agent is running\n  agent uninstall           Stop and remove the background agent service\n  doctor                    Diagnose the local installation\n  diagnostics preview       Preview local logs before exporting\n  diagnostics export        Create a sanitized ZIP archive in Downloads\n  help                      Show this help\n";
+Commands:\n  profile add <name> <url>  Add or replace a Warpgate profile\n  profile list              List configured profiles\n  profile default <name>    Select the profile providing short aliases\n  profile ssh-auth <name> <auto|in-browser>  Select SSH authentication\n  login <profile>           Replace a personal API token\n  ls                        List synchronized SSH targets\n  sync                      Request an immediate synchronization\n  status                    Show profile and snapshot status\n  agent install             Install and start the background agent\n  agent status              Show whether the background agent is running\n  agent uninstall           Stop and remove the background agent service\n  doctor                    Diagnose the local installation\n  diagnostics preview       Preview local logs before exporting\n  diagnostics export        Create a sanitized ZIP archive in Downloads\n  shell install zsh         Enable direct target commands in zsh\n  shell uninstall zsh       Remove the zsh startup block\n  shell init zsh            Print the zsh integration\n  help                      Show this help\n";
 
 #[must_use]
 pub fn openssh_arguments(alias: &str, ssh_arguments: &[String]) -> Vec<String> {
