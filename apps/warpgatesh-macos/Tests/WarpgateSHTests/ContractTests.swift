@@ -21,8 +21,9 @@ struct ContractTests {
     #expect(demo.state.profiles.count == 1)
   }
   @Test func snapshotAgeIsHonestWithoutFirstSync() {
-    #expect(SyncAge.label(nil) == "Jamais")
-    #expect(SyncAge.label(180) == "Il y a 3 min")
-    #expect(SyncAge.label(86400) == "Il y a 1 j")
+    #expect(SyncAge.label(nil, language: .french) == "Jamais")
+    #expect(SyncAge.label(180, language: .french) == "Il y a 3 min")
+    #expect(SyncAge.label(86400, language: .french) == "Il y a 1 j")
+    #expect(SyncAge.label(180, language: .english) == "3 min ago")
   }
 }

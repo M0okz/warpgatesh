@@ -8,7 +8,7 @@ warpgatesh doctor
 warpgatesh agent status
 ```
 
-If the CLI is missing, open **Préférences → Intégration terminal** in the app
+If the CLI is missing, open **Preferences → System → Terminal command** in the app
 and install it first.
 
 ## The background agent is not running
@@ -117,7 +117,7 @@ host-key, or compatibility error, then request another synchronization.
 
 ## The application does not reopen after an update
 
-Open **WarpgateSH** from Applications and check the version in **Préférences**.
+Open **WarpgateSH** from Applications and check the version in **About**.
 The version that was running performs the relaunch, so an older version can
 still require a manual reopen when first updating to a release containing the
 relaunch fix.
@@ -137,9 +137,9 @@ warpgatesh diagnostics preview
 warpgatesh diagnostics export
 ```
 
-In **v0.1.18 and later**, open [**Journaux**](desktop-app.md#logs) to review the
+In **v0.1.18 and later**, open [**Logs**](desktop-app.md#logs) to review the
 local files and select **Exporter les diagnostics nettoyés…**. Earlier versions
-provide diagnostics under **Préférences → Diagnostics locaux**. Logs are retained for seven days, sanitized, and never uploaded
+provide diagnostics under **Preferences → Diagnostics locaux**. Logs are retained for seven days, sanitized, and never uploaded
 automatically. Review the ZIP before attaching it to a GitHub issue.
 
 When reporting a problem, include the WarpgateSH version, macOS version,

@@ -4,6 +4,8 @@ Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
 ## Non publié
 
+## 0.1.19 — 2026-10-30
+
 - Les préférences sont réparties en Général, Synchronisation et Système. La langue
   peut suivre macOS ou être réglée en français ou en anglais ; les thèmes Warpgate,
   Clair, Noir et Système s’appliquent immédiatement et sont conservés sur ce Mac.

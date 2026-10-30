@@ -60,7 +60,7 @@ macOS reste requise avant une publication publique.
 
 ## Preferences in the development version
 
-These settings are new, unreleased changes after v0.1.18:
+These settings are included from v0.1.19:
 
 - **General**: automatic/French/English language; original Warpgate, Light, Black,
   or System appearance. System follows the macOS light/dark setting. Language and
