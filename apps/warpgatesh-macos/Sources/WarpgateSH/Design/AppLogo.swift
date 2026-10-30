@@ -10,6 +10,14 @@ enum AppLogo {
     }
     return image
   }()
+  static let menuBarImage: NSImage = {
+    guard let url = Bundle.module.url(forResource: "MenuBarIcon", withExtension: "png"),
+      let image = NSImage(contentsOf: url)
+    else { preconditionFailure("Missing bundled WarpgateSH menu-bar icon") }
+    image.size = NSSize(width: 18, height: 18)
+    image.isTemplate = true
+    return image
+  }()
   static let dockImage: NSImage = {
     let source =
       Bundle.main.url(forResource: "icon", withExtension: "icns")
