@@ -18,7 +18,7 @@ permissions:
 jobs:
   macos:
     name: Signed universal DMG
-    runs-on: macos-15
+    runs-on: macos-latest
     defaults:
       run:
         working-directory: apps/warpgatesh-companion
@@ -37,6 +37,9 @@ jobs:
 
       - name: Install Nix
         uses: cachix/install-nix-action@d9186cbdca7adedf113a159fa91f725a27866771 # v31
+
+      - name: Select Xcode for the SwiftUI companion
+        run: bash ../../.github/scripts/select-xcode.sh
 
       - name: Install frontend dependencies
         run: npm ci

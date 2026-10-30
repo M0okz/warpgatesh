@@ -25,7 +25,10 @@ instructions. Architecture and maintainer links stay on GitHub.
 
 macOS download links use the project's latest release page rather than a pinned
 artifact filename. Linux installation commands follow the versioned Linux guide.
-The companion illustration is HTML/CSS, explicitly identified as an illustration.
+The companion figures are real captures of the native SwiftUI app in isolated
+demo mode, stored once in `docs/assets/swiftui/` and copied into the site during
+build. The README and desktop guide reuse the same files. The native interface is available from v0.1.18. Each capture is labeled as
+running in demo mode, with fictional data. See `docs/assets/swiftui/README.md` for capture provenance.
 
 The intended public domain is `warpgatesh.homeblack.fr`.
 The production reverse proxy, firewall, and DNS configuration is maintained

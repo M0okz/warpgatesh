@@ -85,3 +85,11 @@ Cette commande active `tauri.release.conf.json` et exige notamment
 `TAURI_SIGNING_PRIVATE_KEY` et `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
 Ne jamais ajouter ces secrets aux fichiers Nix. Le workflow conserve les étapes
 Apple de finalisation, notarisation et validation avant la création du brouillon.
+
+## Interface native SwiftUI
+
+Le packaging prépare aussi `warpgatesh-ui` et le bundle de ressources Swift.
+Xcode doit fournir Swift 6.2 ou ultérieur. Le lanceur/backend Rust, l’interface
+SwiftUI, la CLI et l’agent sont tous universels et signés ensemble. Le protocole
+de mise à jour signé, l’identifiant du bundle et les chemins Trousseau restent
+identiques ; aucune conversion des données utilisateur n’est nécessaire.

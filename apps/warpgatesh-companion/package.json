@@ -1,7 +1,7 @@
 {
   "name": "warpgatesh-companion",
   "private": true,
-  "version": "0.1.17",
+  "version": "0.1.18",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,13 +11,14 @@
     "test:sidecars": "node --test scripts/prepare-sidecars.test.mjs",
     "test:updater-manifest": "node --test scripts/updater-manifest.test.mjs",
     "prepare:sidecars": "node scripts/prepare-sidecars.mjs",
-    "build:bundle": "npm run prepare:sidecars && npm run build",
+    "build:bundle": "npm run prepare:sidecars && python3 ../warpgatesh-macos/scripts/prepare-native.py && npm run build",
     "bundle:macos": "tauri build --bundles app,dmg && npm run verify:bundle",
     "bundle:macos:universal": "TAURI_ENV_TARGET_TRIPLE=universal-apple-darwin tauri build --config src-tauri/tauri.release.conf.json --target universal-apple-darwin --bundles app,dmg && npm run verify:bundle -- src-tauri/target/universal-apple-darwin/release/bundle/macos/WarpgateSH.app",
     "verify:bundle": "node scripts/verify-macos-bundle.mjs",
     "verify:release-version": "node scripts/verify-release-version.mjs",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "prepare:native": "python3 ../warpgatesh-macos/scripts/prepare-native.py"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",

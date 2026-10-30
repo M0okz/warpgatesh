@@ -40,6 +40,9 @@ jobs:
       - name: Install Nix
         uses: cachix/install-nix-action@d9186cbdca7adedf113a159fa91f725a27866771 # v31
 
+      - name: Select Xcode for the SwiftUI companion
+        run: bash .github/scripts/select-xcode.sh
+
       - name: Check macOS companion in the reference environment
         run: nix develop --command bash nix/tasks.sh check-companion
 

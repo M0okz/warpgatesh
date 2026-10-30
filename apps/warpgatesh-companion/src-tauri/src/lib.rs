@@ -1,5 +1,7 @@
 mod commands;
 mod installation;
+#[cfg(target_os = "macos")]
+mod native;
 mod relaunch;
 mod tray_menu;
 mod updates;
@@ -19,6 +21,25 @@ fn handle_second_instance(app: &tauri::AppHandle, _arguments: Vec<String>, _cwd:
 ///
 /// Panics when Tauri cannot initialize or its event loop exits with an error.
 pub fn run() {
+    let context = tauri::generate_context!();
+    #[cfg(target_os = "macos")]
+    if std::env::args().any(|argument| argument == "--native-backend") {
+        native::run(context);
+        return;
+    }
+    #[cfg(target_os = "macos")]
+    {
+        use std::os::unix::process::CommandExt;
+        let executable = std::env::current_exe().expect("resolve companion executable");
+        let interface = executable.with_file_name("warpgatesh-ui");
+        if interface.is_file() {
+            let error = std::process::Command::new(interface)
+                .args(std::env::args_os().skip(1))
+                .exec();
+            eprintln!("WarpgateSH: could not start the native interface: {error}");
+            std::process::exit(1);
+        }
+    }
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(handle_second_instance))
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -71,7 +92,7 @@ pub fn run() {
             updates::check_for_updates,
             updates::install_update,
         ])
-        .build(tauri::generate_context!())
+        .build(context)
         .expect("error while building the WarpgateSH companion");
 
     app.run(|app, event| {

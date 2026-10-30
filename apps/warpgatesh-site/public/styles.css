@@ -1373,3 +1373,23 @@ h1 > span {
     background: CanvasText;
   }
 }
+
+/* Screenshots are captured from the native app; no simulated companion UI. */
+.companion-section { grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); gap: 48px; }
+.app-screenshot { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid rgb(255 255 255 / .10); }
+.screenshot-link { display: block; border-radius: 12px; }
+.screenshot-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; }
+.preview-note { border-left: 2px solid var(--accent); padding-left: 14px; color: var(--muted); font-size: .8rem; line-height: 1.7; margin: 24px 0; }
+.screenshot-section { padding-bottom: 100px; }
+.screenshot-section h2 { font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.12; letter-spacing: -.04em; }
+.screenshot-intro { max-width: 680px; color: var(--muted); line-height: 1.8; margin: 24px 0 40px; }
+.screenshot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 28px; }
+.screenshot-grid figure { margin: 0; min-width: 0; }
+.screenshot-grid figcaption { padding-top: 16px; }
+.screenshot-grid h3 { font-size: 1rem; font-weight: 600; }
+.screenshot-grid p { font-size: .85rem; color: var(--muted); line-height: 1.7; margin-top: 8px; }
+.docs-content img { max-width: 100%; height: auto; border-radius: 12px; }
+@media (max-width: 700px) {
+  .companion-section, .screenshot-grid { grid-template-columns: minmax(0, 1fr); }
+  .screenshot-section { padding-bottom: 64px; }
+}

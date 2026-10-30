@@ -10,3 +10,6 @@ apps/warpgatesh-companion/src-tauri/binaries/
 # Nix build output links
 /result
 /result-*
+
+# SwiftUI native companion build resources
+apps/warpgatesh-companion/src-tauri/native-resources/
