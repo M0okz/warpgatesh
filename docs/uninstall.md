@@ -3,16 +3,15 @@
 Use the built-in uninstaller so the app can distinguish its own files from your
 personal SSH configuration.
 
-The labels below describe the published v0.1.17 companion. In the [SwiftUI
-preview](desktop-app.md#preferences), use **Préférences → Application →
-Désinstaller WarpgateSH…** and leave **Supprimer aussi les profils, jetons et
-fichiers SSH gérés** unchecked to keep your data.
+These labels apply to **v0.1.18 and later**. See the [native preferences
+screenshots](desktop-app.md#preferences). Earlier versions use shorter labels
+in the same Preferences section.
 
 ## Uninstall and keep local data
 
 1. Open **WarpgateSH → Préférences**.
-2. Select **Désinstaller…**.
-3. Leave **Supprimer aussi mes données** unchecked.
+2. Under **Application**, select **Désinstaller WarpgateSH…**.
+3. Leave **Supprimer aussi les profils, jetons et fichiers SSH gérés** unchecked.
 4. Enter `DÉSINSTALLER` and continue.
 
 WarpgateSH stops and unregisters the background agent, removes the CLI link
@@ -22,7 +21,7 @@ kept for a later reinstall.
 
 ## Uninstall and delete all WarpgateSH data
 
-Follow the same steps and enable **Supprimer aussi mes données** before confirming. In
+Follow the same steps and enable **Supprimer aussi les profils, jetons et fichiers SSH gérés** before confirming. In
 addition to uninstalling the app, WarpgateSH removes:
 
 - its personal API tokens from the macOS Keychain;

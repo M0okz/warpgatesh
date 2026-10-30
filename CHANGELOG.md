@@ -4,6 +4,8 @@ Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
 ## Non publié
 
+## 0.1.18 — 2026-10-30
+
 - Le compagnon macOS adopte SwiftUI avec six rubriques, une navigation latérale,
   un panneau translucide, le logo de l’application et des animations de survol.
 - Les profils, la synchronisation, les préférences, les diagnostics et les mises
@@ -13,7 +15,7 @@ Toutes les évolutions notables de WarpgateSH sont documentées ici.
   vérification. L’interface protège aussi l’état récent contre une réponse de
   lecture plus ancienne.
 - Le README, les guides et le site présentent les captures réelles du mode démo
-  SwiftUI, clairement identifiées comme aperçu de la prochaine version.
+  SwiftUI, avec des données fictives et les parcours de cette version native.
 
 ## 0.1.17 — 2026-10-30
 

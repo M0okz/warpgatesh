@@ -5,7 +5,7 @@ your Warpgate user synchronized with standard OpenSSH aliases.
 
 ## User guides
 
-- [Native macOS companion — SwiftUI preview and screenshots](desktop-app.md)
+- [Native macOS companion — SwiftUI guide and screenshots](desktop-app.md)
 
 - [Install WarpgateSH on macOS](installation.md)
 - [Install the CLI and agent on Linux](installation-linux.md)

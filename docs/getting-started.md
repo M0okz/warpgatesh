@@ -24,21 +24,19 @@ writes it to the generated SSH configuration.
 
 ### With the graphical companion
 
-The steps below describe the published v0.1.17 companion. For the next SwiftUI
-interface, use **Profils → Ajouter un profil → Vérifier le profil**, approve the
-fingerprints, then **Enregistrer**. See the [SwiftUI profile walkthrough and
-screenshots](desktop-app.md#profiles).
+These labels apply to **v0.1.18 and later**. See the [native profile walkthrough
+and screenshots](desktop-app.md#profiles).
 
-1. Open **Profils** and select **+ Ajouter**.
-2. Enter a short profile name using lowercase letters, digits, and hyphens,
-   such as `production`.
+1. Open **Profils** and select **Ajouter un profil**.
+2. Enter a local name using lowercase letters, digits and hyphens, such as `production`.
 3. Enter the Warpgate root URL and your personal API token.
-4. Select **Vérifier la connexion**.
+4. Select **Vérifier le profil**.
 5. Compare the displayed SSH host-key fingerprints with a trusted source.
-6. Select **Faire confiance et ajouter** only after the fingerprints match.
+6. Enable **J’ai vérifié ces empreintes par un canal de confiance**, then select **Enregistrer**.
 
-If the SSH service uses a different public hostname or port from the HTTP
-service, open **Adresse SSH différente ?** and provide the reachable endpoint.
+If SSH uses a different public hostname or port from the HTTP service, expand
+**Options SSH** and provide the reachable endpoint. Enrollment is refused if
+the keys change between inspection and saving.
 
 ### With the CLI
 

@@ -18,7 +18,7 @@ final class DemoBridge: CompanionTransport {
     preferences: .init(
       syncIntervalSeconds: 300, launchCompanionAtLogin: false, defaultProfile: "homelab"),
     terminalIntegration: .init(status: "missing", path: "/usr/local/bin/warpgatesh"),
-    update: .init(phase: "idle", channel: "unsupported", currentVersion: "0.1.17"), alerts: [])
+    update: .init(phase: "idle", channel: "unsupported", currentVersion: "0.1.18"), alerts: [])
 
   func request(_ command: String, args: [String: JSONValue]) async throws -> JSONValue {
     switch command {

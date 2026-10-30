@@ -21,9 +21,8 @@ tools.
 
 ![WarpgateSH SwiftUI access screen](docs/assets/swiftui/access.png)
 
-*SwiftUI preview from the running macOS app, using fictional demo data. This
-interface is on `main` for the next release; the latest published v0.1.17 DMG
-still uses the previous companion.*
+*Native SwiftUI companion, available from v0.1.18. Actual capture of the running
+macOS app using fictional demo data.*
 
 [Explore the six native screens](docs/desktop-app.md) ·
 [Watch the CLI demo](docs/assets/warpgatesh-demo.gif)
@@ -244,7 +243,7 @@ The project currently includes:
 
 - the `warpgatesh` command-line client;
 - a per-user synchronization agent;
-- a native SwiftUI macOS companion and menu-bar interface on `main`, for the next release;
+- a native SwiftUI macOS companion and menu-bar interface;
 - an early Linux CLI and systemd user-agent port;
 - signed, notarized universal macOS release artifacts;
 - multi-profile target synchronization and deterministic SSH aliases.

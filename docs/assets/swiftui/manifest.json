@@ -2,13 +2,13 @@
   "capturedOn": "2026-10-30",
   "source": "Running WarpgateSH SwiftUI app, --demo mode",
   "data": "Fictional demo data only; no live profiles or secrets",
-  "releaseStatus": "Preview on main for the next release; published v0.1.17 uses the previous interface",
+  "releaseStatus": "Native SwiftUI companion, available from v0.1.18",
   "images": [
     {
       "file": "about.png",
       "width": 4718592,
       "height": 4292935744,
-      "sha256": "bac27f9dce419eb9f31cadfc8cff522881475dfafe0b68be30478aaa5108854f"
+      "sha256": "eb21479a37d09124efe91963710642f0dd2d13923606e19a4a9ef954dff71455"
     },
     {
       "file": "access.png",
@@ -40,5 +40,6 @@
       "height": 4292935744,
       "sha256": "9492e9cab04f867b46a09d99cdc6089db3c23509947ecaf6ce47702946bbdfe0"
     }
-  ]
+  ],
+  "version": "0.1.18"
 }

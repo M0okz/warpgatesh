@@ -7,9 +7,8 @@ These are application screenshots, not rendered HTML or generated mockups.
 The six images show the approved interface and real native controls. Every
 profile, hostname, URL, counter and diagnostic entry comes from fictional demo
 fixtures; no live infrastructure data or tokens are included. The French UI
-labels are captured as displayed. The source build keeps version 0.1.17 until
-release preparation; this does not make the SwiftUI preview part of that
-published release.
+labels are captured as displayed. The screenshots correspond to the v0.1.18 source build. The native SwiftUI
+interface is distributed from v0.1.18.
 
 `manifest.json` records dimensions and SHA-256 checksums. The project README,
 `docs/desktop-app.md` and website share these exact files. The site build copies

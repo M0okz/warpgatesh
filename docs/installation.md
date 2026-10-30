@@ -3,12 +3,11 @@
 WarpgateSH currently supports macOS 13 or newer on Apple silicon and Intel
 Macs. The public installation method is a signed and notarized universal DMG.
 
-## Interface versions
+## Native macOS interface
 
-The latest published **v0.1.17** DMG uses the previous companion. The native
-[SwiftUI preview](desktop-app.md), with its sidebar and six sections, is on
-`main` for the next release. The installation steps below apply to the public
-DMG; the preview guide gives the new labels and screenshots.
+From **v0.1.18**, the companion uses SwiftUI with a sidebar and six sections.
+See the [native companion guide and screenshots](desktop-app.md). Earlier
+versions use the previous interface; update before following the new labels.
 
 ## Install from the DMG
 
@@ -36,8 +35,8 @@ The app already generates standard OpenSSH aliases, so `ssh <target>` works
 without installing an extra SSH client. To also use the `warpgatesh` command:
 
 1. Open **WarpgateSH → Préférences**.
-2. Find **Intégration terminal**.
-3. Select **Installer la CLI** and approve the macOS administrator prompt.
+2. Find **Commande du terminal**.
+3. Select **Installer la commande warpgatesh** and approve the macOS administrator prompt.
 
 The app creates `/usr/local/bin/warpgatesh` as a link to the signed executable
 inside the application bundle. It does not modify your shell configuration or
@@ -59,10 +58,9 @@ signed DMG and do not rely on `brew install --cask warpgatesh`.
 ## Updates
 
 DMG installations check for new GitHub releases every six hours. You can
-also check manually from **Préférences** or the menu-bar icon. WarpgateSH downloads
+also check manually from **À propos → Vérifier les mises à jour**. WarpgateSH downloads
 an update only after your confirmation and verifies its updater signature
-before replacing the companion, CLI, and agent together. In the SwiftUI preview,
-manual checks are under **À propos → Vérifier les mises à jour**.
+before replacing the companion, CLI, and agent together.
 
 If macOS rejects an official release, do not bypass Gatekeeper. Verify that the
 download came from this repository, check the SHA-256 file, and report the

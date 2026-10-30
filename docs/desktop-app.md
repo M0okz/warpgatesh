@@ -1,11 +1,10 @@
-# Native macOS companion — SwiftUI preview
+# Native macOS companion
 
-The next WarpgateSH companion uses SwiftUI with the sidebar, translucent macOS
+The WarpgateSH companion uses SwiftUI with the sidebar, translucent macOS
 material, application logo, and hover feedback shown below. It remains optional:
 the synchronization agent and OpenSSH access work independently of its window.
 
-**Availability:** this interface is implemented on `main` for the next release.
-The latest published **v0.1.17** DMG still contains the previous companion.
+**Availability:** the native interface is available in **v0.1.18 and later**.
 The screenshots are actual captures of the running SwiftUI application in its
 isolated demo mode. Every profile, target, counter and diagnostic entry shown
 is fictional. The interface currently uses French labels.
@@ -71,7 +70,7 @@ Check the installed version and update status. DMG installations check for new
 releases every six hours; **Vérifier les mises à jour** requests a manual check.
 An available signed update requires confirmation before replacing the app, CLI
 and agent together. Homebrew installations instead show the upgrade command.
-The screenshot's version refers to the development build, not a new published release.
+The version shown corresponds to the v0.1.18 source build used for these captures.
 
 ## Menu bar, keyboard and accessibility
 
@@ -82,7 +81,7 @@ labels, hover motion respects Reduce Motion, and the sidebar becomes opaque
 when Reduce Transparency is enabled. Full assistive-technology coverage still
 requires manual verification before publication.
 
-## Try the preview from source
+## Run from source
 
 See the [native companion development guide](../apps/warpgatesh-macos/README.md).
 Its preview script starts in isolated demo mode by default. The public signed
