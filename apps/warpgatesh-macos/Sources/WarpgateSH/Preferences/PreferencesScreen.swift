@@ -83,25 +83,14 @@ struct PreferencesScreen: View {
                         }))
                   }
                 }
-                Text(
-                  L10n.text(
-                    "Vérification des versions publiques sur GitHub toutes les six heures, sans transmettre vos identifiants."
-                  )
-                )
-                .font(.caption).foregroundStyle(AccessTheme.secondary)
               }
-              Text(
-                L10n.text(
-                  "Les rappels à J−7 et J−1 nécessitent une date d’expiration renseignée dans Profils. Un jeton refusé est signalé même sans date."
-                )
+              Link(
+                L10n.text("À propos des notifications"),
+                destination: URL(
+                  string: "https://warpgatesh.homeblack.fr/docs/desktop-app.html#notifications"
+                )!
               )
-              .font(.caption).foregroundStyle(AccessTheme.secondary)
-              Text(
-                L10n.text(
-                  "Une alerte par incident. Les notifications restent actives lorsque la fenêtre est fermée, tant que WarpgateSH fonctionne dans la barre des menus."
-                )
-              )
-              .font(.caption).foregroundStyle(AccessTheme.secondary)
+              .foregroundStyle(AccessTheme.cyan)
               HStack {
                 Button(L10n.text("Envoyer une notification de test")) {
                   permissionTask = Task { await notifications.test() }
