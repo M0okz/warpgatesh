@@ -5,12 +5,12 @@ enum AppSection: String, CaseIterable, Identifiable {
   var id: Self { self }
   var title: String {
     switch self {
-    case .access: "Accès"
-    case .profiles: "Profils"
-    case .preferences: "Préférences"
-    case .synchronization: "Synchronisation"
-    case .logs: "Journaux"
-    case .about: "À propos"
+    case .access: L10n.text("Accès")
+    case .profiles: L10n.text("Profils")
+    case .preferences: L10n.text("Préférences")
+    case .synchronization: L10n.text("Synchronisation")
+    case .logs: L10n.text("Journaux")
+    case .about: L10n.text("À propos")
     }
   }
   var symbol: String {

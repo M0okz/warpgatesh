@@ -10,28 +10,32 @@ struct AccessScreen: View {
       VStack(spacing: 14) {
         HStack(spacing: 8) {
           MetricCard(
-            symbol: "server.rack", value: "\(state.targets.count)", caption: "cibles",
+            symbol: "server.rack", value: "\(state.targets.count)", caption: L10n.text("cibles"),
             tint: AccessTheme.cyanText)
           MetricCard(
             symbol: "person.2.fill", value: "\(state.profiles.count)",
-            caption: state.profiles.count == 1 ? "profil" : "profils", tint: AccessTheme.purple)
+            caption: state.profiles.count == 1 ? L10n.text("profil") : L10n.text("profils"),
+            tint: AccessTheme.purple)
           MetricCard(
             symbol: "clock", value: SyncAge.label(state.lastSyncAgeSeconds),
-            caption: "dernière synchro", tint: AccessTheme.amber, compactValue: true)
+            caption: L10n.text("dernière synchro"), tint: AccessTheme.amber, compactValue: true)
         }
         .accessibilityElement(children: .contain)
         Button(action: model.synchronize) {
           HStack(spacing: 12) {
             if state.agentSynchronizing || model.busy {
-              ProgressView().controlSize(.small).tint(AccessTheme.canvas)
+              ProgressView().controlSize(.small).tint(AccessTheme.onAccent)
             } else {
               Image(systemName: "arrow.clockwise").font(.title3.weight(.semibold))
                 .accessibilityHidden(true)
             }
-            Text(state.agentSynchronizing ? "Synchronisation…" : "Synchroniser maintenant").font(
+            Text(
+              state.agentSynchronizing
+                ? L10n.text("Synchronisation…") : L10n.text("Synchroniser maintenant")
+            ).font(
               .body.weight(.semibold))
           }
-          .foregroundStyle(AccessTheme.canvas)
+          .foregroundStyle(AccessTheme.onAccent)
           .frame(maxWidth: .infinity, minHeight: 44)
           .background(AccessTheme.cyan.gradient, in: RoundedRectangle(cornerRadius: 16))
         }
@@ -39,25 +43,27 @@ struct AccessScreen: View {
       }
       if let alert = state.alerts.first {
         VStack(alignment: .leading, spacing: 8) {
-          Label(alert.title, systemImage: "exclamationmark.triangle").font(.headline)
-          Text(alert.message).font(.callout)
+          Label(L10n.text(alert.title), systemImage: "exclamationmark.triangle").font(.headline)
+          Text(L10n.text(alert.message)).font(.callout)
           if alert.action == "profiles" {
-            Button("Gérer les profils") { model.section = .profiles }
+            Button(L10n.text("Gérer les profils")) { model.section = .profiles }
           }
         }.foregroundStyle(AccessTheme.amber).padding(12).modifier(Surface(tint: AccessTheme.amber))
       }
       if state.profiles.isEmpty {
         VStack(spacing: 12) {
-          Text("Bienvenue dans WarpgateSH").font(.title2.weight(.semibold))
-          Text("Ajoutez votre premier profil Warpgate pour retrouver vos cibles SSH.")
+          Text(L10n.text("Bienvenue dans WarpgateSH")).font(.title2.weight(.semibold))
+          Text(L10n.text("Ajoutez votre premier profil Warpgate pour retrouver vos cibles SSH."))
             .foregroundStyle(AccessTheme.secondary)
-          Button("Ajouter un profil") { model.section = .profiles }.buttonStyle(.borderedProminent)
-            .tint(AccessTheme.cyan)
+          Button(L10n.text("Ajouter un profil")) { model.section = .profiles }.buttonStyle(
+            .borderedProminent
+          )
+          .tint(AccessTheme.cyan)
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
       } else if state.targets.isEmpty {
         VStack(spacing: 12) {
-          Text("Aucune cible synchronisée").font(.headline)
-          Text("Lancez une synchronisation ou vérifiez vos autorisations Warpgate.")
+          Text(L10n.text("Aucune cible synchronisée")).font(.headline)
+          Text(L10n.text("Lancez une synchronisation ou vérifiez vos autorisations Warpgate."))
             .foregroundStyle(AccessTheme.secondary)
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
       } else {

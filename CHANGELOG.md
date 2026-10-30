@@ -4,6 +4,16 @@ Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
 ## Non publié
 
+- Les préférences sont réparties en Général, Synchronisation et Système. La langue
+  peut suivre macOS ou être réglée en français ou en anglais ; les thèmes Warpgate,
+  Clair, Noir et Système s’appliquent immédiatement et sont conservés sur ce Mac.
+- Les notifications macOS facultatives signalent les incidents persistants et les
+  mises à jour du client. La surveillance des versions du serveur est optionnelle
+  par profil. Les rappels d’expiration nécessitent une date connue, saisie dans le
+  profil ; un renouvellement réussi efface cette ancienne date.
+- Un lien dans les préférences ouvre directement le guide de la commande du terminal.
+- La bordure verticale de la barre latérale est retirée dans tous les thèmes.
+
 ## 0.1.18 — 2026-10-30
 
 - Le compagnon macOS adopte SwiftUI avec six rubriques, une navigation latérale,

@@ -26,6 +26,8 @@ cat > "$app_dir/Contents/Info.plist" <<'PLIST'
 <key>NSHighResolutionCapable</key><true/>
 </dict></plist>
 PLIST
+# Sign the complete preview bundle so local UserNotifications can identify it.
+codesign --force --deep --sign - "$app_dir"
 # The default preview is isolated: no backend, profiles, tokens, agent or network.
 if [ "${1:-}" = "--live" ]; then
   open "$app_dir"

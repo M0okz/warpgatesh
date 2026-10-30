@@ -7,26 +7,30 @@ struct UninstallSheet: View {
   @State private var confirmation = ""
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
-      Text("Désinstaller WarpgateSH").font(.title2.bold())
+      Text(L10n.text("Désinstaller WarpgateSH")).font(.title2.bold())
       Text(
-        "L’agent et la commande gérée seront retirés, puis l’application sera placée dans la Corbeille."
+        L10n.text(
+          "L’agent et la commande gérée seront retirés, puis l’application sera placée dans la Corbeille."
+        )
       )
-      Toggle("Supprimer aussi les profils, jetons et fichiers SSH gérés", isOn: $deleteData)
-      Text("Saisissez DÉSINSTALLER pour confirmer.").foregroundStyle(AccessTheme.secondary)
-      TextField("DÉSINSTALLER", text: $confirmation).textFieldStyle(.roundedBorder)
+      Toggle(
+        L10n.text("Supprimer aussi les profils, jetons et fichiers SSH gérés"), isOn: $deleteData)
+      Text(L10n.text("Saisissez DÉSINSTALLER pour confirmer.")).foregroundStyle(
+        AccessTheme.secondary)
+      TextField(L10n.text("DÉSINSTALLER"), text: $confirmation).textFieldStyle(.roundedBorder)
       HStack {
         Spacer()
-        Button("Annuler") { dismiss() }.keyboardShortcut(.cancelAction)
-        Button("Désinstaller", role: .destructive) {
+        Button(L10n.text("Annuler")) { dismiss() }.keyboardShortcut(.cancelAction)
+        Button(L10n.text("Désinstaller"), role: .destructive) {
           model.perform(
             "uninstall_warpgatesh",
             args: [
               "request": .object([
-                "deleteUserData": .bool(deleteData), "confirmation": .string(confirmation),
+                "deleteUserData": .bool(deleteData), "confirmation": .string("DÉSINSTALLER"),
               ])
             ])
           dismiss()
-        }.disabled(confirmation != "DÉSINSTALLER" || model.busy)
+        }.disabled(confirmation != L10n.text("DÉSINSTALLER") || model.busy)
       }
     }.padding(24).frame(width: 500).background(AccessTheme.canvas)
   }

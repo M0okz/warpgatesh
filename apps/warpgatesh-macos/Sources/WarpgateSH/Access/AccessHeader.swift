@@ -12,7 +12,7 @@ struct AccessHeader: View {
         .tracking(1.2)
         .foregroundStyle(AccessTheme.secondary)
       HStack(alignment: .center) {
-        Text("Vos accès, à jour.")
+        Text(L10n.text("Vos accès, à jour."))
           .font(.system(size: headingSize, weight: .bold))
           .tracking(-0.8)
           .accessibilityAddTraits(.isHeader)
@@ -20,9 +20,13 @@ struct AccessHeader: View {
         HStack(spacing: 7) {
           Circle().fill(running ? AccessTheme.green : AccessTheme.amber).frame(width: 8, height: 8)
             .accessibilityHidden(true)
-          Text(synchronizing ? "Synchronisation" : running ? "Agent actif" : "Agent arrêté")
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(AccessTheme.cyanText)
+          Text(
+            synchronizing
+              ? L10n.text("Synchronisation")
+              : running ? L10n.text("Agent actif") : L10n.text("Agent arrêté")
+          )
+          .font(.caption.weight(.semibold))
+          .foregroundStyle(AccessTheme.cyanText)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 7)
@@ -31,7 +35,7 @@ struct AccessHeader: View {
           RoundedRectangle(cornerRadius: 12).strokeBorder(AccessTheme.cyan.opacity(0.25))
         }
       }
-      Text("Synchronisez vos cibles SSH sur tous vos appareils.")
+      Text(L10n.text("Synchronisez vos cibles SSH sur tous vos appareils."))
         .font(.body)
         .foregroundStyle(AccessTheme.secondary)
     }

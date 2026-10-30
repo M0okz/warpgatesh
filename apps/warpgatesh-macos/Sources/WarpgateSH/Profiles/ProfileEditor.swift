@@ -13,36 +13,47 @@ struct ProfileEditor: View {
   @State private var operation: Task<Void, Never>?
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
-      Text("Ajouter un profil Warpgate").font(.title2.bold()).accessibilityAddTraits(.isHeader)
+      Text(L10n.text("Ajouter un profil Warpgate")).font(.title2.bold()).accessibilityAddTraits(
+        .isHeader)
       ScrollView {
         VStack(alignment: .leading, spacing: 14) {
-          LabeledContent("Nom local") { TextField("ex. production", text: $request.name) }
-          LabeledContent("Instance Warpgate") {
+          LabeledContent(L10n.text("Nom local")) {
+            TextField(L10n.text("ex. production"), text: $request.name)
+          }
+          LabeledContent(L10n.text("Instance Warpgate")) {
             TextField("https://warpgate.example.com", text: $request.baseUrl)
           }
-          Button("Créer un jeton dans Warpgate", action: openTokenPage).disabled(
+          Button(L10n.text("Créer un jeton dans Warpgate"), action: openTokenPage).disabled(
             request.baseUrl.isEmpty)
-          LabeledContent("Jeton d’accès") {
-            SecureField("Jeton API personnel", text: $request.token)
+          LabeledContent(L10n.text("Jeton d’accès")) {
+            SecureField(L10n.text("Jeton API personnel"), text: $request.token)
           }
           Text(
-            "Le jeton sert à synchroniser vos cibles. Il sera conservé dans le Trousseau, indépendamment de votre authentification SSH."
+            L10n.text(
+              "Le jeton sert à synchroniser vos cibles. Il sera conservé dans le Trousseau, indépendamment de votre authentification SSH."
+            )
           )
           .font(.caption).foregroundStyle(AccessTheme.secondary)
-          DisclosureGroup("Options SSH") {
-            LabeledContent("Hôte SSH") { TextField("Détecté automatiquement", text: $sshHost) }
-            LabeledContent("Port SSH") { TextField("Détecté automatiquement", text: $sshPort) }
+          DisclosureGroup(L10n.text("Options SSH")) {
+            LabeledContent(L10n.text("Hôte SSH")) {
+              TextField(L10n.text("Détecté automatiquement"), text: $sshHost)
+            }
+            LabeledContent(L10n.text("Port SSH")) {
+              TextField(L10n.text("Détecté automatiquement"), text: $sshPort)
+            }
             if !sshPort.isEmpty && (UInt16(sshPort) == nil || UInt16(sshPort) == 0) {
-              Text("Le port doit être compris entre 1 et 65535.").foregroundStyle(AccessTheme.amber)
+              Text(L10n.text("Le port doit être compris entre 1 et 65535.")).foregroundStyle(
+                AccessTheme.amber)
             }
           }
           if let inspection {
             Divider()
-            Text("Identité : \(inspection.username)")
+            Text(L10n.text("Identité : %@", inspection.username))
             Text("SSH : \(inspection.sshHost):\(inspection.sshPort)").textSelection(.enabled)
-            Text("Empreintes SSH").font(.headline)
+            Text(L10n.text("Empreintes SSH")).font(.headline)
             Text(inspection.fingerprints).font(.body.monospaced()).textSelection(.enabled)
-            Toggle("J’ai vérifié ces empreintes par un canal de confiance", isOn: $approved)
+            Toggle(
+              L10n.text("J’ai vérifié ces empreintes par un canal de confiance"), isOn: $approved)
           }
           if let error { Text(error).foregroundStyle(AccessTheme.amber).textSelection(.enabled) }
         }.padding(2)
@@ -51,13 +62,16 @@ struct ProfileEditor: View {
       HStack {
         if busy { ProgressView().controlSize(.small) }
         Spacer()
-        Button("Annuler") { dismiss() }.keyboardShortcut(.cancelAction)
-        Button(inspection == nil ? "Vérifier le profil" : "Enregistrer", action: submit)
-          .buttonStyle(.borderedProminent).tint(AccessTheme.cyan)
-          .disabled(
-            busy || (!sshPort.isEmpty && (UInt16(sshPort) == nil || UInt16(sshPort) == 0))
-              || request.name.isEmpty || request.baseUrl.isEmpty || request.token.isEmpty
-              || (inspection != nil && !approved))
+        Button(L10n.text("Annuler")) { dismiss() }.keyboardShortcut(.cancelAction)
+        Button(
+          inspection == nil ? L10n.text("Vérifier le profil") : L10n.text("Enregistrer"),
+          action: submit
+        )
+        .buttonStyle(.borderedProminent).tint(AccessTheme.cyan)
+        .disabled(
+          busy || (!sshPort.isEmpty && (UInt16(sshPort) == nil || UInt16(sshPort) == 0))
+            || request.name.isEmpty || request.baseUrl.isEmpty || request.token.isEmpty
+            || (inspection != nil && !approved))
       }
     }
     .textFieldStyle(.roundedBorder)

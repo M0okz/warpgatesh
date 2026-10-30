@@ -7,17 +7,21 @@ struct ProfilesScreen: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 20) {
       HStack {
-        Text("Profils Warpgate").font(.largeTitle.bold()).accessibilityAddTraits(.isHeader)
+        Text(L10n.text("Profils Warpgate")).font(.largeTitle.bold()).accessibilityAddTraits(
+          .isHeader)
         Spacer()
-        Button("Ajouter un profil") { editor = .new }.buttonStyle(.borderedProminent).tint(
-          AccessTheme.cyan)
+        Button(L10n.text("Ajouter un profil")) { editor = .new }.buttonStyle(.borderedProminent)
+          .tint(
+            AccessTheme.cyan)
       }
-      Text("Vos instances Warpgate, leurs identités et leurs accès SSH.").foregroundStyle(
-        AccessTheme.secondary)
+      Text(L10n.text("Vos instances Warpgate, leurs identités et leurs accès SSH."))
+        .foregroundStyle(
+          AccessTheme.secondary)
       ScrollView {
         LazyVStack(spacing: 12) {
           if state.profiles.isEmpty {
-            Text("Aucun profil. Ajoutez une instance Warpgate pour commencer.").padding(24)
+            Text(L10n.text("Aucun profil. Ajoutez une instance Warpgate pour commencer.")).padding(
+              24)
           }
           ForEach(state.profiles) { profile in
             ProfileCard(model: model, profile: profile) { editor = .renew(profile) }

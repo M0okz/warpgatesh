@@ -28,7 +28,7 @@ struct AccessSidebar: View {
           SidebarItem(section: section, selection: $selection)
         }
       }
-      Text("SYSTÈME")
+      Text(L10n.text("SYSTÈME"))
         .font(.caption.weight(.medium))
         .tracking(1.1)
         .foregroundStyle(AccessTheme.secondary)
@@ -42,7 +42,7 @@ struct AccessSidebar: View {
       }
       Spacer(minLength: 16)
       Label(
-        isDemo ? "Démonstration" : "Accès SSH personnels",
+        isDemo ? L10n.text("Démonstration") : L10n.text("Accès SSH personnels"),
         systemImage: isDemo ? "testtube.2" : "lock.shield"
       )
       .font(.caption2)
@@ -51,7 +51,7 @@ struct AccessSidebar: View {
       .padding(.bottom, 16)
     }
     .accessibilityElement(children: .contain)
-    .accessibilityLabel("Navigation")
+    .accessibilityLabel(L10n.text("Navigation"))
     .frame(width: AccessTheme.sidebarWidth)
     .frame(maxHeight: .infinity)
     .background {
@@ -61,9 +61,6 @@ struct AccessSidebar: View {
         SidebarBackdrop()
         AccessTheme.sidebar.opacity(0.42)
       }
-    }
-    .overlay(alignment: .trailing) {
-      Rectangle().fill(Color.black.opacity(0.45)).frame(width: 1)
     }
   }
 }

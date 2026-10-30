@@ -19,7 +19,7 @@ final class NativeBridge: CompanionTransport {
       group.addTask {
         try await Task.sleep(for: timeout)
         throw BridgeError.message(
-          "Le moteur local ne répond pas. Vérifiez l’état de l’agent puis réessayez.")
+          L10n.text("Le moteur local ne répond pas. Vérifiez l’état de l’agent puis réessayez."))
       }
       defer { group.cancelAll() }
       guard let value = try await group.next() else { throw CancellationError() }
@@ -33,7 +33,7 @@ final class NativeBridge: CompanionTransport {
       "warpgatesh-companion")
     guard let url, FileManager.default.isExecutableFile(atPath: url.path) else {
       throw BridgeError.message(
-        "Le moteur local est absent. Lancez l’application complète WarpgateSH.")
+        L10n.text("Le moteur local est absent. Lancez l’application complète WarpgateSH."))
     }
     let child = Process()
     child.executableURL = url
@@ -77,10 +77,12 @@ final class NativeBridge: CompanionTransport {
           if !args.isEmpty { fields["args"] = .object(args) }
           var data = try JSONEncoder().encode(JSONValue.object(fields))
           guard data.count < 64 * 1024 else {
-            throw BridgeError.message("La demande locale est trop volumineuse.")
+            throw BridgeError.message(L10n.text("La demande locale est trop volumineuse."))
           }
           data.append(10)
-          guard let input else { throw BridgeError.message("Le moteur local est déconnecté.") }
+          guard let input else {
+            throw BridgeError.message(L10n.text("Le moteur local est déconnecté."))
+          }
           try input.write(contentsOf: data)
         } catch { pending.removeValue(forKey: id)?.resume(throwing: error) }
       }
@@ -116,7 +118,8 @@ final class NativeBridge: CompanionTransport {
     pending.removeAll()
     for continuation in operations {
       continuation.resume(
-        throwing: BridgeError.message("Le moteur local s’est arrêté. Réessayez pour le relancer."))
+        throwing: BridgeError.message(
+          L10n.text("Le moteur local s’est arrêté. Réessayez pour le relancer.")))
     }
   }
 

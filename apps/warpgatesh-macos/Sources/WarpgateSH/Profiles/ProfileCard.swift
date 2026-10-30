@@ -5,12 +5,14 @@ struct ProfileCard: View {
   let profile: CompanionProfile
   let renew: () -> Void
   @State private var removing = false
+  @State private var editingExpiration = false
+  @EnvironmentObject private var settings: AppSettings
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
       HStack {
         Label(profile.name, systemImage: "person.crop.rectangle").font(.title3.weight(.semibold))
         if profile.isDefault {
-          Text("Par défaut").font(.caption).foregroundStyle(AccessTheme.cyanText)
+          Text(L10n.text("Par défaut")).font(.caption).foregroundStyle(AccessTheme.cyanText)
         }
         Spacer()
       }
@@ -20,23 +22,31 @@ struct ProfileCard: View {
       if let version = profile.warpgateVersion {
         Text("Warpgate \(version)").font(.caption).foregroundStyle(AccessTheme.secondary)
       }
+      Button(L10n.text("Rappel d’expiration du jeton…")) { editingExpiration = true }
+        .font(.callout).foregroundStyle(AccessTheme.cyanText)
       HStack {
-        if !profile.isDefault { Button("Définir par défaut", action: makeDefault) }
-        Button("Renouveler le jeton", action: renew)
+        if !profile.isDefault { Button(L10n.text("Définir par défaut"), action: makeDefault) }
+        Button(L10n.text("Renouveler le jeton"), action: renew)
         Spacer()
-        Button("Supprimer", role: .destructive) { removing = true }
+        Button(L10n.text("Supprimer"), role: .destructive) { removing = true }
       }.buttonStyle(.bordered)
     }
     .padding(16).modifier(Surface(tint: AccessTheme.purple))
+    .sheet(isPresented: $editingExpiration) {
+      TokenExpirationSheet(
+        profile: profile, expiration: settings.preferences.tokenExpirations[profile.name])
+    }
     .confirmationDialog(
-      "Supprimer le profil « \(profile.name) » ?", isPresented: $removing, titleVisibility: .visible
+      L10n.text("Supprimer le profil « %@ » ?", profile.name), isPresented: $removing,
+      titleVisibility: .visible
     ) {
-      Button("Supprimer le profil", role: .destructive) {
+      Button(L10n.text("Supprimer le profil"), role: .destructive) {
         model.perform(
-          "remove_profile", args: ["name": .string(profile.name)], success: "Profil supprimé.")
+          "remove_profile", args: ["name": .string(profile.name)],
+          success: L10n.text("Profil supprimé."))
       }
     } message: {
-      Text("Ses alias seront retirés par l’agent. Vos autres profils sont conservés.")
+      Text(L10n.text("Ses alias seront retirés par l’agent. Vos autres profils sont conservés."))
     }
   }
   private func makeDefault() {

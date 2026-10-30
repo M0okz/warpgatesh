@@ -5,11 +5,32 @@ struct WarpgateSHApp: App {
   @NSApplicationDelegateAdaptor(CompanionAppDelegate.self) private var delegate
   @StateObject private var model = CompanionModel(
     transport: CommandLine.arguments.contains("--demo") ? DemoBridge() : NativeBridge())
+  @StateObject private var settings: AppSettings
+  @StateObject private var notifications: DesktopNotifications
+  init() {
+    let settings = AppSettings()
+    _settings = StateObject(wrappedValue: settings)
+    _notifications = StateObject(wrappedValue: DesktopNotifications(settings: settings))
+  }
   var body: some Scene {
     Window("WarpgateSH", id: "access") {
-      CompanionShell(model: model).preferredColorScheme(.dark)
+      CompanionShell(model: model)
+        .environmentObject(settings)
+        .environmentObject(notifications)
+        .environment(\.locale, Locale(identifier: settings.preferences.language.code))
+        .preferredColorScheme(settings.preferences.appearance.colorScheme)
+        .id(settings.preferences.language.rawValue + settings.preferences.appearance.rawValue)
         .task {
           delegate.model = model
+          settings.applyAppearance()
+          notifications.configureCategories()
+          notifications.openSection = { section in
+            model.section = section
+            delegate.showWindow()
+          }
+          model.notifications = notifications
+          model.settings = settings
+          await notifications.refreshAuthorization()
           model.start()
         }
     }
@@ -19,7 +40,7 @@ struct WarpgateSHApp: App {
     .commands {
       CommandGroup(replacing: .newItem) {}
       CommandGroup(replacing: .appSettings) {
-        Button("Préférences…") {
+        Button(L10n.text("Préférences…")) {
           model.section = .preferences
           delegate.showWindow()
         }
@@ -28,6 +49,8 @@ struct WarpgateSHApp: App {
     }
     MenuBarExtra {
       CompanionMenu(model: model)
+        .environment(\.locale, Locale(identifier: settings.preferences.language.code))
+        .id(settings.preferences.language.rawValue)
     } label: {
       Image(systemName: "terminal")
     }
