@@ -85,11 +85,12 @@ About, or the official Warpgate release notes. The companion keeps monitoring
 when its window is closed, while its menu-bar process is running. Quitting it
 stops notifications; the independent Rust agent continues synchronizing.
 
-Warpgate does not identify the expiry date of an already stored API token in the
-responses used by this client. **Profiles → Token expiry reminder** accepts an
-optional user-supplied date. Reminders occur within seven days, within one day,
-and after expiry. No date is guessed. Rejected authentication is reported even
-without a date. Successfully replacing a token clears its old expiry reminder.
+From v0.1.21, app-managed tokens use their server-reported expiry and are renewed
+by the Rust agent. Imported tokens without an expiry retain **Profiles → Token
+expiry reminder**, an optional user-supplied date. Reminders occur within seven
+days, within one day and after expiry. No date is guessed. Rejected authentication
+and failed automatic renewal open the profile. Successful replacement clears an
+old manual reminder. See [sign-in and token renewal](../../docs/getting-started.md).
 
 Server release checks are optional per profile, every six hours, against the
 public GitHub releases API. They compare stable numeric versions with the server

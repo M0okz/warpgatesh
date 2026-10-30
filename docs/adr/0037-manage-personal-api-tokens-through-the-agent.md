@@ -1,6 +1,6 @@
 # 0037 — Manage personal API tokens through the agent
 
-Status: implemented on the development branch; not included in published 0.1.20.
+Status: accepted; included from WarpgateSH 0.1.21.
 
 ## Decision
 

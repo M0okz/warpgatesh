@@ -4,6 +4,8 @@ Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
 ## Non publié
 
+## 0.1.21 — 2026-10-30
+
 - Les libellés et icônes du volet latéral sont légèrement agrandis, avec des lignes plus aérées.
 
 - La barre de menus utilise le logo monochrome WarpgateSH avec une info-bulle identifiable, à la place du symbole générique de terminal.
