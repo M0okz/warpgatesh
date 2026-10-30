@@ -7,7 +7,7 @@ the synchronization agent and OpenSSH access work independently of its window.
 **Availability:** the native interface is available in **v0.1.18 and later**.
 The screenshots are actual captures of the running SwiftUI application in its
 isolated demo mode. Every profile, target, counter and diagnostic entry shown
-is fictional. These v0.1.21 captures use English labels. From v0.1.20 the
+is fictional. These v0.1.22 captures use English labels. From v0.1.20 the
 interface supports French, English and automatic language selection.
 
 ## Access
@@ -24,7 +24,7 @@ The last successful snapshot remains available if a later synchronization fails.
 
 ![SwiftUI Profiles screen with a fictional homelab profile](assets/swiftui/profiles.png)
 
-From **v0.1.21**, select **Add a profile**, enter the local name and HTTPS
+From **v0.1.22**, select **Add a profile**, enter the local name and HTTPS
 instance URL, then **Sign in to Warpgate**. The official instance page opens
 inside an ephemeral sign-in window; the instance still controls SSO and MFA.
 Use **Check profile**, compare the SSH host-key fingerprints with a trusted
@@ -110,11 +110,11 @@ with an underline and color change on hover. Check the installed version and upd
 releases every six hours; **Check for updates** requests a manual check.
 An available signed update requires confirmation before replacing the app, CLI
 and agent together. Homebrew installations instead show the upgrade command.
-The version shown corresponds to the v0.1.21 source build used for these captures.
+The version shown corresponds to the v0.1.22 source build used for these captures.
 
 ## Menu bar, keyboard and accessibility
 
-From **v0.1.21**, the menu-bar item uses the monochrome WarpgateSH logo. Closing
+From **v0.1.22**, the menu-bar item uses the monochrome WarpgateSH logo. Closing
 the window hides its Dock icon while leaving the companion in the menu bar;
 reopening restores the window and Dock. **Quit WarpgateSH** exits the companion.
 The Dock logo has native margins, and sidebar labels and icons are larger.

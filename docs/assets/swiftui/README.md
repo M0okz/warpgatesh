@@ -1,13 +1,13 @@
 # SwiftUI screenshot provenance
 
-Captured on 30 October 2026 from the running native macOS application in
+Captured on 31 October 2026 from the running native macOS application in
 `apps/warpgatesh-macos`, using its `--demo` mode and native app screenshot API.
 These are application screenshots, not rendered HTML or generated mockups.
 
 The thirteen images show the approved interface and real native controls. Every
 profile, hostname, URL, counter and diagnostic entry comes from fictional demo
 fixtures; no live infrastructure data or tokens are included. The English UI
-labels are captured as displayed. The screenshots correspond to the v0.1.21 source build. The native SwiftUI
+labels are captured as displayed. The screenshots correspond to the v0.1.22 source build. The native SwiftUI
 interface is distributed from v0.1.18.
 
 `manifest.json` records dimensions and SHA-256 checksums. The project README,

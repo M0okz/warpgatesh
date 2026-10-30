@@ -4,7 +4,9 @@ Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
 ## Non publié
 
-## 0.1.21 — 2026-10-30
+## 0.1.22 — 2026-10-31
+
+- Le démarrage ignore les entrées temporaires de macOS sans identifiant de processus valide, afin de ne pas fermer l’app comme un faux doublon.
 
 - Les libellés et icônes du volet latéral sont légèrement agrandis, avec des lignes plus aérées.
 

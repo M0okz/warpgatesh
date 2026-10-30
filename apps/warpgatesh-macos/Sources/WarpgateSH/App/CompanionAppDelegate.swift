@@ -9,7 +9,9 @@ final class CompanionAppDelegate: NSObject, NSApplicationDelegate {
     if let identifier = Bundle.main.bundleIdentifier,
       let existing = NSRunningApplication.runningApplications(withBundleIdentifier: identifier)
         .first(where: {
-          $0.processIdentifier != ProcessInfo.processInfo.processIdentifier
+          Self.isOtherProcess(
+            $0.processIdentifier, current: ProcessInfo.processInfo.processIdentifier)
+            && !$0.isTerminated
             && $0.bundleURL?.standardizedFileURL == applicationURL
             && $0.activationPolicy != .prohibited
         })
@@ -32,6 +34,9 @@ final class CompanionAppDelegate: NSObject, NSApplicationDelegate {
     NSApp.applicationIconImage = AppLogo.dockImage
     NSApp.setActivationPolicy(.regular)
     NSApp.activate(ignoringOtherApps: true)
+  }
+  static func isOtherProcess(_ processIdentifier: Int32, current: Int32) -> Bool {
+    processIdentifier > 0 && processIdentifier != current
   }
   func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
   @objc private func companionWindowWillClose(_ notification: Notification) {

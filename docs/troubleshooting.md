@@ -37,7 +37,7 @@ DMG if the requesting application is not WarpgateSH.
 ## Warpgate rejects the API token
 
 The token may be expired, revoked, copied incompletely, or owned by another
-account. From v0.1.21, use **Profiles → Renew token → Sign in to Warpgate again**
+account. From v0.1.22, use **Profiles → Renew token → Sign in to Warpgate again**
 and authenticate as the profile’s existing identity. An expired token cannot
 renew itself. A provider that rejects embedded sign-in can use manual import.
 Alternatively, create a fresh personal token in Warpgate, then replace it:
