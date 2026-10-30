@@ -43,6 +43,10 @@ notarial Apple, agrafe le ticket et exécute `codesign`, `spctl`, `stapler` et
    signature et `latest.json`.
 4. Installer le DMG sur un Mac de test, puis publier manuellement le brouillon.
 
+Le workflow agrafe explicitement le ticket de l’application après l’assemblage Tauri, puis reconstruit le DMG et l’archive de mise à jour à partir de ce bundle. L’archive est signée de nouveau et son contenu extrait doit encore passer `codesign` et `stapler validate`.
+
+Pour reconstruire une version dont le workflow a échoué sans déplacer son tag signé, utiliser le déclenchement manuel du workflow **Release macOS** depuis `main`, avec le tag existant dans le champ `tag`.
+
 Le brouillon n’est jamais proposé aux clients. Après publication, l’application
 lit `releases/latest/download/latest.json` au maximum une fois toutes les six heures. Elle ne
 télécharge et n’installe une archive qu’après une action explicite de
