@@ -137,9 +137,10 @@ warpgatesh diagnostics preview
 warpgatesh diagnostics export
 ```
 
-In **v0.1.18 and later**, open [**Logs**](desktop-app.md#logs) to review the
-local files and select **Exporter les diagnostics nettoyés…**. Earlier versions
-provide diagnostics under **Preferences → Diagnostics locaux**. Logs are retained for seven days, sanitized, and never uploaded
+In the English interface from **v0.1.19**, open [**Logs**](desktop-app.md#logs) to
+review local files and select **Export sanitized diagnostics…**. Version 0.1.18
+uses **Journaux → Exporter les diagnostics nettoyés…**. Older versions provide
+diagnostics under **Préférences → Diagnostics locaux**. Logs are retained for seven days, sanitized, and never uploaded
 automatically. Review the ZIP before attaching it to a GitHub issue.
 
 When reporting a problem, include the WarpgateSH version, macOS version,

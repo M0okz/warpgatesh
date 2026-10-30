@@ -28,7 +28,7 @@ Use **Add a profile**, enter the local name, instance URL and personal API
 token, then select **Check profile**. Compare the displayed SSH host-key
 fingerprints with a trusted source. Enable **I verified these fingerprints through a trusted channel** and select **Save** only after they match.
 
-**Options SSH** lets you override a detected hostname or port. If the keys change
+**SSH options** lets you override a detected hostname or port. If the keys change
 between inspection and saving, enrollment is refused and must be verified again.
 Existing profiles offer **Renew token**, **Set as default** and a
 confirmed **Remove** action. Tokens stay in the platform secret store.
