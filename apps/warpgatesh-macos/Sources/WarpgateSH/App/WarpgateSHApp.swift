@@ -52,7 +52,7 @@ struct WarpgateSHApp: App {
         .environment(\.locale, Locale(identifier: settings.preferences.language.code))
         .id(settings.preferences.language.rawValue)
     } label: {
-      Image(systemName: "terminal")
+      Image(systemName: "terminal").accessibilityLabel("WarpgateSH")
     }
   }
 }
