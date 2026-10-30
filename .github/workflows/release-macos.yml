@@ -5,6 +5,13 @@ on:
     tags:
       - "v*"
 
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing signed release tag to rebuild
+        required: true
+        type: string
+
 permissions:
   contents: write
 
@@ -16,6 +23,7 @@ jobs:
       run:
         working-directory: apps/warpgatesh-companion
     env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
       APPLE_ID: ${{ secrets.APPLE_ID }}
       APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -23,6 +31,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -41,7 +51,7 @@ jobs:
         run: npm ci
 
       - name: Verify release version
-        run: npm run verify:release-version -- "${GITHUB_REF_NAME}"
+        run: npm run verify:release-version -- "${RELEASE_TAG}"
 
       - name: Require Apple release credentials
         env:
@@ -85,9 +95,34 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npm run bundle:macos:universal
 
+      - name: Finalize stapled distribution artifacts
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          bundle="src-tauri/target/universal-apple-darwin/release/bundle/macos/WarpgateSH.app"
+          dmg="src-tauri/target/universal-apple-darwin/release/bundle/dmg/WarpgateSH_${RELEASE_TAG#v}_universal.dmg"
+          updater="${bundle}.tar.gz"
+          xcrun stapler staple "${bundle}"
+          xcrun stapler validate "${bundle}"
+          image_root="$(mktemp -d "${RUNNER_TEMP}/warpgatesh-image.XXXXXX")"
+          trap 'rm -rf "${image_root}"' EXIT
+          ditto "${bundle}" "${image_root}/WarpgateSH.app"
+          xcrun stapler validate "${image_root}/WarpgateSH.app"
+          ln -s /Applications "${image_root}/Applications"
+          hdiutil create -volname WarpgateSH -srcfolder "${image_root}" -format UDZO -ov "${dmg}"
+          codesign --force --sign "${APPLE_SIGNING_IDENTITY}" --timestamp "${dmg}"
+          tar -czf "${updater}" -C "$(dirname "${bundle}")" WarpgateSH.app
+          npm run tauri -- signer sign "${updater}"
+          archive_root="${image_root}/updater-check"
+          mkdir "${archive_root}"
+          tar -xzf "${updater}" -C "${archive_root}"
+          codesign --verify --deep --strict "${archive_root}/WarpgateSH.app"
+          xcrun stapler validate "${archive_root}/WarpgateSH.app"
+
       - name: Notarize and staple disk image
         run: |
-          dmg="src-tauri/target/universal-apple-darwin/release/bundle/dmg/WarpgateSH_${GITHUB_REF_NAME#v}_universal.dmg"
+          dmg="src-tauri/target/universal-apple-darwin/release/bundle/dmg/WarpgateSH_${RELEASE_TAG#v}_universal.dmg"
           xcrun notarytool submit "${dmg}" \
             --apple-id "${APPLE_ID}" \
             --password "${APPLE_PASSWORD}" \
@@ -98,7 +133,7 @@ jobs:
       - name: Verify Apple distribution checks
         run: |
           bundle="src-tauri/target/universal-apple-darwin/release/bundle/macos/WarpgateSH.app"
-          dmg="src-tauri/target/universal-apple-darwin/release/bundle/dmg/WarpgateSH_${GITHUB_REF_NAME#v}_universal.dmg"
+          dmg="src-tauri/target/universal-apple-darwin/release/bundle/dmg/WarpgateSH_${RELEASE_TAG#v}_universal.dmg"
           codesign --verify --deep --strict --verbose=2 "${bundle}"
           spctl --assess --type execute --verbose=2 "${bundle}"
           xcrun stapler validate "${bundle}"
@@ -119,13 +154,13 @@ jobs:
           test -s "${updater}"
           test -s "${signature}"
           gh api --method POST "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
-            -f tag_name="${GITHUB_REF_NAME}" --jq .body > "${notes}"
+            -f tag_name="${RELEASE_TAG}" --jq .body > "${notes}"
           node scripts/generate-updater-manifest.mjs \
-            "${GITHUB_REF_NAME}" \
-            "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/WarpgateSH.app.tar.gz" \
+            "${RELEASE_TAG}" \
+            "https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/WarpgateSH.app.tar.gz" \
             "${signature}" "${notes}" "${manifest}"
           jq -e \
-            --arg version "${GITHUB_REF_NAME#v}" \
+            --arg version "${RELEASE_TAG#v}" \
             '.version == $version and .platforms["darwin-aarch64"].signature != "" and .platforms["darwin-x86_64"].url != ""' \
             "${manifest}" >/dev/null
 
@@ -133,13 +168,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          dmg="src-tauri/target/universal-apple-darwin/release/bundle/dmg/WarpgateSH_${GITHUB_REF_NAME#v}_universal.dmg"
+          dmg="src-tauri/target/universal-apple-darwin/release/bundle/dmg/WarpgateSH_${RELEASE_TAG#v}_universal.dmg"
           updater="src-tauri/target/universal-apple-darwin/release/bundle/macos/WarpgateSH.app.tar.gz"
-          gh release create "${GITHUB_REF_NAME}" \
+          gh release create "${RELEASE_TAG}" \
             "${dmg}" "${dmg}.sha256" \
             "${updater}#WarpgateSH.app.tar.gz" "${updater}.sig#WarpgateSH.app.tar.gz.sig" \
             "${RUNNER_TEMP}/latest.json#latest.json" \
             --verify-tag \
             --draft \
-            --title "WarpgateSH ${GITHUB_REF_NAME#v}" \
+            --title "WarpgateSH ${RELEASE_TAG#v}" \
             --generate-notes
