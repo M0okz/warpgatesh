@@ -51,6 +51,8 @@
           shell = (if pkgs.stdenv.isDarwin then pkgs.mkShellNoCC else pkgs.mkShell) {
             packages = tools;
             buildInputs = libraries;
+            # Cargo also discovers rustup proxies in CARGO_HOME/bin before PATH.
+            RUSTUP_TOOLCHAIN = "${toolchain}";
             shellHook = lib.optionalString pkgs.stdenv.isDarwin ''
               # Tauri otherwise asks an unrelated host rustup for installed targets.
               # Keep the Nix toolchain authoritative, including on GitHub runners.

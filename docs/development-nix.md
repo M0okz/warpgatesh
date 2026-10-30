@@ -8,6 +8,8 @@ on macOS. OpenSSH is declared for configuration tests; GitHub CLI and jq are pro
 release tasks. No global rustup or Node installation is required. On macOS,
 proxy directories containing a host `rustup` are removed from the shell PATH so
 Tauri does not validate Nix's targets against an unrelated Rustup toolchain.
+`RUSTUP_TOOLCHAIN` also points to the Nix toolchain so Cargo's rustfmt/Clippy
+proxies in `CARGO_HOME/bin` cannot select a different compiler version.
 
 ## Setup
 
