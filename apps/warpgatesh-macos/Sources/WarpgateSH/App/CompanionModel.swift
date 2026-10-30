@@ -97,6 +97,22 @@ final class CompanionModel: ObservableObject {
     try await transport.perform("add_profile", args: ["request": .encoding(request)])
     await refresh()
   }
+  func rotateToken(_ name: String, sessionCookie: String? = nil) async throws {
+    guard !busy else { throw BridgeError.message(L10n.text("Une opération est déjà en cours.")) }
+    revision += 1
+    busy = true
+    defer {
+      revision += 1
+      busy = false
+    }
+    let _: ManagedTokenStatus = try await transport.fetch(
+      "rotate_profile_token",
+      args: [
+        "name": .string(name), "session_cookie": sessionCookie.map(JSONValue.string) ?? .null,
+      ])
+    settings?.preferences.tokenExpirations.removeValue(forKey: name)
+    await refresh()
+  }
   func diagnostics() async throws -> DiagnosticsPreview {
     try await transport.fetch("preview_diagnostics")
   }

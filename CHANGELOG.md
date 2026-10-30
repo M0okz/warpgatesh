@@ -4,6 +4,24 @@ Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
 ## Non publié
 
+## 0.1.21 — 2026-10-30
+
+- Les libellés et icônes du volet latéral sont légèrement agrandis, avec des lignes plus aérées.
+
+- La barre de menus utilise le logo monochrome WarpgateSH avec une info-bulle identifiable, à la place du symbole générique de terminal.
+
+- Fermer la fenêtre conserve le compagnon en barre de menus et masque son icône du Dock ; rouvrir la fenêtre restaure le mode application.
+
+- L’icône du Dock reçoit des marges transparentes pour une taille cohérente avec les autres applications.
+
+- La connexion intégrée à la page officielle de Warpgate permet de créer un
+  jeton depuis l’app après authentification et approbation des empreintes SSH.
+- L’agent renouvelle les jetons créés par l’app avant leur expiration, avec une
+  reprise après interruption et un interrupteur par profil. Les jetons importés
+  restent disponibles et ne sont jamais révoqués automatiquement.
+- La date d’expiration fournie par l’instance alimente les rappels des profils
+  gérés. Un jeton déjà expiré ou révoqué nécessite une nouvelle authentification.
+
 ## 0.1.20 — 2026-10-30
 
 - Les liens vers les sites et la documentation sont colorés et se soulignent au survol.

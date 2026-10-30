@@ -68,7 +68,24 @@ pub fn ensure_bundled_agent() -> Result<bool, RuntimeError> {
         ));
     }
     let store = LocalStore::for_current_user()?;
-    launchd::ensure_installed(store.paths(), &executable)
+    let changed = launchd::ensure_installed(store.paths(), &executable)?;
+    // A same-path bundle update can leave the previous agent executing in memory.
+    if !changed
+        && warpgatesh_runtime::ipc::request_with_read_timeout(
+            &store.paths().agent_socket,
+            "status",
+            std::time::Duration::from_secs(1),
+        )
+        .is_ok_and(|status| {
+            !status
+                .split_whitespace()
+                .any(|field| field == "token_management=1")
+        })
+    {
+        launchd::restart()?;
+        return Ok(true);
+    }
+    Ok(changed)
 }
 
 pub fn cli_installation() -> Result<CliInstallation, RuntimeError> {
@@ -125,8 +142,15 @@ pub fn uninstall_components(store: &LocalStore) -> Result<(), RuntimeError> {
 pub fn delete_user_data(store: &LocalStore) -> Result<(), RuntimeError> {
     let catalog = store.load_profiles()?;
     let tokens = SystemKeychain;
-    for profile in &catalog.profiles {
-        tokens.delete(&profile.name)?;
+    let mut names: std::collections::BTreeSet<String> = catalog
+        .profiles
+        .iter()
+        .map(|profile| profile.name.clone())
+        .collect();
+    names.extend(warpgatesh_runtime::token_lifecycle::statuses(store)?.into_keys());
+    for name in names {
+        tokens.delete(&name)?;
+        warpgatesh_runtime::token_lifecycle::clear_management(store, &tokens, &name)?;
     }
 
     uninstall_managed_include(store.paths())?;

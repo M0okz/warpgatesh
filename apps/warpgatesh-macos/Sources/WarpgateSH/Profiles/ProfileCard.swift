@@ -17,13 +17,37 @@ struct ProfileCard: View {
         Spacer()
       }
       Text(profile.baseUrl).textSelection(.enabled)
-      Text("\(profile.username) · SSH \(profile.sshHost):\(profile.sshPort)").foregroundStyle(
-        AccessTheme.secondary)
+      Text("\(profile.username) · SSH \(profile.sshHost):\(String(profile.sshPort))")
+        .foregroundStyle(
+          AccessTheme.secondary)
       if let version = profile.warpgateVersion {
         Text("Warpgate \(version)").font(.caption).foregroundStyle(AccessTheme.secondary)
       }
-      Button(L10n.text("Rappel d’expiration du jeton…")) { editingExpiration = true }
-        .font(.callout).foregroundStyle(AccessTheme.cyanText)
+      if let managed = profile.managedToken {
+        if let error = managed.lastError {
+          Text(L10n.text(error)).font(.caption).foregroundStyle(AccessTheme.amber)
+        }
+        Toggle(
+          L10n.text("Renouvellement automatique"),
+          isOn: Binding(
+            get: { managed.automaticRenewal },
+            set: { enabled in
+              model.perform(
+                "set_token_auto_renew",
+                args: ["name": .string(profile.name), "enabled": .bool(enabled)])
+            }
+          )
+        ).toggleStyle(.switch).controlSize(.small).disabled(model.busy)
+        if let expiry = managed.expiresAtEpochSeconds {
+          HStack {
+            Text(L10n.text("Expiration du jeton"))
+            Text(Date(timeIntervalSince1970: TimeInterval(expiry)), style: .date)
+          }.font(.caption).foregroundStyle(AccessTheme.secondary)
+        }
+      } else {
+        Button(L10n.text("Rappel d’expiration du jeton…")) { editingExpiration = true }
+          .font(.callout).foregroundStyle(AccessTheme.cyanText)
+      }
       HStack {
         if !profile.isDefault { Button(L10n.text("Définir par défaut"), action: makeDefault) }
         Button(L10n.text("Renouveler le jeton"), action: renew)

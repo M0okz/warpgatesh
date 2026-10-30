@@ -25,7 +25,7 @@ enum NotificationPolicy {
     guard options.enabled else { return [] }
     var events: [NotificationEvent] = []
     for alert in state.alerts {
-      let token = alert.id == "token"
+      let token = alert.id.hasPrefix("token")
       guard token ? options.token : options.synchronization else { continue }
       events.append(
         .init(
@@ -38,7 +38,11 @@ enum NotificationPolicy {
     }
     if options.token {
       for profile in state.profiles {
-        guard let expiry = preferences.tokenExpirations[profile.name] else { continue }
+        guard
+          let expiry = profile.managedToken?.expiresAtEpochSeconds.map({
+            Date(timeIntervalSince1970: TimeInterval($0))
+          }) ?? preferences.tokenExpirations[profile.name]
+        else { continue }
         let remaining = expiry.timeIntervalSince(now)
         guard remaining <= 7 * 86400 else { continue }
         let threshold = remaining <= 0 ? "expired" : remaining <= 86400 ? "day" : "week"

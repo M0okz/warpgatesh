@@ -8,5 +8,6 @@ struct CompanionProfile: Codable, Sendable, Identifiable {
   var sshHost: String
   var sshPort: UInt16
   var isDefault: Bool
+  var managedToken: ManagedTokenStatus? = nil
   var id: String { name }
 }

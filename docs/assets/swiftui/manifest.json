@@ -1,70 +1,88 @@
 {
   "capturedOn": "2026-10-30",
   "source": "Running WarpgateSH SwiftUI app, --demo mode",
-  "data": "Fictional demo data only; no live profiles or secrets",
+  "data": "Fictional demo data only; no live profiles or secrets; login is explicitly simulated",
   "language": "English",
-  "releaseStatus": "WarpgateSH v0.1.20; original Warpgate theme except named Light and Black variants",
-  "version": "0.1.20",
+  "releaseStatus": "WarpgateSH v0.1.21; original Warpgate theme except named Light and Black variants",
+  "version": "0.1.21",
   "images": [
     {
       "file": "about.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "402008777720816908ff426809ede9b42de4e338f9cab965cd8b7b3f9b096270"
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "0a499f685f7093152a6090505545dca9d227674d6ef9a69c53e81e2c0fa291c5"
     },
     {
       "file": "access.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "bca99c7bfdda78e13a25a89f881e9c05c5921a07222c53ca87e444e3d8c43e9c"
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "9b400aacd34227f556242d91aaf208df98985754dc04dfb59686145ef08f656e"
     },
     {
       "file": "logs.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "47929a13c74e8940e0c82f96cd4372d68ebd67947539a0dc8ac6306c3f48dbe2"
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "1b99e43d33792f731b4a41e6a71e79c55c40874ec76790535778f97ab4111a20"
     },
     {
       "file": "preferences-black.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "1ba5cbc1dbea27b051528b0e87eeb74fc6a31cf906f7fcc921776f1d6300a9f2"
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "225deacb84bce36a49b1e65f88137cb7f3e52d55072f0e2cb49cd3c920018a57"
     },
     {
       "file": "preferences-light.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "fdeade985d91d9a6f26cd0dfa94243d2680d22e8aa789e34743f9629a5336d63"
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "37c9bc123e387a6b0ad8650b6feb932ca0d0a49a1291f9d35250ae154e21b076"
     },
     {
       "file": "preferences-sync.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "0fb0b51c555120fa776d9f8b4cadd17dcc16090d70b750a4b756adfbb87f15e5"
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "993f0286577d704240889605e9cfe052c6c3e2c5ccac71f0e920447334d8c179"
     },
     {
       "file": "preferences-system.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "ee4e67aa87b83c156109fe46a9c16e7a08fb5da0d4b1e0b6b7d5febea5cc68ab"
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "e5e5abfbfd3121b8f685402e4e78ac41a84d3872bbc334202cdcf7f6c20da4fb"
     },
     {
       "file": "preferences.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "3995123cf74625bcbe3c8d7ed9fadf845fc8ee3bf87ef52a6afabe4b3bebf2c6"
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "65f8394bc3393ad5c359ff4c2b8b0cbe42ca6199231c7eb2fdbc7af69fbf8e01"
+    },
+    {
+      "file": "profile-add.png",
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "84a3aefb60c37ab552dc791b63190d4afac62d89b76cd6c01621f9945a92db58"
+    },
+    {
+      "file": "profile-login.png",
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "d3e63b1f5e973ba572f3f61ceff2550bcb43c9cf53a3447e7d8d757624ee0a9a"
     },
     {
       "file": "profiles.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "f0b481c91dc0b3ae95d99e6273162d8535409137b6f1ed74bbafc621278739ab"
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "65fa34a49da26ab9095c2c465846299b834c51a1a4649b8a13c23088122269ac"
     },
     {
       "file": "synchronization.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "dbc7e544219ecd0c492c32ea0ae8e56b7d9cff3663becbbd57cac4d1f3ed70f7"
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "3dfbd07063d3c35f0cf4ce5cb4edc58f2278d2eefa5b3f11466e7f06df68718a"
+    },
+    {
+      "file": "token-renewal.png",
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "9938e78a337ba804c391ae099324439a8176b4f75f160d26a5871917192d221a"
     }
   ]
 }

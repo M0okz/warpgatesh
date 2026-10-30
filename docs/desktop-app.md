@@ -7,7 +7,7 @@ the synchronization agent and OpenSSH access work independently of its window.
 **Availability:** the native interface is available in **v0.1.18 and later**.
 The screenshots are actual captures of the running SwiftUI application in its
 isolated demo mode. Every profile, target, counter and diagnostic entry shown
-is fictional. These v0.1.20 captures use English labels. From v0.1.20 the
+is fictional. These v0.1.21 captures use English labels. From v0.1.20 the
 interface supports French, English and automatic language selection.
 
 ## Access
@@ -24,14 +24,37 @@ The last successful snapshot remains available if a later synchronization fails.
 
 ![SwiftUI Profiles screen with a fictional homelab profile](assets/swiftui/profiles.png)
 
-Use **Add a profile**, enter the local name, instance URL and personal API
-token, then select **Check profile**. Compare the displayed SSH host-key
-fingerprints with a trusted source. Enable **I verified these fingerprints through a trusted channel** and select **Save** only after they match.
+From **v0.1.21**, select **Add a profile**, enter the local name and HTTPS
+instance URL, then **Sign in to Warpgate**. The official instance page opens
+inside an ephemeral sign-in window; the instance still controls SSO and MFA.
+Use **Check profile**, compare the SSH host-key fingerprints with a trusted
+source, approve them, then **Save**. Only saving creates and stores the token.
 
-**SSH options** lets you override a detected hostname or port. If the keys change
-between inspection and saving, enrollment is refused and must be verified again.
-Existing profiles offer **Renew token**, **Set as default** and a
-confirmed **Remove** action. Tokens stay in the platform secret store.
+![Profile enrollment and SSH approval in demo mode](assets/swiftui/profile-add.png)
+
+The demo sign-in screen below simulates authentication only. Connected mode
+loads your instance's official page. Providers that reject embedded sign-in can
+use **Use an existing token**, which retains the manual secure-field flow.
+
+![Isolated sign-in simulation; no real instance authentication](assets/swiftui/profile-login.png)
+
+**SSH options** overrides a detected endpoint. Changed fingerprints between
+inspection and saving are refused. Tokens remain in the native secret store.
+
+### Managed token renewal
+
+**Renew token → Renew through the API** creates an app-managed replacement
+using your current valid token. Managed profiles show **Automatic renewal** and
+the server's expiry date. The independent agent rotates the token before expiry,
+with retries on failure, even when the companion is closed. Only app-created
+tokens may be revoked after replacement; imported tokens are never revoked.
+
+![Token renewal actions in the native demo app](assets/swiftui/token-renewal.png)
+
+An expired or revoked token requires **Sign in to Warpgate again**. Authenticate
+with the same identity as the profile. You can disable automatic renewal per
+profile or import a token manually. See the [complete token lifecycle guide](getting-started.md#automatic-renewal-and-reconnecting)
+for policy limits, ownership and manual-token behavior.
 
 ## Preferences
 
@@ -87,9 +110,14 @@ with an underline and color change on hover. Check the installed version and upd
 releases every six hours; **Check for updates** requests a manual check.
 An available signed update requires confirmation before replacing the app, CLI
 and agent together. Homebrew installations instead show the upgrade command.
-The version shown corresponds to the v0.1.20 source build used for these captures.
+The version shown corresponds to the v0.1.21 source build used for these captures.
 
 ## Menu bar, keyboard and accessibility
+
+From **v0.1.21**, the menu-bar item uses the monochrome WarpgateSH logo. Closing
+the window hides its Dock icon while leaving the companion in the menu bar;
+reopening restores the window and Dock. **Quit WarpgateSH** exits the companion.
+The Dock logo has native margins, and sidebar labels and icons are larger.
 
 The menu-bar companion shows agent status and counts and provides shortcuts to
 the main window, synchronization, profiles and preferences. **⌘,** opens
@@ -116,10 +144,11 @@ settings…** to change it. **Send a test notification** checks delivery.
 You can choose which alerts to receive:
 
 - **Expired or expiring tokens:** rejected authentication opens the profile list.
-  For advance reminders, enter a known expiry date under **Profiles → Token expiry
-  reminder…**. Reminders occur within seven days, within one day, and after expiry.
-  WarpgateSH does not guess the date of an existing token. Successfully replacing
-  the token clears its old reminder date.
+  Managed profiles use their server-reported expiry and report automatic renewal
+  failures. For an imported token without a known expiry, enter a date under
+  **Profiles → Token expiry reminder…**. Reminders occur within seven days,
+  within one day and after expiry. WarpgateSH never guesses an imported token’s
+  expiry; successful replacement clears an old manual reminder.
 - **Persistent synchronization failures:** an alert opens diagnostics when the
   agent reports repeated failures or overdue synchronization.
 - **WarpgateSH updates:** an alert opens About when a client update is available.

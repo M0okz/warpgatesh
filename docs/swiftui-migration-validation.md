@@ -72,3 +72,25 @@ public sert les six captures communes et son guide natif ; les contrôles sur
 ordinateur et mobile confirment leur chargement sans débordement horizontal ni
 erreur JavaScript. Les captures sont stockées en PNG 860 × 620 ; leur manifeste
 consigne leurs dimensions et empreintes réelles.
+
+
+## Development regression check: closing the companion
+
+After 0.1.20, closing the main window explicitly changes the companion to the
+macOS accessory activation policy. The process and SwiftUI menu-bar extra stay
+alive; reopening restores the regular application policy. Explicit Quit still
+terminates the companion. The cause was a regular policy set only at launch,
+with no matching window-close transition.
+
+This AppKit lifecycle needs an actual running application rather than a view
+unit test. The read-only regression check examines Launch Services metadata:
+
+```sh
+# Close the preview window with the red button, then check without reopening it.
+python3 apps/warpgatesh-macos/scripts/check-window-mode.py --expect menu-bar
+# Reopen the companion, then check the reverse transition.
+python3 apps/warpgatesh-macos/scripts/check-window-mode.py --expect window
+```
+
+Verified locally: the original close returned Foreground (failure); after the
+fix it returned UIElement (pass), and reopening returned Foreground (pass).

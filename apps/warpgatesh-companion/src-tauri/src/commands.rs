@@ -12,6 +12,8 @@ use warpgatesh_runtime::diagnostics::{self, DiagnosticLogger, DiagnosticsPreview
 use warpgatesh_runtime::ipc;
 use warpgatesh_runtime::ssh::{open_token_page, scan_host_keys};
 use warpgatesh_runtime::storage::{AgentErrorKind, LocalStore, Preferences};
+use warpgatesh_runtime::token_api::ApiAuthorization;
+use warpgatesh_runtime::token_lifecycle::{self, ManagedTokenStatus};
 
 use crate::{installation, updates};
 
@@ -46,6 +48,7 @@ struct CompanionProfile {
     ssh_host: String,
     ssh_port: u16,
     is_default: bool,
+    managed_token: Option<ManagedTokenStatus>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
@@ -75,12 +78,14 @@ struct CompanionAlert {
     action: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProfileRequest {
     name: String,
     base_url: String,
+    #[serde(default)]
     token: String,
+    session_cookie: Option<String>,
     ssh_host: Option<String>,
     ssh_port: Option<u16>,
     pub(crate) expected_fingerprints: Option<String>,
@@ -246,7 +251,7 @@ pub async fn inspect_profile(request: ProfileRequest) -> Result<ProfileInspectio
         validate_profile_request(&request)?;
         let client = ApiClient::new(request.base_url.trim()).map_err(display_error)?;
         let metadata = client
-            .validate(request.token.trim())
+            .validate_authorization(&profile_authorization(&request)?)
             .map_err(display_error)?;
         let ssh_host = request
             .ssh_host
@@ -275,7 +280,7 @@ pub async fn add_profile(request: ProfileRequest) -> Result<(), String> {
         validate_profile_request(&request)?;
         let client = ApiClient::new(request.base_url.trim()).map_err(display_error)?;
         let metadata = client
-            .validate(request.token.trim())
+            .validate_authorization(&profile_authorization(&request)?)
             .map_err(display_error)?;
         let ssh_host = request
             .ssh_host
@@ -291,6 +296,29 @@ pub async fn add_profile(request: ProfileRequest) -> Result<(), String> {
             &host_keys.fingerprints,
         )?;
         let store = LocalStore::for_current_user().map_err(display_error)?;
+        if let Some(cookie) = request
+            .session_cookie
+            .as_deref()
+            .filter(|value| !value.is_empty())
+        {
+            request_configuration(
+                &store,
+                &ConfigurationMutation::EnrollManagedProfile {
+                    profile: Profile {
+                        name: request.name.clone(),
+                        base_url: client.base_url().as_str().to_owned(),
+                        username: metadata.username,
+                        warpgate_version: metadata.version,
+                        ssh_host,
+                        ssh_port,
+                        ssh_authentication: warpgatesh_core::profiles::SshAuthentication::Auto,
+                    },
+                    known_hosts: host_keys.known_hosts,
+                    session_cookie: cookie.to_owned(),
+                },
+            )?;
+            return Ok(());
+        }
         request_configuration(
             &store,
             &ConfigurationMutation::SaveProfile {
@@ -326,6 +354,11 @@ pub async fn renew_profile_token(name: String, token: String) -> Result<(), Stri
             .ok_or_else(|| format!("Le profil « {name} » n’existe pas."))?;
         let client = ApiClient::new(&existing.base_url).map_err(display_error)?;
         let metadata = client.validate(token.trim()).map_err(display_error)?;
+        if metadata.username != existing.username {
+            return Err(
+                "Reconnectez-vous avec la même identité Warpgate que ce profil.".to_owned(),
+            );
+        }
         request_configuration(
             &store,
             &ConfigurationMutation::RenewToken {
@@ -408,11 +441,16 @@ fn load_state(
     let catalog = store.load_profiles().map_err(display_error)?;
     let snapshot = store.load_snapshot().map_err(display_error)?;
     let preferences = store.load_preferences().map_err(display_error)?;
+    let managed = token_lifecycle::statuses(store).map_err(display_error)?;
     let profiles = catalog
         .profiles
         .iter()
         .map(|profile| CompanionProfile {
             is_default: catalog.default_profile.as_deref() == Some(profile.name.as_str()),
+            managed_token: managed
+                .get(&profile.name)
+                .filter(|status| status.managed)
+                .cloned(),
             name: profile.name.clone(),
             username: profile.username.clone(),
             base_url: profile.base_url.clone(),
@@ -542,6 +580,18 @@ fn build_alerts(
             });
         }
     }
+    for (name, managed) in token_lifecycle::statuses(store).map_err(display_error)? {
+        if managed.last_error.is_some() {
+            alerts.push(CompanionAlert {
+                id: format!("token-renewal-{name}"),
+                kind: "error".to_owned(),
+                title: "Renouvellement du jeton en échec".to_owned(),
+                message: "Automatic token renewal failed. Check the profile and secure storage."
+                    .to_owned(),
+                action: Some("profiles".to_owned()),
+            });
+        }
+    }
     let stale_after = preferences
         .sync_interval_seconds
         .saturating_mul(2)
@@ -584,7 +634,9 @@ fn validate_profile_request(request: &ProfileRequest) -> Result<(), String> {
                 .to_owned(),
         );
     }
-    if request.token.trim().is_empty() {
+    if request.token.trim().is_empty()
+        && request.session_cookie.as_deref().is_none_or(str::is_empty)
+    {
         return Err("Le jeton API est requis.".to_owned());
     }
     Ok(())
@@ -602,7 +654,11 @@ fn request_configuration(
     ipc::request_mutation(
         &store.paths().agent_socket,
         mutation,
-        Duration::from_secs(20),
+        Duration::from_secs(if mutation.is_network_operation() {
+            120
+        } else {
+            20
+        }),
     )
     .map_err(display_error)
 }
@@ -662,6 +718,7 @@ mod tests {
                 name: "test".to_owned(),
                 base_url: format!("http://{address}"),
                 token: "test-token".to_owned(),
+                session_cookie: None,
                 ssh_host: None,
                 ssh_port: None,
                 expected_fingerprints: None,
@@ -787,4 +844,66 @@ mod tests {
         assert_eq!(alerts.len(), 1);
         assert_eq!(alerts[0].id, "api");
     }
+}
+
+fn profile_authorization(request: &ProfileRequest) -> Result<ApiAuthorization, String> {
+    if let Some(cookie) = request
+        .session_cookie
+        .as_deref()
+        .filter(|value| !value.is_empty())
+    {
+        if !cookie.starts_with("warpgate-http-session=") || cookie.contains(['\r', '\n', ';']) {
+            return Err("Session Warpgate invalide.".to_owned());
+        }
+        Ok(ApiAuthorization::Session(cookie.to_owned()))
+    } else {
+        Ok(ApiAuthorization::Token(request.token.trim().to_owned()))
+    }
+}
+
+#[tauri::command]
+pub async fn rotate_profile_token(
+    name: String,
+    session_cookie: Option<String>,
+) -> Result<ManagedTokenStatus, String> {
+    run_blocking(move || {
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        let _profile = store
+            .load_profiles()
+            .map_err(display_error)?
+            .find(&name)
+            .cloned()
+            .ok_or_else(|| "Profil introuvable.".to_owned())?;
+        if let Some(cookie) = &session_cookie {
+            if !cookie.starts_with("warpgate-http-session=") || cookie.contains(['\r', '\n', ';']) {
+                return Err("Session Warpgate invalide.".to_owned());
+            }
+        }
+        request_configuration(
+            &store,
+            &ConfigurationMutation::RotateManagedToken {
+                name: name.clone(),
+                session_cookie,
+            },
+        )?;
+        let result = token_lifecycle::statuses(&store)
+            .map_err(display_error)?
+            .remove(&name)
+            .ok_or_else(|| "État du jeton indisponible.".to_owned())?;
+        Ok(result)
+    })
+    .await
+}
+
+#[tauri::command]
+pub async fn set_token_auto_renew(name: String, enabled: bool) -> Result<(), String> {
+    run_blocking(move || {
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        request_configuration(
+            &store,
+            &ConfigurationMutation::SetTokenAutoRenew { name, enabled },
+        )?;
+        Ok(())
+    })
+    .await
 }
