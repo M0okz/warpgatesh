@@ -24,7 +24,7 @@ writes it to the generated SSH configuration.
 
 ### With the graphical companion
 
-These English labels apply to **v0.1.19 and later**; French remains available. See the [native profile walkthrough
+These English labels apply to **v0.1.20 and later**; French remains available. See the [native profile walkthrough
 and screenshots](desktop-app.md#profiles).
 
 1. Open **Profiles** and select **Add a profile**.

@@ -7,7 +7,7 @@ the synchronization agent and OpenSSH access work independently of its window.
 **Availability:** the native interface is available in **v0.1.18 and later**.
 The screenshots are actual captures of the running SwiftUI application in its
 isolated demo mode. Every profile, target, counter and diagnostic entry shown
-is fictional. These v0.1.19 captures use English labels. From v0.1.19 the
+is fictional. These v0.1.20 captures use English labels. From v0.1.20 the
 interface supports French, English and automatic language selection.
 
 ## Access
@@ -37,7 +37,7 @@ confirmed **Remove** action. Tokens stay in the platform secret store.
 
 ![SwiftUI Preferences screen with synchronization and terminal settings](assets/swiftui/preferences.png)
 
-From **v0.1.19**, preferences have three tabs:
+From **v0.1.20**, preferences have three tabs:
 
 - **General**: choose Automatic, Français or English; select Warpgate, Light,
   Black or System appearance; configure [desktop notifications](#notifications).
@@ -82,11 +82,12 @@ sanitized ZIP; it never uploads anything. Review the archive before sharing it.
 
 ![SwiftUI About screen with version and update controls](assets/swiftui/about.png)
 
-Check the installed version and update status. DMG installations check for new
+The app logo, identity, version and update card are centered. Links use cyan
+with an underline and color change on hover. Check the installed version and update status. DMG installations check for new
 releases every six hours; **Check for updates** requests a manual check.
 An available signed update requires confirmation before replacing the app, CLI
 and agent together. Homebrew installations instead show the upgrade command.
-The version shown corresponds to the v0.1.19 source build used for these captures.
+The version shown corresponds to the v0.1.20 source build used for these captures.
 
 ## Menu bar, keyboard and accessibility
 
@@ -106,7 +107,7 @@ DMG remains available from the [latest release](https://github.com/M0okz/warpgat
 
 ## Notifications
 
-**Availability:** desktop notifications are included from **v0.1.19**.
+**Availability:** desktop notifications are included from **v0.1.20**.
 
 Open **Preferences → General → Desktop notifications** to enable macOS alerts.
 macOS asks for permission the first time. If permission is denied, use **macOS

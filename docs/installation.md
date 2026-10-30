@@ -6,7 +6,7 @@ Macs. The public installation method is a signed and notarized universal DMG.
 ## Native macOS interface
 
 From **v0.1.18**, the companion uses SwiftUI with a sidebar and six sections.
-From v0.1.19, French/English, appearance and notification settings are available.
+From v0.1.20, French/English, appearance and notification settings are available.
 See the [native companion guide and screenshots](desktop-app.md). Earlier
 versions use the previous interface; update before following the new labels.
 

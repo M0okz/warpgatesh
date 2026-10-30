@@ -6,11 +6,11 @@ struct AboutScreen: View {
   @State private var confirmUpdate = false
   var body: some View {
     ScrollView {
-      VStack(alignment: .leading, spacing: 20) {
-        HStack(spacing: 16) {
+      VStack(spacing: 20) {
+        VStack(spacing: 12) {
           Image(nsImage: AppLogo.image).resizable().scaledToFit().frame(width: 64, height: 64)
             .accessibilityHidden(true)
-          VStack(alignment: .leading) {
+          VStack(spacing: 4) {
             Text("WarpgateSH").font(.largeTitle.bold()).accessibilityAddTraits(.isHeader)
             Text("Version \(state.update.currentVersion)").foregroundStyle(AccessTheme.secondary)
           }
@@ -25,7 +25,7 @@ struct AboutScreen: View {
         ).font(
           .callout
         ).foregroundStyle(AccessTheme.secondary)
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(spacing: 12) {
           Text(L10n.text("Mises à jour")).font(.title3.weight(.semibold))
           Text(updateMessage)
           if let notes = state.update.notes { Text(notes).textSelection(.enabled).font(.callout) }
@@ -45,13 +45,18 @@ struct AboutScreen: View {
           if state.update.channel == "homebrew" {
             Text("brew upgrade --cask warpgatesh").font(.body.monospaced()).textSelection(.enabled)
           }
-        }.padding(20).modifier(Surface(tint: AccessTheme.cyan))
-        Link(
+        }
+        .padding(20).frame(maxWidth: 520)
+        .modifier(Surface(tint: AccessTheme.cyan))
+        DocumentationLink(
           L10n.text("Code source et documentation"),
           destination: URL(string: "https://github.com/M0okz/warpgatesh")!)
         Text(L10n.text("Licence Apache 2.0 · Aucune télémétrie")).font(.caption).foregroundStyle(
           AccessTheme.secondary)
       }
+      .multilineTextAlignment(.center)
+      .frame(maxWidth: .infinity)
+      .padding(.vertical, 16)
     }
     .confirmationDialog(
       L10n.text("Installer la mise à jour signée ?"), isPresented: $confirmUpdate,

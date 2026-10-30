@@ -3,7 +3,7 @@
 Use the built-in uninstaller so the app can distinguish its own files from your
 personal SSH configuration.
 
-These English labels apply to **v0.1.19 and later**; French remains available. See the [native preferences
+These English labels apply to **v0.1.20 and later**; French remains available. See the [native preferences
 screenshots](desktop-app.md#preferences). Earlier versions use the original French labels.
 
 ## Uninstall and keep local data

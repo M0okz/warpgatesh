@@ -84,13 +84,12 @@ struct PreferencesScreen: View {
                   }
                 }
               }
-              Link(
+              DocumentationLink(
                 L10n.text("À propos des notifications"),
                 destination: URL(
                   string: "https://warpgatesh.homeblack.fr/docs/desktop-app.html#notifications"
                 )!
               )
-              .foregroundStyle(AccessTheme.cyan)
               HStack {
                 Button(L10n.text("Envoyer une notification de test")) {
                   permissionTask = Task { await notifications.test() }
@@ -153,7 +152,7 @@ struct PreferencesScreen: View {
             }
             .disabled(
               ["managed", "external", "conflict"].contains(state.terminalIntegration.status))
-            Link(
+            DocumentationLink(
               L10n.text("Commande warpgatesh : utilité et installation"),
               destination: URL(
                 string:

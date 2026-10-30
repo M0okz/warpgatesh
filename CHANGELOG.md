@@ -4,7 +4,10 @@ Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
 ## Non publié
 
-## 0.1.19 — 2026-10-30
+## 0.1.20 — 2026-10-30
+
+- Les liens vers les sites et la documentation sont colorés et se soulignent au survol.
+- La page À propos centre le logo, le nom, la version, les informations et le bloc de mise à jour.
 
 - Les préférences sont réparties en Général, Synchronisation et Système. La langue
   peut suivre macOS ou être réglée en français ou en anglais ; les thèmes Warpgate,

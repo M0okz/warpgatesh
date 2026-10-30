@@ -137,7 +137,7 @@ warpgatesh diagnostics preview
 warpgatesh diagnostics export
 ```
 
-In the English interface from **v0.1.19**, open [**Logs**](desktop-app.md#logs) to
+In the English interface from **v0.1.20**, open [**Logs**](desktop-app.md#logs) to
 review local files and select **Export sanitized diagnostics…**. Version 0.1.18
 uses **Journaux → Exporter les diagnostics nettoyés…**. Older versions provide
 diagnostics under **Préférences → Diagnostics locaux**. Logs are retained for seven days, sanitized, and never uploaded

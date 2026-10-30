@@ -3,68 +3,68 @@
   "source": "Running WarpgateSH SwiftUI app, --demo mode",
   "data": "Fictional demo data only; no live profiles or secrets",
   "language": "English",
-  "releaseStatus": "WarpgateSH v0.1.19; original Warpgate theme except named Light and Black variants",
-  "version": "0.1.19",
+  "releaseStatus": "WarpgateSH v0.1.20; original Warpgate theme except named Light and Black variants",
+  "version": "0.1.20",
   "images": [
     {
       "file": "about.png",
       "width": 881,
       "height": 713,
-      "sha256": "93ea4d8cdc6eb85f4d82821b97134a3222516af6b850bddac8f1e424353bb06b"
+      "sha256": "402008777720816908ff426809ede9b42de4e338f9cab965cd8b7b3f9b096270"
     },
     {
       "file": "access.png",
       "width": 881,
       "height": 713,
-      "sha256": "ba022930bfe4b184aade781f06bb5afc4794f2abecf77a204153d9b0b098a4ef"
+      "sha256": "bca99c7bfdda78e13a25a89f881e9c05c5921a07222c53ca87e444e3d8c43e9c"
     },
     {
       "file": "logs.png",
       "width": 881,
       "height": 713,
-      "sha256": "7bddbbc0a4f848bd40d108b6363434e20bd2282b07cdb9ffc4cc942aaa5782a6"
+      "sha256": "47929a13c74e8940e0c82f96cd4372d68ebd67947539a0dc8ac6306c3f48dbe2"
     },
     {
       "file": "preferences-black.png",
       "width": 881,
       "height": 713,
-      "sha256": "650803226829b19c557bb89872a8f193d59afe72e8d8b4830f50f7c5279220ba"
+      "sha256": "1ba5cbc1dbea27b051528b0e87eeb74fc6a31cf906f7fcc921776f1d6300a9f2"
     },
     {
       "file": "preferences-light.png",
       "width": 881,
       "height": 713,
-      "sha256": "4c7437923fc08399fd7ee2747f1faaaacd01a417cc5b249ac6f4aa09153a2258"
+      "sha256": "fdeade985d91d9a6f26cd0dfa94243d2680d22e8aa789e34743f9629a5336d63"
     },
     {
       "file": "preferences-sync.png",
       "width": 881,
       "height": 713,
-      "sha256": "15c2e058beac904dc25d380d1cd019ac546b6f27bdd4bff7d991727fbfffbcd2"
+      "sha256": "0fb0b51c555120fa776d9f8b4cadd17dcc16090d70b750a4b756adfbb87f15e5"
     },
     {
       "file": "preferences-system.png",
       "width": 881,
       "height": 713,
-      "sha256": "823ca54a481524bf1fa0fd08d89809ae169bcbf2524183a53cf3bc4d2300928e"
+      "sha256": "ee4e67aa87b83c156109fe46a9c16e7a08fb5da0d4b1e0b6b7d5febea5cc68ab"
     },
     {
       "file": "preferences.png",
       "width": 881,
       "height": 713,
-      "sha256": "c39d6cae6e8a36a3e9fd284ff3cb4e75e844c0bbb041f8b678c20f80a586e1a2"
+      "sha256": "3995123cf74625bcbe3c8d7ed9fadf845fc8ee3bf87ef52a6afabe4b3bebf2c6"
     },
     {
       "file": "profiles.png",
       "width": 881,
       "height": 713,
-      "sha256": "3a354995ad034f94f05a13f54742b42625976fd6cde2707ba2b3fd70cf38015d"
+      "sha256": "f0b481c91dc0b3ae95d99e6273162d8535409137b6f1ed74bbafc621278739ab"
     },
     {
       "file": "synchronization.png",
       "width": 881,
       "height": 713,
-      "sha256": "2305fd4843fd877202b1c19cba8c7b1a6a2cd77c62b228422f0fc0f2ac3552e4"
+      "sha256": "dbc7e544219ecd0c492c32ea0ae8e56b7d9cff3663becbbd57cac4d1f3ed70f7"
     }
   ]
 }
