@@ -4,6 +4,12 @@ Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
 ## Non publié
 
+## 0.1.17 — 2026-10-30
+
+- Une intégration zsh facultative permet de taper directement le nom d’une cible, avec la complétion Tab habituelle. `warpgatesh shell install zsh` active les alias courts et qualifiés dans les nouveaux terminaux ; `warpgatesh shell uninstall zsh` retire cette intégration.
+- Les commandes de cibles sont actualisées depuis l’instantané local avant chaque invite, sans accès réseau. Les commandes, alias et fonctions personnels restent prioritaires et les arguments SSH sont transmis à la CLI.
+- Le site public présente le produit et fournit les guides d’installation, de connexion, de dépannage et de désinstallation.
+
 - Les changements de bannière SSH dans les commentaires de `ssh-keyscan` ne sont plus signalés comme une rotation des clés hôtes. Les modifications du matériel des clés restent refusées.
 - Des tests de contrat couvrent les API utilisateur Warpgate 0.27.5, 0.28.6 et 0.29.1, ainsi que la conservation de l’état local en cas de réponse invalide ou d’erreur HTTP.
 
