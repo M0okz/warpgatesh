@@ -23,7 +23,7 @@ final class CompanionAppDelegate: NSObject, NSApplicationDelegate {
       window.backgroundColor = .clear
       window.titlebarAppearsTransparent = true
     }
-    NSApp.applicationIconImage = AppLogo.image
+    NSApp.applicationIconImage = AppLogo.dockImage
     NSApp.setActivationPolicy(.regular)
     NSApp.activate(ignoringOtherApps: true)
   }

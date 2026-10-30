@@ -4,6 +4,8 @@ Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
 ## Non publié
 
+- L’icône du Dock reçoit des marges transparentes pour une taille cohérente avec les autres applications.
+
 - La connexion intégrée à la page officielle de Warpgate permet de créer un
   jeton depuis l’app après authentification et approbation des empreintes SSH.
 - L’agent renouvelle les jetons créés par l’app avant leur expiration, avec une
