@@ -4,6 +4,7 @@ import os
 import pathlib
 import shutil
 import subprocess
+from apple_toolchain import apple_environment
 
 root = pathlib.Path(__file__).resolve().parents[1]
 companion = root.parent / "warpgatesh-companion" / "src-tauri"
@@ -16,8 +17,9 @@ if triple not in architectures:
 args = ["/usr/bin/xcrun", "swift", "build", "--package-path", str(root), "--configuration", "release"]
 for arch in architectures[triple]:
     args.extend(["--arch", arch])
-subprocess.run(args, check=True)
-binaries = pathlib.Path(subprocess.check_output(args + ["--show-bin-path"], text=True).strip())
+apple_env = apple_environment()
+subprocess.run(args, check=True, env=apple_env)
+binaries = pathlib.Path(subprocess.check_output(args + ["--show-bin-path"], text=True, env=apple_env).strip())
 output = companion / "binaries"
 output.mkdir(exist_ok=True)
 shutil.copy2(binaries / "warpgatesh-ui", output / ("warpgatesh-ui-" + triple))

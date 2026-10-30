@@ -86,3 +86,12 @@ the package. Cargo target directories, frontend `dist`, Swift `.build`, Tauri na
 `node_modules` remain ignored generated outputs. Preserve local build caches
 unless you intentionally want a clean rebuild. Nix store garbage collection is
 a machine-wide maintenance operation, separate from cleaning this project.
+
+## Native Swift toolchain boundary
+
+The SwiftUI sidecar uses the selected Xcode through `scripts/swift.py` and
+`apple_toolchain.py`. These child processes remove inherited Nix compiler/linker
+flags, select the Apple SDK and compiler drivers, and retain macOS 13 as the
+deployment target. In particular, Xcode’s `LD` setting expects the Clang driver;
+the raw `LD=ld` supplied by a Nix shell cannot consume `-Xlinker` arguments.
+The enclosing Rust build remains in the pinned Nix environment.

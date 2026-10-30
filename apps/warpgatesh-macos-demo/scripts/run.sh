@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 cd "$(dirname "$0")/.."
-swift build
-binary_dir="$(swift build --show-bin-path)"
+python3 ../warpgatesh-macos/scripts/swift.py build
+binary_dir="$(python3 ../warpgatesh-macos/scripts/swift.py build --show-bin-path)"
 app_dir="$PWD/.build/WarpgateSH Demo.app"
 mkdir -p "$app_dir/Contents/MacOS" "$app_dir/Contents/Resources"
 cp -R "$binary_dir/WarpgateSHDemo_WarpgateSHDemo.bundle" "$app_dir/Contents/Resources/"

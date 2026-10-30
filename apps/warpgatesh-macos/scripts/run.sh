@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 cd "$(dirname "$0")/.."
-swift build
-binary_dir="$(swift build --show-bin-path)"
+python3 scripts/swift.py build
+binary_dir="$(python3 scripts/swift.py build --show-bin-path)"
 repo_dir="$(cd ../.. && pwd)"
 cargo build --manifest-path "$repo_dir/apps/warpgatesh-companion/src-tauri/Cargo.toml" --locked
 cargo build --manifest-path "$repo_dir/Cargo.toml" --locked --package warpgatesh-cli --package warpgatesh-agent

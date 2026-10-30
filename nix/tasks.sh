@@ -19,8 +19,8 @@ check_companion() {
   npm run test:updater-manifest
   npm run prepare:sidecars
   npm run prepare:native
-  /usr/bin/xcrun swift test --package-path ../warpgatesh-macos
-  /usr/bin/xcrun swift format lint --strict --recursive ../warpgatesh-macos/Sources ../warpgatesh-macos/Tests ../warpgatesh-macos/Package.swift
+  python3 ../warpgatesh-macos/scripts/swift.py test --package-path ../warpgatesh-macos
+  python3 ../warpgatesh-macos/scripts/swift.py format lint --strict --recursive ../warpgatesh-macos/Sources ../warpgatesh-macos/Tests ../warpgatesh-macos/Package.swift
   cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
   cargo test --manifest-path src-tauri/Cargo.toml --locked
   cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --locked -- -D warnings
