@@ -94,3 +94,14 @@ python3 apps/warpgatesh-macos/scripts/check-window-mode.py --expect window
 
 Verified locally: the original close returned Foreground (failure); after the
 fix it returned UIElement (pass), and reopening returned Foreground (pass).
+
+
+## Lancement depuis Launch Services (0.1.22)
+
+Le candidat privé signé 0.1.21 se fermait lors de `open -n`, y compris en mode
+démo. Une instrumentation temporaire a identifié une entrée Launch Services de
+PID -1, prise à tort pour une autre instance. Le filtre exige désormais un PID
+strictement positif, distinct du processus courant, et une instance non terminée.
+Le test `LaunchIdentityTests` couvre les PID -1, 0, courant et étranger valide.
+La reproduction empaquetée est passée de l’arrêt immédiat au maintien du processus
+avec `open -n`, en démo puis en mode réel. L’instrumentation a été retirée.

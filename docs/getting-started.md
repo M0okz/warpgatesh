@@ -12,7 +12,7 @@ targets.
 
 ## 1. Sign in with the macOS companion
 
-From **v0.1.21**, the companion can create a personal API token without
+From **v0.1.22**, the companion can create a personal API token without
 copying it from your browser. French and English labels are available. See the
 [native profile walkthrough and screenshots](desktop-app.md#profiles).
 

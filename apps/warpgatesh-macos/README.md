@@ -85,7 +85,7 @@ About, or the official Warpgate release notes. The companion keeps monitoring
 when its window is closed, while its menu-bar process is running. Quitting it
 stops notifications; the independent Rust agent continues synchronizing.
 
-From v0.1.21, app-managed tokens use their server-reported expiry and are renewed
+From v0.1.22, app-managed tokens use their server-reported expiry and are renewed
 by the Rust agent. Imported tokens without an expiry retain **Profiles → Token
 expiry reminder**, an optional user-supplied date. Reminders occur within seven
 days, within one day and after expiry. No date is guessed. Rejected authentication

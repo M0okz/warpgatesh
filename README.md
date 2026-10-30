@@ -21,7 +21,7 @@ tools.
 
 ![WarpgateSH SwiftUI access screen](docs/assets/swiftui/access.png)
 
-*WarpgateSH v0.1.21, English interface. Native SwiftUI companion available from v0.1.18. Actual capture of the running
+*WarpgateSH v0.1.22, English interface. Native SwiftUI companion available from v0.1.18. Actual capture of the running
 macOS app using fictional demo data.*
 
 [Explore the six native screens](docs/desktop-app.md) ·
@@ -65,7 +65,7 @@ The graphical companion can install the bundled CLI from its preferences. It
 never needs to stay open: synchronization is handled independently by a
 per-user background agent.
 
-From **v0.1.21**, the companion offers **Profiles → Add a profile → Sign in to
+From **v0.1.22**, the companion offers **Profiles → Add a profile → Sign in to
 Warpgate**. Authenticate on your instance's official page, approve the SSH host
 fingerprints and save. The app creates the token; the background agent renews
 it before expiry. Existing-token import and the CLI flow remain available.

@@ -93,3 +93,13 @@ Xcode doit fournir Swift 6.2 ou ultérieur. Le lanceur/backend Rust, l’interfa
 SwiftUI, la CLI et l’agent sont tous universels et signés ensemble. Le protocole
 de mise à jour signé, l’identifiant du bundle et les chemins Trousseau restent
 identiques ; aucune conversion des données utilisateur n’est nécessaire.
+
+
+## Smoke test du lancement macOS
+
+Lancer le bundle final depuis Finder ou avec `open -n /Applications/WarpgateSH.app`,
+puis vérifier que la fenêtre reste ouverte et que l’agent répond. Répéter avec
+`--args --demo` et vérifier la fermeture/réouverture. Exécuter seulement le
+binaire en ligne de commande ne suffit pas à tester l’enregistrement Launch
+Services. Celui-ci peut présenter une entrée temporaire dont le PID vaut -1 ;
+elle ne doit jamais être considérée comme une autre instance active.
