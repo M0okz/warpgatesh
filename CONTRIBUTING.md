@@ -32,7 +32,11 @@ nix develop
 cargo build --workspace --locked
 ```
 
-For interactive companion development, run `npm ci` and `npm run tauri dev`
+The macOS production interface is SwiftUI in `apps/warpgatesh-macos` (Swift 6.2+).
+See its README for an isolated preview and native tests. The Tauri frontend
+remains available as a development fallback.
+
+For interactive Tauri companion development, run `npm ci` and `npm run tauri dev`
 from `apps/warpgatesh-companion` inside that shell. Manual Cargo/npm workflows
 remain available with an equivalent toolchain.
 

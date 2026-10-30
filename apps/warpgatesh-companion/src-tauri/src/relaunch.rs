@@ -19,8 +19,13 @@ done
 exec /usr/bin/open -n "$application" --args "$@"
 "#;
 
+pub(crate) struct NativeSession {
+    pub(crate) parent_pid: u32,
+}
+
 pub(crate) struct RelaunchPlan {
     application: PathBuf,
+    parent_pid: u32,
     arguments: Vec<OsString>,
 }
 
@@ -32,7 +37,14 @@ impl RelaunchPlan {
             .map_err(|error| format!("Impossible de préparer le redémarrage : {error}"))?;
         Ok(Self {
             application: application_bundle(&executable)?,
-            arguments: environment.args_os.into_iter().skip(1).collect(),
+            parent_pid: app
+                .try_state::<NativeSession>()
+                .map_or(std::process::id(), |session| session.parent_pid),
+            arguments: if app.try_state::<NativeSession>().is_some() {
+                Vec::new()
+            } else {
+                environment.args_os.into_iter().skip(1).collect()
+            },
         })
     }
 
@@ -43,7 +55,7 @@ impl RelaunchPlan {
                     .to_owned(),
             );
         }
-        relaunch_command(&self.application, std::process::id(), &self.arguments)
+        relaunch_command(&self.application, self.parent_pid, &self.arguments)
             .spawn()
             .map_err(|error| format!("Impossible de programmer le redémarrage : {error}"))?;
         app.exit(0);

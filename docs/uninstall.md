@@ -3,6 +3,11 @@
 Use the built-in uninstaller so the app can distinguish its own files from your
 personal SSH configuration.
 
+The labels below describe the published v0.1.17 companion. In the [SwiftUI
+preview](desktop-app.md#preferences), use **Préférences → Application →
+Désinstaller WarpgateSH…** and leave **Supprimer aussi les profils, jetons et
+fichiers SSH gérés** unchecked to keep your data.
+
 ## Uninstall and keep local data
 
 1. Open **WarpgateSH → Préférences**.

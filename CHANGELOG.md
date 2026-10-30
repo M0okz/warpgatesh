@@ -4,6 +4,17 @@ Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
 ## Non publié
 
+- Le compagnon macOS adopte SwiftUI avec six rubriques, une navigation latérale,
+  un panneau translucide, le logo de l’application et des animations de survol.
+- Les profils, la synchronisation, les préférences, les diagnostics et les mises
+  à jour réutilisent le moteur Rust existant via une passerelle locale privée.
+  La CLI, l’agent indépendant, les profils et le Trousseau sont conservés.
+- L’enregistrement d’un profil refuse les empreintes SSH modifiées depuis leur
+  vérification. L’interface protège aussi l’état récent contre une réponse de
+  lecture plus ancienne.
+- Le README, les guides et le site présentent les captures réelles du mode démo
+  SwiftUI, clairement identifiées comme aperçu de la prochaine version.
+
 ## 0.1.17 — 2026-10-30
 
 - Une intégration zsh facultative permet de taper directement le nom d’une cible, avec la complétion Tab habituelle. `warpgatesh shell install zsh` active les alias courts et qualifiés dans les nouveaux terminaux ; `warpgatesh shell uninstall zsh` retire cette intégration.

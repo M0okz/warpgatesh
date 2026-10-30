@@ -19,7 +19,14 @@ tools.
 > optional convenience layer for people who prefer a synchronized local SSH
 > workflow.
 
-![WarpgateSH terminal demo](docs/assets/warpgatesh-demo.gif)
+![WarpgateSH SwiftUI access screen](docs/assets/swiftui/access.png)
+
+*SwiftUI preview from the running macOS app, using fictional demo data. This
+interface is on `main` for the next release; the latest published v0.1.17 DMG
+still uses the previous companion.*
+
+[Explore the six native screens](docs/desktop-app.md) ·
+[Watch the CLI demo](docs/assets/warpgatesh-demo.gif)
 
 
 ## Why WarpgateSH?
@@ -146,6 +153,7 @@ Run `warpgatesh help` for the complete built-in reference.
 ## Documentation
 
 - [Product website source and local preview](apps/warpgatesh-site/README.md)
+- [SwiftUI companion preview and screenshots](docs/desktop-app.md)
 - [Install WarpgateSH on macOS](docs/installation.md)
 - [Install the CLI and agent on Linux](docs/installation-linux.md)
 - [Create a token and connect to a first target](docs/getting-started.md)
@@ -236,7 +244,7 @@ The project currently includes:
 
 - the `warpgatesh` command-line client;
 - a per-user synchronization agent;
-- a lightweight macOS menu-bar companion;
+- a native SwiftUI macOS companion and menu-bar interface on `main`, for the next release;
 - an early Linux CLI and systemd user-agent port;
 - signed, notarized universal macOS release artifacts;
 - multi-profile target synchronization and deterministic SSH aliases.

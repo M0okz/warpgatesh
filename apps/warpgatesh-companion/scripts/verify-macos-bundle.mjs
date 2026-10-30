@@ -23,10 +23,12 @@ const executables = join(bundle, "Contents", "MacOS");
 const resources = join(bundle, "Contents", "Resources");
 const infoPlist = join(bundle, "Contents", "Info.plist");
 const companion = join(executables, "warpgatesh-companion");
+const native = join(executables, "warpgatesh-ui");
+accessSync(join(resources, "WarpgateSH_WarpgateSH.bundle"), constants.R_OK);
 const cli = join(executables, "warpgatesh");
 const agent = join(executables, "warpgatesh-agent");
 
-for (const executable of [companion, cli, agent]) {
+for (const executable of [companion, native, cli, agent]) {
   accessSync(executable, constants.R_OK | constants.X_OK);
   const dependencies = capture("/usr/bin/otool", ["-L", executable]);
   const loadCommands = capture("/usr/bin/otool", ["-l", executable]);
@@ -46,7 +48,7 @@ if (iconFile !== "icon.icns") {
 accessSync(join(resources, iconFile), constants.R_OK);
 
 if (bundle.includes("universal-apple-darwin")) {
-  for (const executable of [companion, cli, agent]) {
+  for (const executable of [companion, native, cli, agent]) {
     const architectures = capture("/usr/bin/lipo", ["-archs", executable])
       .split(/\s+/)
       .sort();

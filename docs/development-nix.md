@@ -20,7 +20,9 @@ interfaces in `~/.config/nix/nix.conf` if your installer has not enabled them:
 experimental-features = nix-command flakes
 ```
 
-On macOS, install Xcode and accept its license. Desktop builds use Apple's
+On macOS, install Xcode with Swift 6.2 or later and accept its license.
+The native SwiftUI interface lives in `apps/warpgatesh-macos`; its README
+describes the isolated demo and connected preview. Desktop builds use Apple's
 installed SDK, clang, lipo, codesign and hdiutil. The shell sets the deployment
 target to macOS 13.0; it does not install or select Xcode. The build host itself
 must meet the pinned Nixpkgs release’s macOS requirements. Consequently, pinning
@@ -80,7 +82,7 @@ version change also requires editing the selection in `flake.nix`; keep the
 minimum version documented in `Cargo.toml` consistent with compatibility tests.
 
 `result` is only a link into the Nix store and can be removed after inspecting
-the package. Cargo target directories, frontend `dist`, Tauri `binaries` and
+the package. Cargo target directories, frontend `dist`, Swift `.build`, Tauri native resources and `binaries` and
 `node_modules` remain ignored generated outputs. Preserve local build caches
 unless you intentionally want a clean rebuild. Nix store garbage collection is
 a machine-wide maintenance operation, separate from cleaning this project.

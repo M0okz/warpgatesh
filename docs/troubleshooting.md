@@ -138,7 +138,9 @@ warpgatesh diagnostics export
 ```
 
 The graphical companion provides the same actions under **Préférences →
-Diagnostics locaux**. Logs are retained for seven days, sanitized, and never uploaded
+Diagnostics locaux** in the published v0.1.17 companion. In the [SwiftUI
+preview](desktop-app.md#logs), open **Journaux** to review files and
+select **Exporter les diagnostics nettoyés…**. Logs are retained for seven days, sanitized, and never uploaded
 automatically. Review the ZIP before attaching it to a GitHub issue.
 
 When reporting a problem, include the WarpgateSH version, macOS version,

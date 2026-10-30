@@ -83,6 +83,7 @@ pub struct ProfileRequest {
     token: String,
     ssh_host: Option<String>,
     ssh_port: Option<u16>,
+    pub(crate) expected_fingerprints: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -285,6 +286,10 @@ pub async fn add_profile(request: ProfileRequest) -> Result<(), String> {
             .to_owned();
         let ssh_port = request.ssh_port.unwrap_or(metadata.ssh_port);
         let host_keys = scan_host_keys(&ssh_host, ssh_port).map_err(display_error)?;
+        verify_expected_fingerprints(
+            request.expected_fingerprints.as_deref(),
+            &host_keys.fingerprints,
+        )?;
         let store = LocalStore::for_current_user().map_err(display_error)?;
         request_configuration(
             &store,
@@ -553,6 +558,17 @@ fn build_alerts(
     Ok(alerts)
 }
 
+fn verify_expected_fingerprints(expected: Option<&str>, actual: &str) -> Result<(), String> {
+    if expected.is_some_and(|value| value.trim() != actual.trim()) {
+        Err(
+            "Les empreintes SSH ont changé. Vérifiez à nouveau le profil avant de l’enregistrer."
+                .to_owned(),
+        )
+    } else {
+        Ok(())
+    }
+}
+
 fn validate_profile_request(request: &ProfileRequest) -> Result<(), String> {
     if !is_valid_profile_name(request.name.trim()) {
         return Err(
@@ -612,6 +628,14 @@ mod tests {
     use super::*;
 
     #[test]
+    fn refuses_host_keys_changed_since_human_approval() {
+        assert!(verify_expected_fingerprints(Some("SHA256:approved"), "SHA256:changed").is_err());
+        assert!(
+            verify_expected_fingerprints(Some(" SHA256:approved\n"), "SHA256:approved").is_ok()
+        );
+    }
+
+    #[test]
     fn profile_inspection_reports_a_connection_error_without_panicking_in_the_async_runtime() {
         let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("local port");
         let address = listener.local_addr().expect("local address");
@@ -623,6 +647,7 @@ mod tests {
                 token: "test-token".to_owned(),
                 ssh_host: None,
                 ssh_port: None,
+                expected_fingerprints: None,
             })
             .await
         }));

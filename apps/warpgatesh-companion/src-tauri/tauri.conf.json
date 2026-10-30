@@ -44,11 +44,17 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["app", "dmg"],
-    "icon": ["icons/icon.icns"],
+    "targets": [
+      "app",
+      "dmg"
+    ],
+    "icon": [
+      "icons/icon.icns"
+    ],
     "externalBin": [
       "binaries/warpgatesh",
-      "binaries/warpgatesh-agent"
+      "binaries/warpgatesh-agent",
+      "binaries/warpgatesh-ui"
     ],
     "category": "Utility",
     "shortDescription": "Keep Warpgate SSH targets synchronized.",
@@ -56,6 +62,9 @@
     "macOS": {
       "minimumSystemVersion": "13.0",
       "hardenedRuntime": true
+    },
+    "resources": {
+      "native-resources/WarpgateSH_WarpgateSH.bundle": "WarpgateSH_WarpgateSH.bundle"
     }
   }
 }

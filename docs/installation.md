@@ -3,6 +3,13 @@
 WarpgateSH currently supports macOS 13 or newer on Apple silicon and Intel
 Macs. The public installation method is a signed and notarized universal DMG.
 
+## Interface versions
+
+The latest published **v0.1.17** DMG uses the previous companion. The native
+[SwiftUI preview](desktop-app.md), with its sidebar and six sections, is on
+`main` for the next release. The installation steps below apply to the public
+DMG; the preview guide gives the new labels and screenshots.
+
 ## Install from the DMG
 
 1. Open the [latest GitHub release](https://github.com/M0okz/warpgatesh/releases/latest).
@@ -51,10 +58,11 @@ signed DMG and do not rely on `brew install --cask warpgatesh`.
 
 ## Updates
 
-DMG installations check for new GitHub releases at most once per day. You can
+DMG installations check for new GitHub releases every six hours. You can
 also check manually from **Préférences** or the menu-bar icon. WarpgateSH downloads
 an update only after your confirmation and verifies its updater signature
-before replacing the companion, CLI, and agent together.
+before replacing the companion, CLI, and agent together. In the SwiftUI preview,
+manual checks are under **À propos → Vérifier les mises à jour**.
 
 If macOS rejects an official release, do not bypass Gatekeeper. Verify that the
 download came from this repository, check the SHA-256 file, and report the

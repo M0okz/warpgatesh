@@ -1,0 +1,44 @@
+{
+  "capturedOn": "2026-10-30",
+  "source": "Running WarpgateSH SwiftUI app, --demo mode",
+  "data": "Fictional demo data only; no live profiles or secrets",
+  "releaseStatus": "Preview on main for the next release; published v0.1.17 uses the previous interface",
+  "images": [
+    {
+      "file": "about.png",
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "bac27f9dce419eb9f31cadfc8cff522881475dfafe0b68be30478aaa5108854f"
+    },
+    {
+      "file": "access.png",
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "42306088c8ea872c475ad38b517fb97657cb40cda4f947d8cde382d0120b0816"
+    },
+    {
+      "file": "logs.png",
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "c76bc9415cd7e1950a38b4145d96b50c4fb6de00ddfb0120514b3e3e772e8a10"
+    },
+    {
+      "file": "preferences.png",
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "a7731ac07b5817cd55c9a346a4da199a1ae442f6dcdb9148ada2e31337a52535"
+    },
+    {
+      "file": "profiles.png",
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "3a67e8cd6eda8f14c752ac743e17fd3482605b0ea0fa13a4eb5d26a3be6bf490"
+    },
+    {
+      "file": "synchronization.png",
+      "width": 4718592,
+      "height": 4292935744,
+      "sha256": "9492e9cab04f867b46a09d99cdc6089db3c23509947ecaf6ce47702946bbdfe0"
+    }
+  ]
+}

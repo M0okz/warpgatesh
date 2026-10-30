@@ -24,6 +24,11 @@ writes it to the generated SSH configuration.
 
 ### With the graphical companion
 
+The steps below describe the published v0.1.17 companion. For the next SwiftUI
+interface, use **Profils → Ajouter un profil → Vérifier le profil**, approve the
+fingerprints, then **Enregistrer**. See the [SwiftUI profile walkthrough and
+screenshots](desktop-app.md#profiles).
+
 1. Open **Profils** and select **+ Ajouter**.
 2. Enter a short profile name using lowercase letters, digits, and hyphens,
    such as `production`.

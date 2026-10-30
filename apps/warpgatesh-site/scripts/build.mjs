@@ -7,6 +7,7 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const repository = path.resolve(root, "../..");
 const output = path.join(root, "dist");
 const guides = [
+  ["desktop-app", "SwiftUI preview"],
   ["installation", "Install on macOS"],
   ["installation-linux", "Install on Linux"],
   ["getting-started", "Connect your first target"],
@@ -23,6 +24,7 @@ const escape = (value) =>
 await rm(output, { recursive: true, force: true });
 await cp(path.join(root, "public"), output, { recursive: true });
 await mkdir(path.join(output, "docs"), { recursive: true });
+await cp(path.join(repository, "docs", "assets", "swiftui"), path.join(output, "assets", "swiftui"), { recursive: true });
 const home = await readFile(path.join(output, "index.html"), "utf8");
 const header = home
   .match(/<header[\s\S]*?<\/header>/)[0]
@@ -39,6 +41,9 @@ function rewriteLink(href, isImage = false) {
   const [file, fragment] = href.split("#");
   const resolved = path.posix.normalize(path.posix.join("docs", file));
   const slug = path.posix.basename(resolved, ".md");
+  if (isImage && resolved.startsWith("docs/assets/swiftui/")) {
+    return "../assets/swiftui/" + path.posix.basename(resolved);
+  }
   if (
     resolved === `docs/${slug}.md` &&
     guides.some(([name]) => name === slug)
@@ -75,7 +80,7 @@ async function page(slug, title, content, source) {
 await page(
   "index",
   "Get started",
-  `<p class="eyebrow">WarpgateSH / Guides</p><h1>From your instance<br>to your first connection.</h1><p>Install WarpgateSH, add a profile for your Warpgate instance, and use familiar SSH aliases from your workstation.</p><h2>Choose your platform</h2><ul><li><a href="installation.html">macOS 13+ — signed universal app, CLI, and background agent</a></li><li><a href="installation-linux.html">Linux beta — CLI and per-user systemd agent</a></li></ul><h2>Connect and keep going</h2><ol><li><a href="getting-started.html">Create a personal API token, verify host keys, and connect.</a></li><li><a href="troubleshooting.html">Diagnose installation, synchronization, or SSH problems.</a></li><li><a href="uninstall.html">Remove WarpgateSH and understand what data remains.</a></li></ol><h2>Understand the boundaries</h2><p>WarpgateSH discovers your authorized SSH targets. It does not administer Warpgate users or roles. Your API token synchronizes targets; OpenSSH and Warpgate handle SSH authentication.</p><p><a href="https://warpgate.null.page/">Read the upstream Warpgate documentation</a> for instance installation and administration.</p>`,
+  `<p class="eyebrow">WarpgateSH / Guides</p><h1>From your instance<br>to your first connection.</h1><p>Install WarpgateSH, add a profile for your Warpgate instance, and use familiar SSH aliases from your workstation.</p><h2>Explore the next companion</h2><p><a href="desktop-app.html">Tour the SwiftUI preview and its six screens.</a> These captures show the development version; the latest published v0.1.17 download still uses the previous companion.</p><h2>Choose your platform</h2><ul><li><a href="installation.html">macOS 13+ — signed universal app, CLI, and background agent</a></li><li><a href="installation-linux.html">Linux beta — CLI and per-user systemd agent</a></li></ul><h2>Connect and keep going</h2><ol><li><a href="getting-started.html">Create a personal API token, verify host keys, and connect.</a></li><li><a href="troubleshooting.html">Diagnose installation, synchronization, or SSH problems.</a></li><li><a href="uninstall.html">Remove WarpgateSH and understand what data remains.</a></li></ol><h2>Understand the boundaries</h2><p>WarpgateSH discovers your authorized SSH targets. It does not administer Warpgate users or roles. Your API token synchronizes targets; OpenSSH and Warpgate handle SSH authentication.</p><p><a href="https://warpgate.null.page/">Read the upstream Warpgate documentation</a> for instance installation and administration.</p>`,
   "docs/README.md",
 );
 for (const [slug, title] of guides) {
