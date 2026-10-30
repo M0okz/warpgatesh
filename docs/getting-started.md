@@ -1,5 +1,17 @@
 # Create a token and connect
 
+> Development preview: assisted sign-in and automatic token renewal are implemented
+> on `codex/assisted-token-lifecycle`, after release 0.1.20. In that preview, enter
+> an HTTPS instance URL in **Profiles → Add a profile → Sign in to Warpgate**,
+> authenticate on the official page, approve the SSH fingerprints, then save.
+> The app creates and stores the personal token; the agent renews it before expiry.
+> Existing profiles can use **Renew through the API** to adopt a managed token.
+> Expired or revoked tokens require **Sign in to Warpgate again**. Manual token
+> import remains available under **Use an existing token**. See
+> [the lifecycle decision](adr/0037-manage-personal-api-tokens-through-the-agent.md).
+> The instructions below describe the currently published release and CLI flow.
+
+
 Before starting, you need:
 
 - the root URL of a Warpgate instance, for example

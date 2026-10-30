@@ -45,6 +45,14 @@ enum Operation {
         name: String,
         token: String,
     },
+    RotateProfileToken {
+        name: String,
+        session_cookie: Option<String>,
+    },
+    SetTokenAutoRenew {
+        name: String,
+        enabled: bool,
+    },
     RemoveProfile {
         name: String,
     },
@@ -175,6 +183,14 @@ async fn dispatch(app: AppHandle, operation: Operation) -> Result<Value, String>
         }
         Operation::RenewProfileToken { name, token } => {
             commands::renew_profile_token(name, token).await?;
+            Ok(Value::Null)
+        }
+        Operation::RotateProfileToken {
+            name,
+            session_cookie,
+        } => serialize(commands::rotate_profile_token(name, session_cookie).await?),
+        Operation::SetTokenAutoRenew { name, enabled } => {
+            commands::set_token_auto_renew(name, enabled).await?;
             Ok(Value::Null)
         }
         Operation::RemoveProfile { name } => {

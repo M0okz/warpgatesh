@@ -115,6 +115,11 @@ fn synchronize_and_record(store: &LocalStore) -> Result<SyncReport, RuntimeError
 
 fn verify_and_synchronize(store: &LocalStore) -> Result<SyncReport, RuntimeError> {
     let tokens = SystemKeychain;
+    if let Err(error) =
+        warpgatesh_runtime::token_lifecycle::renew_due(store, &tokens, epoch_seconds())
+    {
+        record_current_error("token.renewal-failed", &error);
+    }
     for profile in store.load_profiles()?.profiles {
         let token = tokens.get(&profile.name)?;
         let metadata = ApiClient::new(&profile.base_url)?.validate(&token)?;
@@ -162,15 +167,56 @@ fn format_report(report: &SyncReport) -> String {
 }
 
 #[cfg(unix)]
-fn run_forever() -> Result<(), RuntimeError> {
+fn dispatch_credential_worker(
+    command: &str,
+    store: &LocalStore,
+    workers: &std::sync::Arc<std::sync::atomic::AtomicUsize>,
+    stream: &std::os::unix::net::UnixStream,
+) -> Result<bool, RuntimeError> {
+    use std::sync::atomic::Ordering;
+    let Some(payload) = command.trim_end().strip_prefix(MUTATION_PREFIX) else {
+        return Ok(false);
+    };
+    if !ConfigurationMutation::from_json(payload)
+        .is_ok_and(|mutation| mutation.is_network_operation())
+    {
+        return Ok(false);
+    }
+    let mut stream = stream.try_clone()?;
+    if workers.fetch_add(1, Ordering::AcqRel) >= 4 {
+        workers.fetch_sub(1, Ordering::AcqRel);
+        answer_local_command(
+            &mut stream,
+            "error credential operation already in progress",
+        );
+        return Ok(true);
+    }
+    let store = store.clone();
+    let payload = payload.to_owned();
+    let workers = std::sync::Arc::clone(workers);
+    std::thread::spawn(move || {
+        let result = apply_configuration(&store, &payload);
+        let succeeded = result.is_ok();
+        let response = result.map_or_else(
+            |error| format!("error {}", protocol_text(&error.to_string())),
+            |()| "ok configuration saved".to_owned(),
+        );
+        answer_local_command(&mut stream, &response);
+        workers.fetch_sub(1, Ordering::AcqRel);
+        if succeeded {
+            let _ = warpgatesh_runtime::ipc::request(&store.paths().agent_socket, "sync");
+        }
+    });
+    Ok(true)
+}
+
+#[cfg(unix)]
+fn bind_private_listener(
+    store: &LocalStore,
+) -> Result<std::os::unix::net::UnixListener, RuntimeError> {
     use std::fs;
-    use std::io::{BufRead, BufReader, ErrorKind, Read};
     use std::os::unix::fs::PermissionsExt;
     use std::os::unix::net::{UnixListener, UnixStream};
-    use std::thread;
-    use std::time::{Duration, Instant};
-
-    let store = LocalStore::for_current_user()?;
     let socket = &store.paths().agent_socket;
     let parent = socket.parent().ok_or_else(|| {
         RuntimeError::InvalidInput("the agent socket has no parent directory".to_owned())
@@ -191,11 +237,25 @@ fn run_forever() -> Result<(), RuntimeError> {
     fs::set_permissions(socket, fs::Permissions::from_mode(0o600))?;
     listener.set_nonblocking(true)?;
 
+    Ok(listener)
+}
+
+#[cfg(unix)]
+fn run_forever() -> Result<(), RuntimeError> {
+    use std::io::{BufRead, BufReader, ErrorKind, Read};
+    use std::thread;
+    use std::time::{Duration, Instant};
+
+    let store = LocalStore::for_current_user()?;
+    let listener = bind_private_listener(&store)?;
+
     let mut schedule = schedule_from_preferences(&store)?;
     let mut failures = 0_u32;
     let mut next_sync = Instant::now();
     let mut sync_worker = None;
     let mut resync_requested = false;
+    let mut next_credential_check = Instant::now();
+    let credential_workers = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
     println!(
         "warpgatesh-agent: running (default interval: {} seconds)",
         schedule.interval.as_secs()
@@ -212,6 +272,24 @@ fn run_forever() -> Result<(), RuntimeError> {
     );
 
     loop {
+        if sync_worker.is_none() && Instant::now() >= next_credential_check {
+            next_credential_check = Instant::now() + Duration::from_secs(30);
+            if failures == 0
+                && warpgatesh_runtime::token_lifecycle::statuses(&store)?
+                    .values()
+                    .any(|state| {
+                        state
+                            .next_attempt_epoch_seconds
+                            .is_none_or(|when| when <= epoch_seconds())
+                            && state.automatic_renewal
+                            && state
+                                .renew_after_epoch_seconds
+                                .is_some_and(|when| when <= epoch_seconds())
+                    })
+            {
+                resync_requested = true;
+            }
+        }
         if sync_worker.is_none() && (resync_requested || Instant::now() >= next_sync) {
             resync_requested = false;
             sync_worker = Some(spawn_synchronization(&store));
@@ -241,6 +319,9 @@ fn run_forever() -> Result<(), RuntimeError> {
                     .read_line(&mut command)
                 {
                     eprintln!("warpgatesh-agent: could not read a local command: {error}");
+                    continue;
+                }
+                if dispatch_credential_worker(&command, &store, &credential_workers, &stream)? {
                     continue;
                 }
                 let response = handle_local_request(
@@ -324,7 +405,7 @@ fn format_status_response(synchronizing: bool, next_sync_seconds: u64) -> String
     } else {
         "idle"
     };
-    format!("ok running state={state} next_sync_seconds={next_sync_seconds}")
+    format!("ok running state={state} next_sync_seconds={next_sync_seconds} token_management=1")
 }
 
 #[cfg(unix)]
@@ -423,11 +504,11 @@ mod tests {
     fn reports_the_live_agent_schedule() {
         assert_eq!(
             format_status_response(false, 83),
-            "ok running state=idle next_sync_seconds=83"
+            "ok running state=idle next_sync_seconds=83 token_management=1"
         );
         assert_eq!(
             format_status_response(true, 0),
-            "ok running state=synchronizing next_sync_seconds=0"
+            "ok running state=synchronizing next_sync_seconds=0 token_management=1"
         );
     }
 }

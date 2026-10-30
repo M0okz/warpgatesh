@@ -28,6 +28,12 @@ try:
     unapproved = request({"id": 3, "command": "add_profile", "args": {"request": {"name": "fixture", "baseUrl": "https://example.invalid", "token": "fixture-not-a-real-token"}}})
     assert unapproved["id"] == 3 and "error" in unapproved
     assert "fixture-not-a-real-token" not in json.dumps(unapproved)
+    unapproved_session = request({"id": 4, "command": "add_profile", "args": {"request": {"name": "fixture", "baseUrl": "https://example.invalid", "sessionCookie": "warpgate-http-session=fixture-session-secret"}}})
+    assert unapproved_session["id"] == 4 and "error" in unapproved_session
+    assert "fixture-session-secret" not in json.dumps(unapproved_session)
+    invalid_session = request({"id": 5, "command": "rotate_profile_token", "args": {"name": "fixture-missing", "session_cookie": "warpgate-http-session=fixture-session-secret"}})
+    assert invalid_session["id"] == 5 and "error" in invalid_session
+    assert "fixture-session-secret" not in json.dumps(invalid_session)
     process.stdin.close()
     process.wait(timeout=10)
     assert process.returncode == 0

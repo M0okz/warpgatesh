@@ -11,6 +11,19 @@ use crate::storage::{LocalStore, Preferences};
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ConfigurationMutation {
+    EnrollManagedProfile {
+        profile: Profile,
+        known_hosts: String,
+        session_cookie: String,
+    },
+    RotateManagedToken {
+        name: String,
+        session_cookie: Option<String>,
+    },
+    SetTokenAutoRenew {
+        name: String,
+        enabled: bool,
+    },
     SaveProfile {
         profile: Profile,
         token: String,
@@ -36,6 +49,14 @@ pub enum ConfigurationMutation {
 }
 
 impl ConfigurationMutation {
+    /// Whether this operation needs a background worker rather than the agent's status loop.
+    #[must_use]
+    pub const fn is_network_operation(&self) -> bool {
+        matches!(
+            self,
+            Self::EnrollManagedProfile { .. } | Self::RotateManagedToken { .. }
+        )
+    }
     /// Decode a mutation received through the private local protocol.
     ///
     /// # Errors
@@ -70,6 +91,83 @@ impl<'a, T: TokenStore> LocalConfiguration<'a, T> {
     /// file replacement fails.
     pub fn apply(&self, mutation: ConfigurationMutation) -> Result<(), RuntimeError> {
         match mutation {
+            ConfigurationMutation::EnrollManagedProfile {
+                profile,
+                known_hosts,
+                session_cookie,
+            } => {
+                let api = crate::api::ApiClient::new(&profile.base_url)?;
+                crate::token_lifecycle::enroll(
+                    self.store,
+                    self.tokens,
+                    &api,
+                    &profile,
+                    known_hosts,
+                    &session_cookie,
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_secs(),
+                )?;
+                Ok(())
+            }
+            ConfigurationMutation::RotateManagedToken {
+                name,
+                session_cookie,
+            } => {
+                let profile = self
+                    .store
+                    .load_profiles()?
+                    .find(&name)
+                    .cloned()
+                    .ok_or_else(|| RuntimeError::InvalidInput("unknown profile".to_owned()))?;
+                let api = crate::api::ApiClient::new(&profile.base_url)?;
+                crate::token_lifecycle::rotate(
+                    self.store,
+                    self.tokens,
+                    &api,
+                    &name,
+                    session_cookie.as_deref(),
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_secs(),
+                )?;
+                Ok(())
+            }
+            ConfigurationMutation::SetTokenAutoRenew { name, enabled } => {
+                crate::token_lifecycle::set_automatic(self.store, self.tokens, &name, enabled)
+            }
+            mutation => self.apply_manual(mutation),
+        }
+    }
+
+    fn apply_manual(&self, mutation: ConfigurationMutation) -> Result<(), RuntimeError> {
+        let _guard = crate::configuration_lock::ConfigurationLock::acquire(self.store)?;
+        let reset_name = match &mutation {
+            ConfigurationMutation::SaveProfile { profile, .. } => Some(profile.name.clone()),
+            ConfigurationMutation::RenewToken { name, .. }
+            | ConfigurationMutation::RemoveProfile { name } => Some(name.clone()),
+            _ => None,
+        };
+        self.apply_preserving_management(mutation)?;
+        if let Some(name) = reset_name {
+            crate::token_lifecycle::clear_management(self.store, self.tokens, &name)?;
+        }
+        Ok(())
+    }
+
+    // Caller must own the configuration lock; used by journaled token transitions.
+    pub(crate) fn apply_preserving_management(
+        &self,
+        mutation: ConfigurationMutation,
+    ) -> Result<(), RuntimeError> {
+        match mutation {
+            ConfigurationMutation::EnrollManagedProfile { .. }
+            | ConfigurationMutation::RotateManagedToken { .. }
+            | ConfigurationMutation::SetTokenAutoRenew { .. } => Err(RuntimeError::InvalidInput(
+                "managed credential mutations must own their transaction lock".to_owned(),
+            )),
             ConfigurationMutation::SaveProfile {
                 profile,
                 token,

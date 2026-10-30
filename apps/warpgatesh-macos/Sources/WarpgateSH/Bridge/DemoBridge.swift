@@ -36,6 +36,41 @@ final class DemoBridge: CompanionTransport {
         state.profiles[i].isDefault = state.profiles[i].name == state.preferences.defaultProfile
       }
       return .null
+    case "inspect_profile":
+      let request: ProfileRequest = try (args["request"] ?? .null).decoded()
+      return try .encoding(
+        ProfileInspection(
+          normalizedBaseUrl: request.baseUrl, username: "demo", warpgateVersion: "0.30.2",
+          sshHost: "warpgate.example.com", sshPort: 2222,
+          fingerprints: "SHA256:DEMO-ONLY-NOT-A-REAL-HOST-KEY"))
+    case "add_profile":
+      let request: ProfileRequest = try (args["request"] ?? .null).decoded()
+      guard request.expectedFingerprints == "SHA256:DEMO-ONLY-NOT-A-REAL-HOST-KEY" else {
+        throw BridgeError.message("Demo: approve the simulated SSH fingerprint first.")
+      }
+      state.profiles.removeAll { $0.name == request.name }
+      state.profiles.append(
+        .init(
+          name: request.name, username: "demo", baseUrl: request.baseUrl, warpgateVersion: "0.30.2",
+          sshHost: "warpgate.example.com", sshPort: 2222, isDefault: false,
+          managedToken: request.sessionCookie == nil ? nil : demoToken()))
+      return .null
+    case "rotate_profile_token":
+      let name: String = try (args["name"] ?? .null).decoded()
+      guard let index = state.profiles.firstIndex(where: { $0.name == name }) else {
+        throw BridgeError.message("Demo: unknown profile.")
+      }
+      let status = demoToken()
+      state.profiles[index].managedToken = status
+      return try .encoding(status)
+    case "set_token_auto_renew":
+      let name: String = try (args["name"] ?? .null).decoded()
+      let enabled: Bool = try (args["enabled"] ?? .null).decoded()
+      guard let index = state.profiles.firstIndex(where: { $0.name == name }),
+        state.profiles[index].managedToken != nil
+      else { throw BridgeError.message("Demo: unknown managed profile.") }
+      state.profiles[index].managedToken?.automaticRenewal = enabled
+      return .null
     case "preview_diagnostics":
       return try .encoding(
         DiagnosticsPreview(
@@ -51,6 +86,12 @@ final class DemoBridge: CompanionTransport {
         )
       )
     }
+  }
+  private func demoToken() -> ManagedTokenStatus {
+    let now = UInt64(Date().timeIntervalSince1970)
+    return .init(
+      automaticRenewal: true, expiresAtEpochSeconds: now + 30 * 86400,
+      renewAfterEpochSeconds: now + 24 * 86400)
   }
   func stop() {}
 }

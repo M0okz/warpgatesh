@@ -8,6 +8,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+fs2.workspace = true
 chrono.workspace = true
 glob.workspace = true
 reqwest.workspace = true

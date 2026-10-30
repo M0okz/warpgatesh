@@ -13,7 +13,12 @@ final class NativeBridge: CompanionTransport {
     try startIfNeeded()
     nextID += 1
     let id = nextID
-    let timeout: Duration = command == "install_update" ? .seconds(900) : .seconds(120)
+    let timeout: Duration
+    switch command {
+    case "install_update": timeout = .seconds(900)
+    case "add_profile", "rotate_profile_token": timeout = .seconds(180)
+    default: timeout = .seconds(120)
+    }
     return try await withThrowingTaskGroup(of: JSONValue.self) { group in
       group.addTask { try await self.send(id, command: command, args: args) }
       group.addTask {

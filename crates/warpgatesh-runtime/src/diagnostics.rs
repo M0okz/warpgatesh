@@ -285,6 +285,9 @@ fn is_sensitive_key(key: &str) -> bool {
         .collect();
     [
         "token",
+        "cookie",
+        "session_cookie",
+        "sessioncookie",
         "password",
         "secret",
         "authorization",
@@ -298,6 +301,9 @@ fn is_sensitive_key(key: &str) -> bool {
 fn redact_text(text: &str) -> String {
     let mut result = text.to_owned();
     for marker in [
+        "warpgate-http-session=",
+        "cookie=",
+        "cookie: ",
         "bearer ",
         "token=",
         "password=",
@@ -372,6 +378,11 @@ mod tests {
         let mut fields = BTreeMap::new();
         fields.insert("token".to_owned(), json!("api-secret"));
         fields.insert("apiToken".to_owned(), json!("another-secret"));
+        fields.insert("sessionCookie".to_owned(), json!("cookie-secret"));
+        fields.insert(
+            "detail".to_owned(),
+            json!("warpgate-http-session=hidden-session failed"),
+        );
         fields.insert(
             "message".to_owned(),
             json!("authorization=api-secret failed"),
@@ -390,6 +401,8 @@ mod tests {
         assert!(text.contains("sync.failed"));
         assert!(!text.contains("api-secret"));
         assert!(!text.contains("another-secret"));
+        assert!(!text.contains("cookie-secret"));
+        assert!(!text.contains("hidden-session"));
         assert!(text.contains("[REDACTED]"));
     }
 

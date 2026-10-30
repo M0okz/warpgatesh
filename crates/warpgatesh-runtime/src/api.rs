@@ -8,8 +8,6 @@ use warpgatesh_core::aliases::Target;
 
 use crate::RuntimeError;
 
-const TOKEN_HEADER: &str = "x-warpgate-token";
-
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct InstanceMetadata {
     pub username: String,
@@ -46,8 +44,8 @@ struct ApiTarget {
 
 #[derive(Clone, Debug)]
 pub struct ApiClient {
-    client: Client,
-    base_url: Url,
+    pub(crate) client: Client,
+    pub(crate) base_url: Url,
 }
 
 impl ApiClient {
@@ -60,6 +58,7 @@ impl ApiClient {
         let base_url = normalize_base_url(base_url)?;
         let client = Client::builder()
             .timeout(Duration::from_secs(15))
+            .redirect(reqwest::redirect::Policy::none())
             .user_agent(concat!("WarpgateSH/", env!("CARGO_PKG_VERSION")))
             .build()?;
         Ok(Self { client, base_url })
@@ -86,9 +85,22 @@ impl ApiClient {
     /// Returns [`RuntimeError`] for authentication, transport, schema, or
     /// missing SSH capability errors.
     pub fn validate(&self, token: &str) -> Result<InstanceMetadata, RuntimeError> {
-        let url = self.base_url.join("@warpgate/api/info")?;
-        let info: InfoResponse =
-            checked(self.client.get(url).header(TOKEN_HEADER, token).send()?)?.json()?;
+        self.validate_authorization(&crate::token_api::ApiAuthorization::Token(token.to_owned()))
+    }
+
+    /// Validate an interactive session or API token without exposing its secret in errors.
+    ///
+    /// # Errors
+    /// Returns an error for rejected authentication or incompatible instance metadata.
+    pub fn validate_authorization(
+        &self,
+        authorization: &crate::token_api::ApiAuthorization,
+    ) -> Result<InstanceMetadata, RuntimeError> {
+        let info: InfoResponse = checked(
+            self.authorized_request(reqwest::Method::GET, "@warpgate/api/info", authorization)?
+                .send()?,
+        )?
+        .json()?;
 
         let username = info.username.ok_or_else(|| {
             RuntimeError::Incompatible("authenticated /info response has no username".to_owned())
@@ -118,9 +130,15 @@ impl ApiClient {
     ///
     /// Returns [`RuntimeError`] for authentication, transport, or schema errors.
     pub fn ssh_targets(&self, token: &str) -> Result<Vec<Target>, RuntimeError> {
-        let url = self.base_url.join("@warpgate/api/targets")?;
-        let targets: Vec<ApiTarget> =
-            checked(self.client.get(url).header(TOKEN_HEADER, token).send()?)?.json()?;
+        let targets: Vec<ApiTarget> = checked(
+            self.authorized_request(
+                reqwest::Method::GET,
+                "@warpgate/api/targets",
+                &crate::token_api::ApiAuthorization::Token(token.to_owned()),
+            )?
+            .send()?,
+        )?
+        .json()?;
 
         Ok(targets
             .into_iter()
@@ -133,14 +151,20 @@ impl ApiClient {
     }
 }
 
-fn checked(response: Response) -> Result<Response, RuntimeError> {
+pub(crate) fn checked(response: Response) -> Result<Response, RuntimeError> {
     if matches!(
         response.status(),
         StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN
     ) {
         return Err(RuntimeError::Unauthorized);
     }
-    Ok(response.error_for_status()?)
+    let response = response.error_for_status()?;
+    if !response.status().is_success() {
+        return Err(RuntimeError::Incompatible(
+            "unexpected API redirect or status".to_owned(),
+        ));
+    }
+    Ok(response)
 }
 
 fn normalize_base_url(value: &str) -> Result<Url, RuntimeError> {
@@ -151,6 +175,11 @@ fn normalize_base_url(value: &str) -> Result<Url, RuntimeError> {
         ));
     }
 
+    if !url.username().is_empty() || url.password().is_some() {
+        return Err(RuntimeError::InvalidInput(
+            "the Warpgate URL must not contain credentials".to_owned(),
+        ));
+    }
     url.set_query(None);
     url.set_fragment(None);
     if let Some((prefix, _)) = url.path().split_once("/@warpgate") {

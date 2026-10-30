@@ -4,6 +4,14 @@ Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
 ## Non publié
 
+- La connexion intégrée à la page officielle de Warpgate permet de créer un
+  jeton depuis l’app après authentification et approbation des empreintes SSH.
+- L’agent renouvelle les jetons créés par l’app avant leur expiration, avec une
+  reprise après interruption et un interrupteur par profil. Les jetons importés
+  restent disponibles et ne sont jamais révoqués automatiquement.
+- La date d’expiration fournie par l’instance alimente les rappels des profils
+  gérés. Un jeton déjà expiré ou révoqué nécessite une nouvelle authentification.
+
 ## 0.1.20 — 2026-10-30
 
 - Les liens vers les sites et la documentation sont colorés et se soulignent au survol.
