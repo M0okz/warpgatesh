@@ -216,4 +216,3 @@ jobs:
           path: |
             apps/warpgatesh-companion/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
             apps/warpgatesh-companion/src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app.tar.gz*
-
