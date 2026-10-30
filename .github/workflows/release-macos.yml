@@ -100,15 +100,24 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
+          stapler_check() {
+            local attempt code
+            for attempt in 1 2 3 4 5 6; do
+              if xcrun stapler "$@"; then return 0; else code=$?; fi
+              if [ "${code}" -ne 68 ] || [ "${attempt}" -eq 6 ]; then return "${code}"; fi
+              echo "Apple ticket service unavailable; retry ${attempt}/6 in 5 seconds."
+              sleep 5
+            done
+          }
           bundle="src-tauri/target/universal-apple-darwin/release/bundle/macos/WarpgateSH.app"
           dmg="src-tauri/target/universal-apple-darwin/release/bundle/dmg/WarpgateSH_${RELEASE_TAG#v}_universal.dmg"
           updater="${bundle}.tar.gz"
-          xcrun stapler staple "${bundle}"
-          xcrun stapler validate "${bundle}"
+          stapler_check staple "${bundle}"
+          stapler_check validate "${bundle}"
           image_root="$(mktemp -d "${RUNNER_TEMP}/warpgatesh-image.XXXXXX")"
           trap 'rm -rf "${image_root}"' EXIT
           ditto "${bundle}" "${image_root}/WarpgateSH.app"
-          xcrun stapler validate "${image_root}/WarpgateSH.app"
+          stapler_check validate "${image_root}/WarpgateSH.app"
           ln -s /Applications "${image_root}/Applications"
           hdiutil create -volname WarpgateSH -srcfolder "${image_root}" -format UDZO -ov "${dmg}"
           codesign --force --sign "${APPLE_SIGNING_IDENTITY}" --timestamp "${dmg}"
@@ -118,27 +127,45 @@ jobs:
           mkdir "${archive_root}"
           tar -xzf "${updater}" -C "${archive_root}"
           codesign --verify --deep --strict "${archive_root}/WarpgateSH.app"
-          xcrun stapler validate "${archive_root}/WarpgateSH.app"
+          stapler_check validate "${archive_root}/WarpgateSH.app"
 
       - name: Notarize and staple disk image
         run: |
+          stapler_check() {
+            local attempt code
+            for attempt in 1 2 3 4 5 6; do
+              if xcrun stapler "$@"; then return 0; else code=$?; fi
+              if [ "${code}" -ne 68 ] || [ "${attempt}" -eq 6 ]; then return "${code}"; fi
+              echo "Apple ticket service unavailable; retry ${attempt}/6 in 5 seconds."
+              sleep 5
+            done
+          }
           dmg="src-tauri/target/universal-apple-darwin/release/bundle/dmg/WarpgateSH_${RELEASE_TAG#v}_universal.dmg"
           xcrun notarytool submit "${dmg}" \
             --apple-id "${APPLE_ID}" \
             --password "${APPLE_PASSWORD}" \
             --team-id "${APPLE_TEAM_ID}" \
             --wait
-          xcrun stapler staple "${dmg}"
+          stapler_check staple "${dmg}"
 
       - name: Verify Apple distribution checks
         run: |
+          stapler_check() {
+            local attempt code
+            for attempt in 1 2 3 4 5 6; do
+              if xcrun stapler "$@"; then return 0; else code=$?; fi
+              if [ "${code}" -ne 68 ] || [ "${attempt}" -eq 6 ]; then return "${code}"; fi
+              echo "Apple ticket service unavailable; retry ${attempt}/6 in 5 seconds."
+              sleep 5
+            done
+          }
           bundle="src-tauri/target/universal-apple-darwin/release/bundle/macos/WarpgateSH.app"
           dmg="src-tauri/target/universal-apple-darwin/release/bundle/dmg/WarpgateSH_${RELEASE_TAG#v}_universal.dmg"
           codesign --verify --deep --strict --verbose=2 "${bundle}"
           spctl --assess --type execute --verbose=2 "${bundle}"
-          xcrun stapler validate "${bundle}"
+          stapler_check validate "${bundle}"
           hdiutil verify "${dmg}"
-          xcrun stapler validate "${dmg}"
+          stapler_check validate "${dmg}"
           dmg_directory="$(dirname "${dmg}")"
           dmg_name="$(basename "${dmg}")"
           (cd "${dmg_directory}" && shasum -a 256 "${dmg_name}" > "${dmg_name}.sha256")
@@ -178,3 +205,14 @@ jobs:
             --draft \
             --title "WarpgateSH ${RELEASE_TAG#v}" \
             --generate-notes
+
+      - name: Preserve distribution outputs after a failure
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: macos-release-recovery
+          retention-days: 1
+          if-no-files-found: ignore
+          path: |
+            apps/warpgatesh-companion/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+            apps/warpgatesh-companion/src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app.tar.gz*
