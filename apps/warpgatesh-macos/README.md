@@ -27,8 +27,8 @@ Ne pas tester une suppression ou une mise à jour sur l’installation personnel
 ## Validation
 
 ```sh
-swift test --package-path apps/warpgatesh-macos
-swift format lint --strict --recursive apps/warpgatesh-macos/Sources apps/warpgatesh-macos/Tests
+python3 apps/warpgatesh-macos/scripts/swift.py test --package-path apps/warpgatesh-macos
+python3 apps/warpgatesh-macos/scripts/swift.py format lint --strict --recursive apps/warpgatesh-macos/Sources apps/warpgatesh-macos/Tests
 nix run .#check
 nix run .#build-macos
 ```
@@ -57,3 +57,46 @@ Les contrôles natifs et libellés assistent VoiceOver. Les animations de survol
 respectent Réduire les animations ; le matériau latéral devient opaque avec
 Réduire la transparence. Une vérification manuelle VoiceOver et des réglages
 macOS reste requise avant une publication publique.
+
+## Preferences in the development version
+
+These settings are included from v0.1.19:
+
+- **General**: automatic/French/English language; original Warpgate, Light, Black,
+  or System appearance. System follows the macOS light/dark setting. Language and
+  appearance update immediately, including the menu bar and dialogs.
+- **Synchronization**: interval and default profile, saved through the existing
+  backend. **System**: launch at login, CLI installation and documentation,
+  application removal. These settings retain their explicit Save button.
+- Local presentation settings persist in UserDefaults independently of backend
+  configuration. Demo settings use `dev.warpgatesh.preview.settings` and never
+  overwrite the installed application's presentation settings.
+
+## Notifications
+
+Notifications are opt-in. Enabling them requests the native macOS authorization;
+denied permission is displayed with a link to System Settings. The test button
+sends a real local notification after authorization. No push service is used.
+
+The running companion evaluates the agent's existing persistent-error alerts
+and client update state. Incidents are delivered once until resolution; updates
+are delivered once per version. Clicking the action opens Profiles, Diagnostics,
+About, or the official Warpgate release notes. The companion keeps monitoring
+when its window is closed, while its menu-bar process is running. Quitting it
+stops notifications; the independent Rust agent continues synchronizing.
+
+Warpgate does not identify the expiry date of an already stored API token in the
+responses used by this client. **Profiles → Token expiry reminder** accepts an
+optional user-supplied date. Reminders occur within seven days, within one day,
+and after expiry. No date is guessed. Rejected authentication is reported even
+without a date. Successfully replacing a token clears its old expiry reminder.
+
+Server release checks are optional per profile, every six hours, against the
+public GitHub releases API. They compare stable numeric versions with the server
+version observed during synchronization. No instance URL, username or token is
+sent to GitHub. An optional release-check failure never blocks SSH or syncing.
+
+
+La prévisualisation est signée ad hoc pour permettre à macOS d’autoriser les
+notifications locales. Les nouveaux tests couvrent les traductions, les réglages
+persistants, les seuils de rappel, les incidents et les comparaisons de versions.

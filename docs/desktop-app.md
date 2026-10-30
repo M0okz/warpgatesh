@@ -7,14 +7,15 @@ the synchronization agent and OpenSSH access work independently of its window.
 **Availability:** the native interface is available in **v0.1.18 and later**.
 The screenshots are actual captures of the running SwiftUI application in its
 isolated demo mode. Every profile, target, counter and diagnostic entry shown
-is fictional. The interface currently uses French labels.
+is fictional. These v0.1.19 captures use English labels. From v0.1.19 the
+interface supports French, English and automatic language selection.
 
 ## Access
 
 ![SwiftUI Access screen with demo targets, profile count and search](assets/swiftui/access.png)
 
 Check the agent state, synchronized target count, configured profiles, and the
-age of the last successful synchronization. Use **Synchroniser maintenant**
+age of the last successful synchronization. Use **Synchronize now**
 for an immediate sync, or **⌘K** to search by name, alias or profile. Selecting
 a target in the connected app opens its qualified alias in the terminal.
 The last successful snapshot remains available if a later synchronization fails.
@@ -23,35 +24,50 @@ The last successful snapshot remains available if a later synchronization fails.
 
 ![SwiftUI Profiles screen with a fictional homelab profile](assets/swiftui/profiles.png)
 
-Use **Ajouter un profil**, enter the local name, instance URL and personal API
-token, then select **Vérifier le profil**. Compare the displayed SSH host-key
-fingerprints with a trusted source. Enable **J’ai vérifié ces empreintes par un
-canal de confiance** and select **Enregistrer** only after they match.
+Use **Add a profile**, enter the local name, instance URL and personal API
+token, then select **Check profile**. Compare the displayed SSH host-key
+fingerprints with a trusted source. Enable **I verified these fingerprints through a trusted channel** and select **Save** only after they match.
 
 **Options SSH** lets you override a detected hostname or port. If the keys change
 between inspection and saving, enrollment is refused and must be verified again.
-Existing profiles offer **Renouveler le jeton**, **Définir par défaut** and a
-confirmed **Supprimer** action. Tokens stay in the platform secret store.
+Existing profiles offer **Renew token**, **Set as default** and a
+confirmed **Remove** action. Tokens stay in the platform secret store.
 
 ## Preferences
 
 ![SwiftUI Preferences screen with synchronization and terminal settings](assets/swiftui/preferences.png)
 
-Choose a synchronization interval, a default profile, and whether the companion
-opens at login. The agent is independent of that preference. Under **Commande
-du terminal**, **Installer la commande warpgatesh** exposes the bundled CLI.
-Existing conflicting commands are preserved. **Enregistrer les préférences**
-applies changed settings through the agent.
+From **v0.1.19**, preferences have three tabs:
 
-The built-in uninstaller remains under **Application**. It requires typing
-`DÉSINSTALLER`; removal of profiles, tokens and managed SSH data is optional.
+- **General**: choose Automatic, Français or English; select Warpgate, Light,
+  Black or System appearance; configure [desktop notifications](#notifications).
+  These local preferences save immediately. System follows macOS light/dark mode.
+- **Synchronization**: set the synchronization interval and default profile.
+- **System**: open at login, install the terminal command, read its guide or
+  uninstall the application. Existing conflicting commands are preserved.
+
+Select **Save preferences** to apply changes under Synchronization or System.
+The independent agent continues working when the companion window is closed.
+
+![Synchronization preferences in the running app](assets/swiftui/preferences-sync.png)
+
+![System preferences and terminal command guide in the running app](assets/swiftui/preferences-system.png)
+
+### Light and Black appearances
+
+The original **Warpgate** theme remains the default. Light and Black provide
+explicit alternatives; System switches between them with the macOS appearance.
+
+![Light appearance with desktop notification controls](assets/swiftui/preferences-light.png)
+
+![Black appearance with desktop notification controls](assets/swiftui/preferences-black.png)
 
 ## Synchronization
 
 ![SwiftUI Synchronization screen with demo agent state and last snapshot](assets/swiftui/synchronization.png)
 
 Inspect the agent state, configured interval, last successful snapshot and
-synchronization alerts. Follow a profile-related alert to **Profils** when a
+synchronization alerts. Follow a profile-related alert to **Profiles** when a
 token or SSH key requires attention. Closing the window leaves the agent running.
 
 ## Logs
@@ -59,7 +75,7 @@ token or SSH key requires attention. Closing the window leaves the agent running
 ![SwiftUI Logs screen showing fictional diagnostic file totals before export](assets/swiftui/logs.png)
 
 Review the local file list, event counts, total size and seven-day retention
-before selecting **Exporter les diagnostics nettoyés…**. Export creates a local
+before selecting **Export sanitized diagnostics…**. Export creates a local
 sanitized ZIP; it never uploads anything. Review the archive before sharing it.
 
 ## About
@@ -67,10 +83,10 @@ sanitized ZIP; it never uploads anything. Review the archive before sharing it.
 ![SwiftUI About screen with version and update controls](assets/swiftui/about.png)
 
 Check the installed version and update status. DMG installations check for new
-releases every six hours; **Vérifier les mises à jour** requests a manual check.
+releases every six hours; **Check for updates** requests a manual check.
 An available signed update requires confirmation before replacing the app, CLI
 and agent together. Homebrew installations instead show the upgrade command.
-The version shown corresponds to the v0.1.18 source build used for these captures.
+The version shown corresponds to the v0.1.19 source build used for these captures.
 
 ## Menu bar, keyboard and accessibility
 
@@ -90,9 +106,7 @@ DMG remains available from the [latest release](https://github.com/M0okz/warpgat
 
 ## Notifications
 
-**Availability:** these settings are part of the upcoming release after v0.1.18.
-They are available in the development preview; the v0.1.18 screenshots above
-show the earlier preferences layout.
+**Availability:** desktop notifications are included from **v0.1.19**.
 
 Open **Preferences → General → Desktop notifications** to enable macOS alerts.
 macOS asks for permission the first time. If permission is denied, use **macOS

@@ -2,7 +2,7 @@ import SwiftUI
 
 struct Surface: ViewModifier {
   @Environment(\.colorSchemeContrast) private var contrast
-  var tint: Color = .white
+  var tint: Color = AccessTheme.primary
 
   func body(content: Content) -> some View {
     content
@@ -10,7 +10,7 @@ struct Surface: ViewModifier {
         RoundedRectangle(cornerRadius: AccessTheme.cardRadius)
           .fill(
             .linearGradient(
-              colors: [tint.opacity(0.07), Color.white.opacity(0.025)],
+              colors: [tint.opacity(0.07), AccessTheme.primary.opacity(0.025)],
               startPoint: .topLeading, endPoint: .bottomTrailing
             ))
       }

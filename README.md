@@ -21,7 +21,7 @@ tools.
 
 ![WarpgateSH SwiftUI access screen](docs/assets/swiftui/access.png)
 
-*Native SwiftUI companion, available from v0.1.18. Actual capture of the running
+*WarpgateSH v0.1.19, English interface. Native SwiftUI companion available from v0.1.18. Actual capture of the running
 macOS app using fictional demo data.*
 
 [Explore the six native screens](docs/desktop-app.md) ·

@@ -12,7 +12,7 @@ struct TargetList: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
       HStack {
-        Text("Cibles disponibles")
+        Text(L10n.text("Cibles disponibles"))
           .font(.headline)
           .accessibilityAddTraits(.isHeader)
         Spacer()
@@ -21,18 +21,18 @@ struct TargetList: View {
           .foregroundStyle(AccessTheme.secondary)
           .padding(.horizontal, 10)
           .padding(.vertical, 3)
-          .background(Color.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 9))
-          .accessibilityLabel("\(targets.count) cibles disponibles")
+          .background(AccessTheme.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 9))
+          .accessibilityLabel(L10n.text("%llu cibles disponibles", targets.count))
       }
       HStack(spacing: 8) {
         Image(systemName: "magnifyingglass")
           .foregroundStyle(AccessTheme.secondary)
           .accessibilityHidden(true)
-        TextField("Nom, alias ou profil", text: $query)
+        TextField(L10n.text("Nom, alias ou profil"), text: $query)
           .textFieldStyle(.plain)
           .font(.body)
           .focused($searching)
-          .accessibilityLabel("Rechercher une cible")
+          .accessibilityLabel(L10n.text("Rechercher une cible"))
           .accessibilityIdentifier("target-search")
         Button(action: focusSearch) {
           Text("⌘ K")
@@ -40,13 +40,14 @@ struct TargetList: View {
             .foregroundStyle(AccessTheme.secondary)
             .padding(.horizontal, 6)
             .padding(.vertical, 3)
-            .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 5))
+            .background(AccessTheme.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 5))
             .overlay { RoundedRectangle(cornerRadius: 5).strokeBorder(AccessTheme.border) }
         }
         .buttonStyle(.plain)
         .keyboardShortcut("k", modifiers: .command)
-        .accessibilityLabel("Rechercher une cible")  // [VERIFY] shortcut focuses the search field
-        .help("Rechercher une cible (⌘K)")
+        // [VERIFY] shortcut focuses the search field
+        .accessibilityLabel(L10n.text("Rechercher une cible"))
+        .help(L10n.text("Rechercher une cible (⌘K)"))
       }
       .padding(.horizontal, 10)
       .padding(.vertical, 6)
@@ -57,17 +58,18 @@ struct TargetList: View {
           .strokeBorder(
             searching
               ? AccessTheme.cyan
-              : .white.opacity(contrast == .increased ? 0.55 : hoveringSearch ? 0.30 : 0.16))
+              : AccessTheme.primary.opacity(
+                contrast == .increased ? 0.55 : hoveringSearch ? 0.30 : 0.16))
       }
       .onHover { hoveringSearch = $0 }
       .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: hoveringSearch)
 
       if targets.isEmpty {
         VStack(spacing: 8) {
-          Text("Aucune cible trouvée").font(.headline)
-          Text("Essayez un autre nom, alias ou profil.")
+          Text(L10n.text("Aucune cible trouvée")).font(.headline)
+          Text(L10n.text("Essayez un autre nom, alias ou profil."))
             .foregroundStyle(AccessTheme.secondary)
-          Button("Effacer la recherche", action: clearSearch)
+          Button(L10n.text("Effacer la recherche"), action: clearSearch)
             .buttonStyle(.bordered)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -76,7 +78,7 @@ struct TargetList: View {
         ScrollView {
           LazyVStack(spacing: 0) {
             ForEach(targets) { target in
-              Divider().overlay(Color.white.opacity(0.025))
+              Divider().overlay(AccessTheme.primary.opacity(0.025))
               TargetRow(target: target) { open(target) }
             }
           }

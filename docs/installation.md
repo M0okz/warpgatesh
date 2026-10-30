@@ -6,6 +6,7 @@ Macs. The public installation method is a signed and notarized universal DMG.
 ## Native macOS interface
 
 From **v0.1.18**, the companion uses SwiftUI with a sidebar and six sections.
+From v0.1.19, French/English, appearance and notification settings are available.
 See the [native companion guide and screenshots](desktop-app.md). Earlier
 versions use the previous interface; update before following the new labels.
 
@@ -34,9 +35,9 @@ of the graphical window and keeps synchronizing after the window is closed.
 The app already generates standard OpenSSH aliases, so `ssh <target>` works
 without installing an extra SSH client. To also use the `warpgatesh` command:
 
-1. Open **WarpgateSH → Préférences**.
-2. Find **Commande du terminal**.
-3. Select **Installer la commande warpgatesh** and approve the macOS administrator prompt.
+1. Open **WarpgateSH → Preferences → System**.
+2. Find **Terminal command**.
+3. Select **Install the warpgatesh command** and approve the macOS administrator prompt.
 
 The app creates `/usr/local/bin/warpgatesh` as a link to the signed executable
 inside the application bundle. It does not modify your shell configuration or
@@ -58,7 +59,7 @@ signed DMG and do not rely on `brew install --cask warpgatesh`.
 ## Updates
 
 DMG installations check for new GitHub releases every six hours. You can
-also check manually from **À propos → Vérifier les mises à jour**. WarpgateSH downloads
+also check manually from **About → Check for updates**. WarpgateSH downloads
 an update only after your confirmation and verifies its updater signature
 before replacing the companion, CLI, and agent together.
 

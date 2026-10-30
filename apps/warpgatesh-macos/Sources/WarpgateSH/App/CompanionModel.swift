@@ -7,6 +7,8 @@ final class CompanionModel: ObservableObject {
   @Published var busy = false
   @Published var error: String?
   @Published var notice: String?
+  var notifications: DesktopNotifications?
+  var settings: AppSettings?
   private var revision: UInt64 = 0
   private var noticeExpiresAt: Date?
   private let transport: any CompanionTransport
@@ -38,6 +40,7 @@ final class CompanionModel: ObservableObject {
       try Task.checkCancellation()
       guard expectedRevision == revision else { return }
       state = fresh
+      await notifications?.evaluate(fresh, isDemo: isDemo)
     } catch is CancellationError {} catch { self.error = error.localizedDescription }
   }
   @discardableResult
@@ -58,6 +61,14 @@ final class CompanionModel: ObservableObject {
       do {
         try await transport.perform(command, args: args)
         try Task.checkCancellation()
+        if ["renew_profile_token", "remove_profile"].contains(command),
+          case .string(let name)? = args["name"]
+        {
+          settings?.preferences.tokenExpirations.removeValue(forKey: name)
+          if command == "remove_profile" {
+            settings?.preferences.notifications.mutedServerProfiles.remove(name)
+          }
+        }
         revision += 1
         notice = success
         noticeExpiresAt = success == nil ? nil : Date().addingTimeInterval(4)
@@ -66,7 +77,7 @@ final class CompanionModel: ObservableObject {
     }
     return action
   }
-  func synchronize() { perform("sync_now", success: "Vos accès sont à jour.") }
+  func synchronize() { perform("sync_now", success: L10n.text("Vos accès sont à jour.")) }
   func open(_ target: CompanionTarget) {
     perform("open_target", args: ["alias": .string(target.qualifiedAlias)])
   }
@@ -74,7 +85,7 @@ final class CompanionModel: ObservableObject {
     do {
       perform(
         "save_preferences", args: ["preferences": try .encoding(preferences)],
-        success: "Préférences enregistrées.")
+        success: L10n.text("Préférences enregistrées."))
     } catch { self.error = error.localizedDescription }
   }
   func inspect(_ request: ProfileRequest) async throws -> ProfileInspection {
@@ -94,6 +105,7 @@ final class CompanionModel: ObservableObject {
     action?.cancel()
     polling = nil
     action = nil
+    notifications?.stop()
     transport.stop()
   }
 }

@@ -18,7 +18,7 @@ final class DemoBridge: CompanionTransport {
     preferences: .init(
       syncIntervalSeconds: 300, launchCompanionAtLogin: false, defaultProfile: "homelab"),
     terminalIntegration: .init(status: "missing", path: "/usr/local/bin/warpgatesh"),
-    update: .init(phase: "idle", channel: "unsupported", currentVersion: "0.1.18"), alerts: [])
+    update: .init(phase: "idle", channel: "unsupported", currentVersion: "0.1.19"), alerts: [])
 
   func request(_ command: String, args: [String: JSONValue]) async throws -> JSONValue {
     switch command {
@@ -29,7 +29,7 @@ final class DemoBridge: CompanionTransport {
       defer { state.agentSynchronizing = false }
       try await Task.sleep(for: .milliseconds(900))
       state.lastSyncAgeSeconds = 0
-      return .string("Synchronisation simulée terminée.")
+      return .string(L10n.text("Synchronisation simulée terminée."))
     case "save_preferences":
       state.preferences = try (args["preferences"] ?? .null).decoded()
       for i in state.profiles.indices {
@@ -39,14 +39,16 @@ final class DemoBridge: CompanionTransport {
     case "preview_diagnostics":
       return try .encoding(
         DiagnosticsPreview(
-          logDirectory: "Journaux de démonstration", retentionDays: 7, totalBytes: 2048,
+          logDirectory: L10n.text("Journaux de démonstration"), retentionDays: 7, totalBytes: 2048,
           totalEvents: 12, files: [.init(name: "agent-demo.jsonl", bytes: 2048, events: 12)]))
     case "check_for_updates":
       state.update.phase = "current"
       return try .encoding(state.update)
     default:
       throw BridgeError.message(
-        "Cette action nécessite l’application connectée. Aucune modification réelle n’a été effectuée."
+        L10n.text(
+          "Cette action nécessite l’application connectée. Aucune modification réelle n’a été effectuée."
+        )
       )
     }
   }

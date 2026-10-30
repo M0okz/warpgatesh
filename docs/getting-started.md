@@ -24,13 +24,13 @@ writes it to the generated SSH configuration.
 
 ### With the graphical companion
 
-These labels apply to **v0.1.18 and later**. See the [native profile walkthrough
+These English labels apply to **v0.1.19 and later**; French remains available. See the [native profile walkthrough
 and screenshots](desktop-app.md#profiles).
 
-1. Open **Profils** and select **Ajouter un profil**.
+1. Open **Profiles** and select **Add a profile**.
 2. Enter a local name using lowercase letters, digits and hyphens, such as `production`.
 3. Enter the Warpgate root URL and your personal API token.
-4. Select **Vérifier le profil**.
+4. Select **Check profile**.
 5. Compare the displayed SSH host-key fingerprints with a trusted source.
 6. Enable **J’ai vérifié ces empreintes par un canal de confiance**, then select **Enregistrer**.
 

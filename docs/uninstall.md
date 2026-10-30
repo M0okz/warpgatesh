@@ -3,16 +3,15 @@
 Use the built-in uninstaller so the app can distinguish its own files from your
 personal SSH configuration.
 
-These labels apply to **v0.1.18 and later**. See the [native preferences
-screenshots](desktop-app.md#preferences). Earlier versions use shorter labels
-in the same Preferences section.
+These English labels apply to **v0.1.19 and later**; French remains available. See the [native preferences
+screenshots](desktop-app.md#preferences). Earlier versions use the original French labels.
 
 ## Uninstall and keep local data
 
-1. Open **WarpgateSH → Préférences**.
-2. Under **Application**, select **Désinstaller WarpgateSH…**.
-3. Leave **Supprimer aussi les profils, jetons et fichiers SSH gérés** unchecked.
-4. Enter `DÉSINSTALLER` and continue.
+1. Open **WarpgateSH → Preferences → System**.
+2. Under **Application**, select **Uninstall WarpgateSH…**.
+3. Leave **Also remove profiles, tokens and managed SSH files** unchecked.
+4. Enter `UNINSTALL` and continue (`DÉSINSTALLER` when using the French interface).
 
 WarpgateSH stops and unregisters the background agent, removes the CLI link
 owned by the app, and moves the application to the Trash. Profiles, Keychain
@@ -21,7 +20,7 @@ kept for a later reinstall.
 
 ## Uninstall and delete all WarpgateSH data
 
-Follow the same steps and enable **Supprimer aussi les profils, jetons et fichiers SSH gérés** before confirming. In
+Follow the same steps and enable **Also remove profiles, tokens and managed SSH files** before confirming. In
 addition to uninstalling the app, WarpgateSH removes:
 
 - its personal API tokens from the macOS Keychain;

@@ -24,8 +24,8 @@ struct CompanionShell: View {
         } else {
           VStack(spacing: 16) {
             ProgressView()
-            Text("Chargement de vos accès…")
-            Button("Réessayer") { Task { await model.refresh() } }
+            Text(L10n.text("Chargement de vos accès…"))
+            Button(L10n.text("Réessayer")) { Task { await model.refresh() } }
           }.frame(maxWidth: .infinity, maxHeight: .infinity)
         }
       }

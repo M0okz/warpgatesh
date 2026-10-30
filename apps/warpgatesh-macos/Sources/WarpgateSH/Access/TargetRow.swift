@@ -31,7 +31,7 @@ struct TargetRow: View {
           .overlay {
             RoundedRectangle(cornerRadius: 7).strokeBorder(AccessTheme.cyan.opacity(0.30))
           }
-          .accessibilityLabel("Profil \(target.profile)")
+          .accessibilityLabel(L10n.text("Profil %@", target.profile))
         Image(systemName: "chevron.right")
           .font(.caption.weight(.semibold))
           .foregroundStyle(hovering ? AccessTheme.cyanText : AccessTheme.secondary)
@@ -55,6 +55,6 @@ struct TargetRow: View {
     .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: hovering)
     .onHover { hovering = $0 }
     .accessibilityElement(children: .combine)
-    .accessibilityHint("Ouvre cette cible dans le terminal.")
+    .accessibilityHint(L10n.text("Ouvre cette cible dans le terminal."))
   }
 }
