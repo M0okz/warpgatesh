@@ -21,81 +21,30 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
-      - name: Install minimum supported Rust
-        run: rustup toolchain install 1.85.0 --profile minimal --component clippy,rustfmt
+      - name: Install Nix
+        uses: cachix/install-nix-action@d9186cbdca7adedf113a159fa91f725a27866771 # v31
 
-      - name: Select minimum supported Rust
-        run: rustup default 1.85.0
+      - name: Check Rust in the reference environment
+        run: nix develop --command bash nix/tasks.sh check-rust
 
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-
-      - name: Install zsh for shell integration tests
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y zsh
-
-      - name: Run tests
-        run: cargo test --workspace
-
-      - name: Run Clippy
-        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Build and test the Nix package
+        run: nix flake check --print-build-logs
 
   companion:
     name: macOS companion
     runs-on: macos-latest
-    defaults:
-      run:
-        working-directory: apps/warpgatesh-companion
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: apps/warpgatesh-companion/package-lock.json
+      - name: Install Nix
+        uses: cachix/install-nix-action@d9186cbdca7adedf113a159fa91f725a27866771 # v31
 
-      - name: Install minimum supported Rust
-        run: rustup toolchain install 1.85.0 --profile minimal --component clippy,rustfmt
+      - name: Check macOS companion in the reference environment
+        run: nix develop --command bash nix/tasks.sh check-companion
 
-      - name: Select minimum supported Rust
-        run: rustup default 1.85.0
-
-      - name: Install frontend dependencies
-        run: npm ci
-
-      - name: Build frontend
-        run: npm run build
-
-      - name: Test state refresh coordination
-        run: npm run test:state
-
-      - name: Test updater manifest
-        run: npm run test:updater-manifest
-
-      - name: Test sidecar packaging plan
-        run: npm run test:sidecars
-
-      - name: Prepare bundled CLI and agent
-        run: npm run prepare:sidecars
-
-      - name: Check Rust formatting
-        run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
-
-      - name: Test native commands
-        run: cargo test --manifest-path src-tauri/Cargo.toml
-
-      - name: Run native Clippy
-        run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
-
-      - name: Build unified macOS application bundle
-        run: npm run tauri build -- --bundles app --ci --no-sign
-
-      - name: Verify bundled CLI and agent
-        run: npm run verify:bundle
+      - name: Build and verify universal application and DMG
+        run: nix run .#build-macos
 
   homebrew:
     name: Homebrew Formula

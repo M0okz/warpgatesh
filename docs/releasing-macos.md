@@ -56,14 +56,32 @@ La première version intégrant l’updater doit encore être installée depuis 
 DMG. Les versions suivantes peuvent remplacer ensemble le compagnon, la CLI et
 l’agent, puis redémarrent l’agent `launchd` depuis le nouveau bundle.
 
-Pour tester uniquement l’assemblage universel en local, installer les cibles
-Rust `aarch64-apple-darwin` et `x86_64-apple-darwin`, puis exécuter :
+## Environnement de build Nix
+
+Le développement, les contrôles CI et la publication utilisent les entrées
+verrouillées de `flake.lock`. Nix fournit Rust 1.85.0, les deux cibles Apple,
+Node.js 22 et npm. Xcode et ses outils de signature restent installés sur le
+Mac ou le runner. Voir [le guide Nix](development-nix.md).
+
+Pour vérifier l’assemblage universel complet sans identifiants de publication,
+depuis la racine du dépôt :
 
 ```sh
-cd apps/warpgatesh-companion
-npm run bundle:macos:universal
+nix run .#build-macos
 ```
 
-Cette commande exige les variables `TAURI_SIGNING_PRIVATE_KEY` et
-`TAURI_SIGNING_PRIVATE_KEY_PASSWORD`. Les builds ordinaires et la CI n’activent
-pas `tauri.release.conf.json` et ne produisent donc pas d’artefacts d’updater.
+Cette commande produit l’application et le DMG, contrôle les trois exécutables
+universels et vérifie l’image disque. Elle n’active pas les artefacts d’updater,
+la signature Developer ID ou la notarisation.
+
+Pour construire une publication avec les identifiants Apple et Tauri injectés
+dans le processus :
+
+```sh
+nix run .#release-macos
+```
+
+Cette commande active `tauri.release.conf.json` et exige notamment
+`TAURI_SIGNING_PRIVATE_KEY` et `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
+Ne jamais ajouter ces secrets aux fichiers Nix. Le workflow conserve les étapes
+Apple de finalisation, notarisation et validation avant la création du brouillon.

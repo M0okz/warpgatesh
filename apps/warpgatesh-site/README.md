@@ -6,14 +6,11 @@ No analytics, third-party fonts, runtime API calls, or visitor data collection.
 
 ## Build and preview
 
-With Node.js 22+ and Python 3 installed:
+From the repository root, use the reference Nix environment:
 
 ```sh
-cd apps/warpgatesh-site
-npm ci
-npm run build
-npm run check
-npm run preview
+nix run .#build-site
+nix develop --command bash -c 'cd apps/warpgatesh-site && npm run preview'
 ```
 
 Open <http://127.0.0.1:4173>. The complete static output is `dist/`.

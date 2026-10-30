@@ -7,11 +7,17 @@ on:
       - apps/warpgatesh-site/**
       - docs/**
       - .github/workflows/site.yml
+      - flake.nix
+      - flake.lock
+      - nix/**
   pull_request:
     paths:
       - apps/warpgatesh-site/**
       - docs/**
       - .github/workflows/site.yml
+      - flake.nix
+      - flake.lock
+      - nix/**
 
 permissions:
   contents: read
@@ -19,19 +25,10 @@ permissions:
 jobs:
   website:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/warpgatesh-site
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: apps/warpgatesh-site/package-lock.json
-      - run: npm ci --ignore-scripts
-      - run: npm run build
-      - run: npm run check
+      - uses: cachix/install-nix-action@d9186cbdca7adedf113a159fa91f725a27866771 # v31
+      - run: nix run .#build-site
       - uses: actions/upload-artifact@v4
         with:
           name: warpgatesh-site

@@ -28,6 +28,11 @@ const agent = join(executables, "warpgatesh-agent");
 
 for (const executable of [companion, cli, agent]) {
   accessSync(executable, constants.R_OK | constants.X_OK);
+  const dependencies = capture("/usr/bin/otool", ["-L", executable]);
+  const loadCommands = capture("/usr/bin/otool", ["-l", executable]);
+  if (`${dependencies}\n${loadCommands}`.includes("/nix/store/")) {
+    throw new Error(`Bundled executable depends on the Nix store: ${executable}`);
+  }
 }
 
 const iconFile = capture("/usr/libexec/PlistBuddy", [

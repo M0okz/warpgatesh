@@ -246,37 +246,29 @@ rationale behind the implementation.
 
 ## Build from source
 
-Requirements:
-
-- Rust 1.85 or newer;
-- macOS 13 or newer for the complete desktop experience;
-- Node.js 22 and npm to build the graphical companion.
-
-Build and test the Rust workspace:
+Nix is the reference environment for development and builds. Install
+[Nix](https://nix.dev/install-nix), enable `nix-command` and `flakes`, and install
+Xcode on macOS. See [the Nix development guide](docs/development-nix.md) for
+platform requirements, toolchain updates and manual Cargo/npm usage.
 
 ```sh
 git clone https://github.com/M0okz/warpgatesh.git
 cd warpgatesh
-cargo build --workspace
-cargo fmt --all -- --check
-cargo test --workspace
-cargo clippy --workspace --all-targets -- -D warnings
+nix develop
+cargo build --workspace --locked
 ```
 
-Install the CLI and agent from the checkout:
+From the repository root, build the CLI and agent or run the required checks:
 
 ```sh
-cargo install --path crates/warpgatesh-cli --locked
-cargo install --path crates/warpgatesh-agent --locked
-warpgatesh agent install
+nix build
+nix run .#check
 ```
 
-Build the macOS companion:
+On a Mac, build and verify the complete unsigned universal application and DMG:
 
 ```sh
-cd apps/warpgatesh-companion
-npm ci
-npm run tauri build -- --bundles app
+nix run .#build-macos
 ```
 
 Release maintainers can find the signing, notarization, and packaging process
@@ -291,15 +283,8 @@ be discussed with the community.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete development setup,
 required checks, project boundaries, and pull-request guidance.
 
-When contributing code, please run the Rust checks above. Changes to the macOS
-companion should also pass:
-
-```sh
-cd apps/warpgatesh-companion
-npm ci
-npm run build
-npm run test:sidecars
-```
+Before submitting code changes, run `nix run .#check` from the repository
+root. Companion changes also require `nix run .#build-macos` on macOS.
 
 ## Acknowledgements
 

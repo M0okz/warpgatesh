@@ -17,6 +17,7 @@ reference. These guides provide the complete public onboarding path.
 ## Community and maintainers
 
 - [Contributing](../CONTRIBUTING.md)
+- [Reference Nix development and builds](development-nix.md)
 - [Changelog](../CHANGELOG.md)
 - [Warpgate API compatibility and upgrade checks](warpgate-api-compatibility.md)
 - [macOS release procedure](releasing-macos.md)

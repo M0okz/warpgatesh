@@ -8,9 +8,13 @@ use std::process::Command;
 fn zsh_refresh_preserves_personal_commands_and_forwards_arguments() {
     let directory = tempfile::tempdir().unwrap();
     let executable = directory.path().join("warpgatesh");
+    let shell = std::env::split_paths(&std::env::var_os("PATH").unwrap_or_default())
+        .map(|directory| directory.join("sh"))
+        .find(|path| path.is_file())
+        .expect("a POSIX shell must be available on PATH");
     fs::write(
         &executable,
-        "#!/bin/sh\nif [ \"$1\" = shell ]; then cat \"$TARGETS\"; else printf '%s\\n' \"$@\" > \"$CALL\"; fi\n",
+        format!("#!{}\nif [ \"$1\" = shell ]; then cat \"$TARGETS\"; else printf '%s\\n' \"$@\" > \"$CALL\"; fi\n", shell.display()),
     ).unwrap();
     fs::set_permissions(&executable, fs::Permissions::from_mode(0o755)).unwrap();
     let targets = directory.path().join("targets");
@@ -19,6 +23,10 @@ fn zsh_refresh_preserves_personal_commands_and_forwards_arguments() {
         "trust-admin-01\ntrust-admin-01.homeblack\nls\ncd\npersonal\ncustom\nold-target\n",
     )
     .unwrap();
+    let mut paths = vec![directory.path().to_path_buf()];
+    paths.extend(std::env::split_paths(
+        &std::env::var_os("PATH").unwrap_or_default(),
+    ));
     let result = Command::new("zsh")
         .args(["-f", "-c", r#"
             alias personal='echo mine'
@@ -43,7 +51,7 @@ fn zsh_refresh_preserves_personal_commands_and_forwards_arguments() {
             (( $+functions[new-target] )) || exit 10
             exit 0
         "#])
-        .env("PATH", format!("{}:/usr/bin:/bin", directory.path().display()))
+        .env("PATH", std::env::join_paths(paths).unwrap())
         .env("TARGETS", &targets)
         .env("CALL", directory.path().join("call"))
         .env("INTEGRATION", concat!(env!("CARGO_MANIFEST_DIR"), "/src/shell.zsh"))

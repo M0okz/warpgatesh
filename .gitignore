@@ -6,3 +6,7 @@ apps/warpgatesh-companion/src-tauri/gen/schemas/
 apps/warpgatesh-companion/src-tauri/binaries/
 .DS_Store
 *.log
+
+# Nix build output links
+/result
+/result-*

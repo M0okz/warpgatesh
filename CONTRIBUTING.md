@@ -20,50 +20,45 @@ instead of a public issue.
 
 ## Development setup
 
-Requirements:
-
-- Rust 1.85 or newer;
-- Node.js 22 and npm for the graphical companion;
-- macOS 13 or newer for the complete desktop application and LaunchAgent flow.
-
-Build the Rust workspace:
+Use [the reference Nix environment](docs/development-nix.md). Install Nix
+with `nix-command` and `flakes` enabled. macOS desktop builds also require Xcode
+and its accepted license. Rust 1.85.0, both macOS Rust targets, Node.js 22 and
+the remaining development tools are supplied by Nix.
 
 ```sh
 git clone https://github.com/M0okz/warpgatesh.git
 cd warpgatesh
-cargo build --workspace
+nix develop
+cargo build --workspace --locked
 ```
 
-Build the companion:
-
-```sh
-cd apps/warpgatesh-companion
-npm ci
-npm run build
-```
+For interactive companion development, run `npm ci` and `npm run tauri dev`
+from `apps/warpgatesh-companion` inside that shell. Manual Cargo/npm workflows
+remain available with an equivalent toolchain.
 
 ## Required checks
 
-Run these before submitting a pull request:
+Run these from the repository root before submitting a pull request:
 
 ```sh
-cargo fmt --all -- --check
-cargo test --workspace
-cargo clippy --workspace --all-targets -- -D warnings
-
-cd apps/warpgatesh-companion
-npm ci
-npm run build
-npm run test:state
-npm run test:sidecars
-npm run test:updater-manifest
-cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
-cargo test --manifest-path src-tauri/Cargo.toml
-cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+nix flake check
+nix run .#check
+nix run .#build-site
 ```
 
+On macOS, also validate the complete universal companion, bundled CLI/agent
+and disk image:
+
+```sh
+nix run .#build-macos
+```
+
+`nix run .#check` runs workspace formatting, tests and Clippy. On macOS it also
+runs frontend checks, sidecar/updater tests, and native companion formatting,
+tests and Clippy. CI uses the same commands and pinned inputs.
+
 For changes to the macOS update/relaunch flow, run `npm run test:relaunch` from
-`apps/warpgatesh-companion` in a graphical macOS session. This test creates two
+`apps/warpgatesh-companion` inside `nix develop` in a graphical macOS session. This test creates two
 temporary bundles signed ad hoc with the hardened runtime, replaces the first
 with a different executable, and verifies that a visible window opens after the
 old process exits. It uses a separate bundle identifier and does not load user
