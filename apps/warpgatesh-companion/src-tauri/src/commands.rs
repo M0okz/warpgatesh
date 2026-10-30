@@ -559,7 +559,15 @@ fn build_alerts(
 }
 
 fn verify_expected_fingerprints(expected: Option<&str>, actual: &str) -> Result<(), String> {
-    if expected.is_some_and(|value| value.trim() != actual.trim()) {
+    let normalized = |value: &str| {
+        value
+            .lines()
+            .map(str::trim)
+            .filter(|line| !line.is_empty())
+            .map(str::to_owned)
+            .collect::<std::collections::BTreeSet<_>>()
+    };
+    if expected.is_some_and(|value| normalized(value) != normalized(actual)) {
         Err(
             "Les empreintes SSH ont changé. Vérifiez à nouveau le profil avant de l’enregistrer."
                 .to_owned(),
@@ -633,6 +641,15 @@ mod tests {
         assert!(
             verify_expected_fingerprints(Some(" SHA256:approved\n"), "SHA256:approved").is_ok()
         );
+    }
+
+    #[test]
+    fn accepts_identical_approved_host_keys_in_a_different_scan_order() {
+        let approved =
+            "256 SHA256:ed25519 example.com (ED25519)\n3072 SHA256:rsa example.com (RSA)\n";
+        let rescanned =
+            "3072 SHA256:rsa example.com (RSA)\n\n256 SHA256:ed25519 example.com (ED25519)\n";
+        assert!(verify_expected_fingerprints(Some(approved), rescanned).is_ok());
     }
 
     #[test]

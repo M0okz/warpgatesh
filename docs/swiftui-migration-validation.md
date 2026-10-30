@@ -1,4 +1,7 @@
-# Migration SwiftUI — validation locale du 30 octobre 2026
+# Migration SwiftUI — validation locale initiale du 30 octobre 2026
+
+Ce compte rendu décrit les contrôles locaux avant préparation de la release
+v0.1.18. La livraison signée est suivie dans la [release GitHub](https://github.com/M0okz/warpgatesh/releases/tag/v0.1.18).
 
 Le compagnon macOS est implémenté dans `apps/warpgatesh-macos`. L’interface
 Accès validée a été conservée : logo, matériau natif translucide, cartes,
