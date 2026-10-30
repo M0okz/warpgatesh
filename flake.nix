@@ -26,7 +26,7 @@
               "aarch64-apple-darwin" "x86_64-apple-darwin"
             ];
           };
-          tools = [ toolchain pkgs.nodejs_22 pkgs.python3 pkgs.pkg-config pkgs.zsh pkgs.perl pkgs.git ];
+          tools = [ toolchain pkgs.nodejs_22 pkgs.python3 pkgs.pkg-config pkgs.zsh pkgs.perl pkgs.git pkgs.openssh pkgs.gh pkgs.jq ];
           libraries = lib.optionals pkgs.stdenv.isLinux [ pkgs.openssl ];
           rustPlatform = pkgs.makeRustPlatform { cargo = toolchain; rustc = toolchain; };
           cli = rustPlatform.buildRustPackage {
@@ -42,6 +42,7 @@
             cargoLock.lockFile = ./Cargo.lock;
             nativeBuildInputs = [ pkgs.pkg-config pkgs.perl pkgs.zsh ];
             buildInputs = libraries;
+            nativeCheckInputs = [ pkgs.openssh ];
             strictDeps = true;
             # API contract tests use local mock servers, including in the sandbox.
             __darwinAllowLocalNetworking = true;
@@ -51,6 +52,17 @@
             packages = tools;
             buildInputs = libraries;
             shellHook = lib.optionalString pkgs.stdenv.isDarwin ''
+              # Tauri otherwise asks an unrelated host rustup for installed targets.
+              # Keep the Nix toolchain authoritative, including on GitHub runners.
+              IFS=: read -r -a warpgatesh_path_entries <<< "$PATH"
+              warpgatesh_clean_path=()
+              for warpgatesh_path_entry in "''${warpgatesh_path_entries[@]}"; do
+                if [[ ! -x "$warpgatesh_path_entry/rustup" ]]; then
+                  warpgatesh_clean_path+=("$warpgatesh_path_entry")
+                fi
+              done
+              export PATH="$(IFS=:; printf '%s' "''${warpgatesh_clean_path[*]}")"
+              unset warpgatesh_path_entries warpgatesh_clean_path warpgatesh_path_entry
               # Desktop distribution uses Apple's installed SDK and signing tools.
               export SDKROOT="$(/usr/bin/xcrun --sdk macosx --show-sdk-path)"
               export MACOSX_DEPLOYMENT_TARGET=13.0

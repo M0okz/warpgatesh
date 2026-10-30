@@ -317,7 +317,7 @@ mod tests {
                 assert_eq!(rendered.matches("PubkeyAuthentication no\n").count(), 2);
                 // Verify effective OpenSSH behavior, not only generated text.
                 for alias in ["db", "db.lab", "new-host", "new-host.lab"] {
-                    let output = std::process::Command::new("/usr/bin/ssh")
+                    let output = std::process::Command::new("ssh")
                         .args(["-G", "-F"])
                         .arg(&paths.ssh_config)
                         .arg(alias)
