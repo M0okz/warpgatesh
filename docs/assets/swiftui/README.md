@@ -7,7 +7,7 @@ These are application screenshots, not rendered HTML or generated mockups.
 The fifteen images show the approved interface and real native controls. Every
 profile, hostname, URL, counter and diagnostic entry comes from fictional demo
 fixtures; no live infrastructure data or tokens are included. The English UI
-labels are captured as displayed. Twelve screenshots were refreshed from the v0.1.23 source build. The three unchanged profile/sign-in/token sheets retain their v0.1.22 captures; `capturedVersion` identifies these entries in the manifest. The native SwiftUI
+labels are captured as displayed. The About screenshot was refreshed for v0.1.24. The interface is otherwise unchanged in v0.1.24. Twelve screenshots were refreshed from the v0.1.23 source build. The three unchanged profile/sign-in/token sheets retain their v0.1.22 captures; `capturedVersion` identifies these entries in the manifest. The native SwiftUI
 interface is distributed from v0.1.18.
 
 `manifest.json` records dimensions and SHA-256 checksums. The project README,

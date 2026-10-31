@@ -56,6 +56,7 @@ pub fn status(store: &LocalStore) -> Result<AgentSetup, RuntimeError> {
 }
 
 pub fn initialize() -> Result<AgentSetup, RuntimeError> {
+    crate::companion_login::migrate_existing()?;
     let store = LocalStore::for_current_user()?;
     initialize_for(&store)
 }

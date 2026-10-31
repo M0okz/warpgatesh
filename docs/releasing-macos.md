@@ -70,7 +70,7 @@ depuis la racine du dépôt :
 nix run .#build-macos
 ```
 
-Cette commande produit l’application et le DMG, contrôle les trois exécutables
+Cette commande produit l’application et le DMG, contrôle les quatre exécutables
 universels et vérifie l’image disque. Elle n’active pas les artefacts d’updater,
 la signature Developer ID ou la notarisation.
 
@@ -103,3 +103,25 @@ puis vérifier que la fenêtre reste ouverte et que l’agent répond. Répéter
 binaire en ligne de commande ne suffit pas à tester l’enregistrement Launch
 Services. Celui-ci peut présenter une entrée temporaire dont le PID vaut -1 ;
 elle ne doit jamais être considérée comme une autre instance active.
+
+Depuis v0.1.24, `CFBundleExecutable` doit désigner `warpgatesh-ui`, également
+signé avec l’identifiant du bundle principal. Le lanceur/backend Rust reste un
+exécutable auxiliaire. Le vérificateur de bundle contrôle ces deux propriétés.
+Tester aussi une identité de bundle neuve : un Mac déjà utilisé pour développer
+peut conserver un enregistrement Launch Services qui masque une régression.
+Vérifier l’entrée dans Réglages Système → Barre des menus, puis la survie du
+compagnon après fermeture par la croix rouge ; le seul processus vivant ne
+prouve pas que l’icône a été enregistrée.
+
+Deux LaunchAgents existent : `dev.warpgatesh.agent.plist` pour la synchronisation
+et `WarpgateSH.plist` pour l’ouverture facultative du compagnon. Vérifier leur
+association à l’application sans activer un élément désactivé ni réinitialiser
+les réglages globaux de macOS.
+
+La signature de distribution compile d’abord sans assembler le bundle, signe le
+backend Rust, puis lance `tauri bundle`. Cet ordre est nécessaire lorsque
+l’exécutable principal déclaré est l’interface SwiftUI : sa signature vérifie
+les composants du bundle englobant. Le script local et le workflow appliquent
+le même ordre. Une reconstruction d’un ancien tag peut utiliser le workflow
+corrigé sans déplacer ce tag ; noter séparément le commit du workflow et le tag
+des sources de l’application.

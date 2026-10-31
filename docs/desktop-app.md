@@ -124,7 +124,7 @@ with an underline and color change on hover. Check the installed version and upd
 releases every six hours; **Check for updates** requests a manual check.
 An available signed update requires confirmation before replacing the app, CLI
 and agent together. Homebrew installations instead show the upgrade command.
-The version shown corresponds to the v0.1.23 source build used for these captures.
+The About view shows v0.1.24. Other unchanged views retain their v0.1.23 or v0.1.22 captures, identified individually in the asset manifest.
 
 ## Menu bar, keyboard and accessibility
 

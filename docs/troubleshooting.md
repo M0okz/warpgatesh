@@ -28,15 +28,28 @@ daemon. Closing the WarpgateSH window does not stop it.
 Releases through v0.1.22 register their synchronization agent automatically on
 first launch. From v0.1.23, the app explains its role and asks first on new
 installations; existing agents are preserved.
-Older releases, including v0.1.22, omit the LaunchAgent's application
-association, so macOS can display the developer certificate holder's name
-instead of WarpgateSH. This does not rename the application.
+Two separate login items can appear: the synchronization agent and the optional
+**Open companion at login** item. Version 0.1.23 associates the agent with the
+app; v0.1.24 also associates the companion's login item, which could still appear
+under the developer certificate holder's name.
 
-The corrected LaunchAgent declares `AssociatedBundleIdentifiers` with
-`dev.warpgatesh.companion`. Opening an updated app refreshes and re-registers an
-existing agent automatically. macOS controls the notification text and may
-retain an earlier notification. Check the item's name in **System Settings →
-General → Login Items & Extensions** after updating.
+Open v0.1.24 once from Applications. Existing items are associated with
+`dev.warpgatesh.companion`; the companion's startup arguments and enabled state
+are preserved. A disabled companion login item is not created by this repair.
+macOS controls notification text and can retain an earlier notification. Check
+**System Settings → General → Login Items & Extensions** for the current entry.
+
+## The menu-bar icon is missing
+
+Version 0.1.24 corrects the app bundle's main executable identity so macOS can
+associate the native companion with its menu-bar item on a new Mac. Update, quit
+WarpgateSH completely with **⌘Q**, then reopen it from Applications.
+
+Closing the window with the red button should keep the companion running in the
+menu bar. On macOS 27, check **System Settings → Menu Bar → Allow in Menu Bar**
+if the icon is hidden. An absent entry and an entry switched off are different
+symptoms; report which one you see. Include the macOS/app versions and whether
+the icon is absent both before and after closing the window.
 
 ## macOS repeatedly asks for Keychain access
 

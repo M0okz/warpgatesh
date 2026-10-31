@@ -2,7 +2,10 @@
 
 Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
-## Non publié
+## 0.1.24 — 2026-10-31
+
+- Le démarrage du compagnon à la connexion est lui aussi associé à WarpgateSH. Les anciens éléments sont corrigés sans réactiver ni arrêter les services ; les nouveaux sont créés avec les bonnes métadonnées.
+- Le paquet macOS déclare directement l’interface SwiftUI comme programme principal, pour que son icône de barre de menus soit correctement enregistrée sur une nouvelle installation.
 
 ## 0.1.23 — 2026-10-31
 
