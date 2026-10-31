@@ -4,7 +4,10 @@ struct CompanionMenu: View {
   @ObservedObject var model: CompanionModel
   @Environment(\.openWindow) private var openWindow
   var body: some View {
-    Text(model.state?.agentRunning == true ? L10n.text("Agent actif") : L10n.text("Agent arrêté"))
+    Text(
+      model.state?.agentRunning == true
+        ? L10n.text("Agent actif")
+        : model.state?.manualMode == true ? L10n.text("Mode manuel") : L10n.text("Agent arrêté"))
     Text(
       L10n.text(
         "%llu cibles · %llu profils", model.state?.targets.count ?? 0,

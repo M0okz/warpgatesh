@@ -3,6 +3,7 @@ import SwiftUI
 struct AccessHeader: View {
   let running: Bool
   let synchronizing: Bool
+  var manualMode = false
   @ScaledMetric(relativeTo: .largeTitle) private var headingSize = 28.0
 
   var body: some View {
@@ -18,12 +19,16 @@ struct AccessHeader: View {
           .accessibilityAddTraits(.isHeader)
         Spacer(minLength: 8)
         HStack(spacing: 7) {
-          Circle().fill(running ? AccessTheme.green : AccessTheme.amber).frame(width: 8, height: 8)
+          Circle().fill(
+            running ? AccessTheme.green : manualMode ? AccessTheme.secondary : AccessTheme.amber
+          ).frame(width: 8, height: 8)
             .accessibilityHidden(true)
           Text(
             synchronizing
               ? L10n.text("Synchronisation")
-              : running ? L10n.text("Agent actif") : L10n.text("Agent arrêté")
+              : running
+                ? L10n.text("Agent actif")
+                : manualMode ? L10n.text("Mode manuel") : L10n.text("Agent arrêté")
           )
           .font(.caption.weight(.semibold))
           .foregroundStyle(AccessTheme.cyanText)

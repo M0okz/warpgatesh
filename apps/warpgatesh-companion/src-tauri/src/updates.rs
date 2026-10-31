@@ -318,14 +318,20 @@ impl UpdateManager {
         app: &AppHandle,
         relaunch: RelaunchPlan,
     ) -> Result<(), String> {
-        let agent_restart = tauri::async_runtime::spawn_blocking(launchd::restart).await;
+        let agent_restart = tauri::async_runtime::spawn_blocking(|| {
+            if launchd::is_loaded()? {
+                launchd::restart()?;
+            }
+            Ok::<(), warpgatesh_runtime::RuntimeError>(())
+        })
+        .await;
         let agent_error = match agent_restart {
             Ok(Ok(())) => None,
             Ok(Err(error)) => Some(error.to_string()),
             Err(error) => Some(error.to_string()),
         };
         if let Some(error) = agent_error {
-            // Reopening the companion also ensures the bundled agent is registered.
+            // Reopening the companion refreshes an existing active agent.
             // An independent agent failure must not strand the old companion in memory.
             self.publish(
                 app,

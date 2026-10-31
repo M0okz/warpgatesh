@@ -1,6 +1,7 @@
 import Foundation
 
 struct CompanionState: Codable, Sendable {
+  var agentSetup: AgentSetup? = nil
   var agentRunning: Bool
   var agentSynchronizing: Bool
   var profiles: [CompanionProfile]
@@ -10,4 +11,5 @@ struct CompanionState: Codable, Sendable {
   var terminalIntegration: TerminalIntegration
   var update: UpdateStatus
   var alerts: [CompanionAlert]
+  var manualMode: Bool { agentSetup?.installed == false && !agentRunning }
 }

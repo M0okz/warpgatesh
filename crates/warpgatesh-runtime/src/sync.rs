@@ -19,6 +19,32 @@ pub struct SyncReport {
     pub synchronized_at_epoch_seconds: u64,
 }
 
+/// Verify pinned SSH host keys before a user-requested or scheduled synchronization.
+///
+/// # Errors
+///
+/// Returns [`RuntimeError`] when credentials, host keys, API access or local writes fail.
+pub fn verify_and_synchronize_all(
+    store: &LocalStore,
+    tokens: &impl TokenStore,
+) -> Result<SyncReport, RuntimeError> {
+    let _guard = crate::configuration_lock::ConfigurationLock::acquire(store)?;
+    for profile in store.load_profiles()?.profiles {
+        let token = tokens.get(&profile.name)?;
+        let metadata = ApiClient::new(&profile.base_url)?.validate(&token)?;
+        let presented = crate::ssh::verify_host_keys(
+            store.paths(),
+            &profile.name,
+            &metadata.ssh_host,
+            metadata.ssh_port,
+        )?;
+        if profile.ssh_host != metadata.ssh_host || profile.ssh_port != metadata.ssh_port {
+            crate::ssh::save_host_keys(store.paths(), &profile.name, &presented.known_hosts)?;
+        }
+    }
+    synchronize_all(store, tokens)
+}
+
 /// Synchronize every configured profile and atomically replace the managed SSH
 /// configuration only after every Warpgate response succeeds.
 ///

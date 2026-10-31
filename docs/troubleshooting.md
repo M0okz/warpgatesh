@@ -25,7 +25,9 @@ daemon. Closing the WarpgateSH window does not stop it.
 
 ## macOS identifies the background item by the developer's name
 
-The app registers its synchronization agent automatically on first launch.
+Releases through v0.1.22 register their synchronization agent automatically on
+first launch. The upcoming release explains its role and asks first on new
+installations; existing agents are preserved.
 Older releases, including v0.1.22, omit the LaunchAgent's application
 association, so macOS can display the developer certificate holder's name
 instead of WarpgateSH. This does not rename the application.

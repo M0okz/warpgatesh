@@ -33,6 +33,7 @@ struct CompanionShell: View {
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
       .background(AccessTheme.canvas)
     }
+    .sheet(isPresented: $model.showAgentSetup) { AgentSetupSheet(model: model) }
     .foregroundStyle(AccessTheme.primary)
     .frame(minWidth: 804, minHeight: 560)
     .ignoresSafeArea(.container, edges: .top)

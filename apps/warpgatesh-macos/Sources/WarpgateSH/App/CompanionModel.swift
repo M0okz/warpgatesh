@@ -4,6 +4,7 @@ import SwiftUI
 final class CompanionModel: ObservableObject {
   @Published var state: CompanionState?
   @Published var section: AppSection = .access
+  @Published var showAgentSetup = false
   @Published var busy = false
   @Published var error: String?
   @Published var notice: String?
@@ -40,6 +41,7 @@ final class CompanionModel: ObservableObject {
       try Task.checkCancellation()
       guard expectedRevision == revision else { return }
       state = fresh
+      showAgentSetup = fresh.agentSetup?.needsDecision == true && !fresh.agentRunning
       await notifications?.evaluate(fresh, isDemo: isDemo)
     } catch is CancellationError {} catch { self.error = error.localizedDescription }
   }
@@ -76,6 +78,9 @@ final class CompanionModel: ObservableObject {
       } catch is CancellationError {} catch { self.error = error.localizedDescription }
     }
     return action
+  }
+  func setBackgroundAgent(_ enabled: Bool) {
+    perform("set_background_agent", args: ["enabled": .bool(enabled)])
   }
   func synchronize() { perform("sync_now", success: L10n.text("Vos accès sont à jour.")) }
   func open(_ target: CompanionTarget) {

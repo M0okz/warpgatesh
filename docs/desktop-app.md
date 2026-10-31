@@ -10,6 +10,16 @@ isolated demo mode. Every profile, target, counter and diagnostic entry shown
 is fictional. These v0.1.22 captures use English labels. From v0.1.20 the
 interface supports French, English and automatic language selection.
 
+## First launch (upcoming release)
+
+New installations explain background synchronization before installing an agent.
+Choose **Enable synchronization** to keep SSH targets current and renew managed
+tokens while the window is closed. **Later** saves your choice and keeps profile
+management and **Sync now** available without installing a background service.
+Automatic token renewal requires the agent. **Preferences → Synchronization**
+lets you enable or disable it later. An existing active or already registered
+agent skips this first-launch window, including on upgrades.
+
 ## Access
 
 ![SwiftUI Access screen with demo targets, profile count and search](assets/swiftui/access.png)

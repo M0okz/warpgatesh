@@ -20,9 +20,20 @@ final class DemoBridge: CompanionTransport {
     terminalIntegration: .init(status: "missing", path: "/usr/local/bin/warpgatesh"),
     update: .init(phase: "idle", channel: "unsupported", currentVersion: "0.1.22"), alerts: [])
 
+  init(firstLaunch: Bool = CommandLine.arguments.contains("--demo-first-launch")) {
+    state.agentSetup = .init(
+      needsDecision: firstLaunch, enabled: !firstLaunch, installed: !firstLaunch)
+    state.agentRunning = !firstLaunch
+  }
+
   func request(_ command: String, args: [String: JSONValue]) async throws -> JSONValue {
     switch command {
-    case "initialize": return .null
+    case "initialize": return try .encoding(state.agentSetup)
+    case "set_background_agent":
+      let enabled: Bool = try (args["enabled"] ?? .null).decoded()
+      state.agentSetup = .init(needsDecision: false, enabled: enabled, installed: enabled)
+      state.agentRunning = enabled
+      return try .encoding(state.agentSetup)
     case "get_companion_state": return try .encoding(state)
     case "sync_now":
       state.agentSynchronizing = true

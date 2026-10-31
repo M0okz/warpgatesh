@@ -27,8 +27,13 @@ versions use the previous interface; update before following the new labels.
 Do not run the app permanently from the mounted DMG. The background agent must
 refer to the stable application path in `/Applications`.
 
-The first launch registers a per-user background agent. It runs independently
-of the graphical window and keeps synchronizing after the window is closed.
+In the upcoming release, a new installation asks before registering its
+per-user background agent. **Enable synchronization** keeps targets up to date
+and renews managed tokens even when the window is closed. **Later** keeps the
+app in manual mode; use **Sync now**, then enable background synchronization
+from **Preferences → Synchronization** whenever needed. The choice is saved.
+Existing agent installations do not receive this prompt. Releases through
+v0.1.22 register the agent automatically.
 
 ## Install the command-line interface
 

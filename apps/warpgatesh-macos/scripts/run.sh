@@ -32,5 +32,5 @@ codesign --force --deep --sign - "$app_dir"
 if [ "${1:-}" = "--live" ]; then
   open "$app_dir"
 else
-  open "$app_dir" --args --demo
+  open "$app_dir" --args --demo "$@"
 fi
