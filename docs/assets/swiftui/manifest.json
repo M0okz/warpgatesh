@@ -8,81 +8,81 @@
   "images": [
     {
       "file": "about.png",
-      "width": 4718592,
-      "height": 4292935744,
-      "sha256": "becaeac0a5fdebe71fd2501d52d3175202f8f96d334f84edefddc15f2350f8fe"
+      "width": 881,
+      "height": 713,
+      "sha256": "70e7b9af6f5ba6c9221913e84d6f1c55606fb8bda204c0165dbac318f2a2d03c"
     },
     {
       "file": "access.png",
-      "width": 4718592,
-      "height": 4292935744,
-      "sha256": "079d46fc374a024f457b0d5daf7899f89ad33c4bc61ece3b865b4ce213085d82"
+      "width": 881,
+      "height": 713,
+      "sha256": "14dc93135d2ee7b592180b1ae89761845bfb9b6ffd84fbdb11b70747c81ad155"
     },
     {
       "file": "logs.png",
-      "width": 4718592,
-      "height": 4292935744,
-      "sha256": "c74a4af7e1e678e5c3949325362135b9d08f9b7f31d608109732fd4848234a1d"
+      "width": 881,
+      "height": 713,
+      "sha256": "556f966cf4d1018c092abc04b8a276ec0c98e00b9bb800e5ee58b5f772ca6f2e"
     },
     {
       "file": "preferences-black.png",
-      "width": 4718592,
-      "height": 4292935744,
-      "sha256": "12a85cf9b827be19a5b8ecb06daadbad71e4eb237df3e9f4bbf1d26aa60a8b85"
+      "width": 881,
+      "height": 713,
+      "sha256": "e6be3125b4434d6fba3476825138fedca602843f17947c06455219a615016a47"
     },
     {
       "file": "preferences-light.png",
-      "width": 4718592,
-      "height": 4292935744,
-      "sha256": "cec09277da0d55bcf6b8fce5965a697716a7527f7b1dd7129e5de592ae4ced53"
+      "width": 881,
+      "height": 713,
+      "sha256": "a5aa846722492a90a02f5ebd1a208b894b234762d93b86a1d987a55d0d2e2ac3"
     },
     {
       "file": "preferences-sync.png",
-      "width": 4718592,
-      "height": 4292935744,
-      "sha256": "4404dd172db49fad4a4111a30c54c38941d749ba429d7342031e38e15f479c9f"
+      "width": 881,
+      "height": 713,
+      "sha256": "c839ecbdaa4a867ce5de559c19f8e39ff5a0d7924406ca697e9db4b6a10d2547"
     },
     {
       "file": "preferences-system.png",
-      "width": 4718592,
-      "height": 4292935744,
-      "sha256": "8fce6457d5a3fbd06f60849dbc087f27e9afe1cf57a84c44db21f1b46978aca4"
+      "width": 881,
+      "height": 713,
+      "sha256": "9861ff422076de75c1c7ac0e67fbc384defbbf3f4bde9fe0bfc5b71e1fb2e2b7"
     },
     {
       "file": "preferences.png",
-      "width": 4718592,
-      "height": 4292935744,
-      "sha256": "5cb5ae0a958bdd9699b7b413af1f6169adda5ed18f1f7ca8a40c9f8f52a933ba"
+      "width": 881,
+      "height": 713,
+      "sha256": "9f3f513c0347b2f08082782557a3e1ece727044372c117c2e4b7338dd94a0b12"
     },
     {
       "file": "profile-add.png",
-      "width": 4718592,
-      "height": 4292935744,
-      "sha256": "84a3aefb60c37ab552dc791b63190d4afac62d89b76cd6c01621f9945a92db58"
+      "width": 560,
+      "height": 490,
+      "sha256": "23a7c3711d56f043f9ec98539f6d645b922c9812f179cc6d30b8e029f14034b3"
     },
     {
       "file": "profile-login.png",
-      "width": 4718592,
-      "height": 4292935744,
-      "sha256": "9f4288303bcb7f245b9c98d175595d966d8121917fafd0c71929300a4caf72e9"
+      "width": 680,
+      "height": 560,
+      "sha256": "bf1c8834581f2573c031e5c6b33a551bc78fdfe1fadd94436adc562b1597d034"
     },
     {
       "file": "profiles.png",
-      "width": 4718592,
-      "height": 4292935744,
-      "sha256": "d37ff8b6ecc5b267f5ecedf344eee05a8223c225b6fcfe0317c932f4a651c8d7"
+      "width": 881,
+      "height": 713,
+      "sha256": "a91d2ad7f447f055933584d9441c981dfefb3e115965506989de0680fe8098f6"
     },
     {
       "file": "synchronization.png",
-      "width": 4718592,
-      "height": 4292935744,
-      "sha256": "22dffc287122432b81f10fd75af14c408c3b4ed952649f29b760e022170c1513"
+      "width": 881,
+      "height": 713,
+      "sha256": "f88eeca0395fd3b5a0d316b6e00a3b931675771f79dfe1b5174ea3f97d19ce3d"
     },
     {
       "file": "token-renewal.png",
-      "width": 4718592,
-      "height": 4292935744,
-      "sha256": "5d410c65961e0ae194d1a4e2bb9e027ab94f6ed43ed6cd3770be41a9efcf6773"
+      "width": 520,
+      "height": 283,
+      "sha256": "3a5e517469d0ffd0567f4338b3d51c2b0c9ba3308eff198287bd727b4d4ece98"
     }
   ]
 }
