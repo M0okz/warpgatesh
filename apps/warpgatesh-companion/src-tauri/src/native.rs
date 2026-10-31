@@ -9,7 +9,7 @@ use tauri::{AppHandle, Manager};
 use tauri_plugin_autostart::MacosLauncher;
 
 use crate::relaunch::NativeSession;
-use crate::{commands, installation, updates};
+use crate::{agent_setup, commands, updates};
 
 const MAX_REQUEST_BYTES: usize = 64 * 1024;
 const MAX_IN_FLIGHT: usize = 16;
@@ -26,6 +26,9 @@ struct Request {
 enum Operation {
     Initialize,
     GetCompanionState,
+    SetBackgroundAgent {
+        enabled: bool,
+    },
     SyncNow,
     PreviewDiagnostics,
     ExportDiagnostics,
@@ -151,10 +154,19 @@ fn write_message(message: &Value) {
 async fn dispatch(app: AppHandle, operation: Operation) -> Result<Value, String> {
     match operation {
         Operation::Initialize => {
-            installation::ensure_bundled_agent().map_err(|error| error.to_string())?;
+            let setup = commands::run_blocking(|| {
+                agent_setup::initialize().map_err(|error| error.to_string())
+            })
+            .await?;
             updates::start_background_checks(app);
-            Ok(Value::Null)
+            serialize(setup)
         }
+        Operation::SetBackgroundAgent { enabled } => serialize(
+            commands::run_blocking(move || {
+                agent_setup::set_enabled(enabled).map_err(|error| error.to_string())
+            })
+            .await?,
+        ),
         Operation::GetCompanionState => serialize(commands::get_companion_state(app).await?),
         Operation::SyncNow => serialize(commands::sync_now().await?),
         Operation::PreviewDiagnostics => serialize(commands::preview_diagnostics().await?),

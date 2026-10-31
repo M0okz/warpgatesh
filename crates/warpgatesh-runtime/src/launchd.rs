@@ -175,6 +175,10 @@ fn render_property_list(agent_executable: &Path) -> Result<String, RuntimeError>
 <dict>
   <key>Label</key>
   <string>{LABEL}</string>
+  <key>AssociatedBundleIdentifiers</key>
+  <array>
+    <string>dev.warpgatesh.companion</string>
+  </array>
   <key>ProgramArguments</key>
   <array>
     <string>{executable}</string>
@@ -227,6 +231,9 @@ mod tests {
         .expect("property list");
 
         assert!(plist.contains("<string>dev.warpgatesh.agent</string>"));
+        assert!(plist.contains(
+            "<key>AssociatedBundleIdentifiers</key>\n  <array>\n    <string>dev.warpgatesh.companion</string>\n  </array>"
+        ));
         assert!(
             plist.contains(
                 "/Applications/WarpgateSH &amp; Tools.app/Contents/MacOS/warpgatesh-agent"

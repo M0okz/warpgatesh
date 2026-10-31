@@ -1,3 +1,4 @@
+mod agent_setup;
 mod commands;
 mod installation;
 #[cfg(target_os = "macos")]
@@ -56,7 +57,7 @@ pub fn run() {
             {
                 app.handle()
                     .set_activation_policy(tauri::ActivationPolicy::Accessory)?;
-                if let Err(error) = installation::ensure_bundled_agent() {
+                if let Err(error) = agent_setup::initialize() {
                     let mut fields = std::collections::BTreeMap::new();
                     fields.insert("message".to_owned(), serde_json::json!(error.to_string()));
                     let _ = diagnostics.record("error", "agent.install-failed", fields);

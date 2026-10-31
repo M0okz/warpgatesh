@@ -225,3 +225,16 @@
 "Renouvellement du jeton en échec" = "Token renewal failed";
 "Expiration du jeton" = "Token expiry";
 "Une opération est déjà en cours." = "An operation is already in progress.";
+"Synchronisez vos accès en arrière-plan" = "Keep your access up to date in the background";
+"WarpgateSH peut installer un agent dans votre session pour maintenir vos cibles SSH à jour et renouveler automatiquement les jetons gérés, même lorsque la fenêtre est fermée." = "WarpgateSH can install an agent in your login session to keep your SSH targets up to date and automatically renew managed tokens, even when the window is closed.";
+"Vous pourrez le désactiver dans Préférences → Synchronisation. Avec « Plus tard », la synchronisation reste manuelle." = "You can disable it in Preferences → Synchronization. Choose “Later” to synchronize manually.";
+"Plus tard" = "Later";
+"Activer la synchronisation" = "Enable synchronization";
+"Synchronisation en arrière-plan" = "Background synchronization";
+"L’agent est activé dans votre session." = "The agent is enabled in your login session.";
+"Désactiver la synchronisation en arrière-plan" = "Disable background synchronization";
+"Mode manuel : utilisez Synchroniser maintenant pour actualiser vos accès." = "Manual mode: use Sync now to update your access.";
+"Le renouvellement automatique des jetons nécessite l’agent en arrière-plan." = "Automatic token renewal requires the background agent.";
+"Mode manuel" = "Manual mode";
+"À la demande" = "On demand";
+"L’installation de l’agent nécessite l’application distribuée. Utilisez le mode démo pour tester cette fenêtre." = "Installing the agent requires the distributed app. Use demo mode to test this dialog.";

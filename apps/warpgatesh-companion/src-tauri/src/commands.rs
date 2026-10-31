@@ -15,11 +15,12 @@ use warpgatesh_runtime::storage::{AgentErrorKind, LocalStore, Preferences};
 use warpgatesh_runtime::token_api::ApiAuthorization;
 use warpgatesh_runtime::token_lifecycle::{self, ManagedTokenStatus};
 
-use crate::{installation, updates};
+use crate::{agent_setup, installation, updates};
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CompanionState {
+    agent_setup: agent_setup::AgentSetup,
     agent_running: bool,
     agent_synchronizing: bool,
     profiles: Vec<CompanionProfile>,
@@ -424,7 +425,7 @@ pub async fn open_target(alias: String) -> Result<(), String> {
     .await
 }
 
-async fn run_blocking<T: Send + 'static>(
+pub(crate) async fn run_blocking<T: Send + 'static>(
     operation: impl FnOnce() -> Result<T, String> + Send + 'static,
 ) -> Result<T, String> {
     tauri::async_runtime::spawn_blocking(operation)
@@ -498,6 +499,7 @@ fn load_state(
     )?;
 
     Ok(CompanionState {
+        agent_setup: agent_setup::status(store).map_err(display_error)?,
         agent_running: agent_runtime.running,
         agent_synchronizing: agent_runtime.synchronizing,
         profiles,
@@ -549,7 +551,8 @@ fn build_alerts(
     preferences: &Preferences,
 ) -> Result<Vec<CompanionAlert>, String> {
     let mut alerts = Vec::new();
-    if !agent_running {
+    let manual = !agent_running && agent_setup::manual_mode(store).map_err(display_error)?;
+    if !agent_running && !manual {
         alerts.push(CompanionAlert {
             id: "agent-down".to_owned(),
             kind: "error".to_owned(),
@@ -561,7 +564,7 @@ fn build_alerts(
     if let Some(status) = store
         .load_agent_status()
         .map_err(display_error)?
-        .filter(|status| status.consecutive_failures >= 2)
+        .filter(|status| !manual && status.consecutive_failures >= 2)
     {
         if let (Some(kind), Some(message)) = (status.last_error_kind, status.last_error_message) {
             let (id, title, action) = match kind {
@@ -596,7 +599,7 @@ fn build_alerts(
         .sync_interval_seconds
         .saturating_mul(2)
         .saturating_add(60);
-    if alerts.is_empty() && sync_age.is_some_and(|age| age > stale_after) {
+    if !manual && alerts.is_empty() && sync_age.is_some_and(|age| age > stale_after) {
         alerts.push(CompanionAlert {
             id: "stale".to_owned(),
             kind: "warning".to_owned(),
@@ -643,6 +646,14 @@ fn validate_profile_request(request: &ProfileRequest) -> Result<(), String> {
 }
 
 fn request_sync(store: &LocalStore) -> Result<String, String> {
+    if agent_setup::manual_mode(store).map_err(display_error)? {
+        let report = warpgatesh_runtime::sync::verify_and_synchronize_all(
+            store,
+            &warpgatesh_runtime::keychain::SystemKeychain,
+        )
+        .map_err(display_error)?;
+        return Ok(format!("{} targets synchronized", report.target_count));
+    }
     ipc::request_with_retry(&store.paths().agent_socket, "sync", Duration::from_secs(20))
         .map_err(display_error)
 }
@@ -651,6 +662,15 @@ fn request_configuration(
     store: &LocalStore,
     mutation: &ConfigurationMutation,
 ) -> Result<String, String> {
+    if agent_setup::manual_mode(store).map_err(display_error)? {
+        warpgatesh_runtime::configuration::LocalConfiguration::new(
+            store,
+            &warpgatesh_runtime::keychain::SystemKeychain,
+        )
+        .apply(mutation.clone())
+        .map_err(display_error)?;
+        return Ok("Configuration saved".to_owned());
+    }
     ipc::request_mutation(
         &store.paths().agent_socket,
         mutation,
@@ -690,6 +710,60 @@ mod tests {
     };
 
     use super::*;
+
+    #[test]
+    fn manual_configuration_and_sync_do_not_install_a_background_agent() {
+        let home = TempDir::new().expect("temporary home");
+        let store = LocalStore::new(WarpgatePaths::for_home(home.path()));
+        request_configuration(
+            &store,
+            &ConfigurationMutation::SavePreferences {
+                preferences: Preferences::default(),
+                default_profile: None,
+            },
+        )
+        .expect("save preferences without an agent");
+        request_sync(&store).expect("manual sync without an agent");
+        assert!(store.load_snapshot().expect("snapshot").is_some());
+        assert!(!store.paths().launch_agent.exists());
+        assert!(!store.paths().agent_socket.exists());
+        assert!(
+            build_alerts(&store, false, Some(0), &Preferences::default())
+                .expect("alerts")
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn manual_mode_has_no_stale_background_failure_or_scheduled_deadline() {
+        let home = TempDir::new().expect("temporary home");
+        let store = LocalStore::new(WarpgatePaths::for_home(home.path()));
+        store
+            .save_agent_status(&AgentStatus {
+                schema_version: warpgatesh_runtime::storage::AGENT_STATUS_SCHEMA_VERSION,
+                last_attempt_epoch_seconds: epoch_seconds(),
+                last_success_epoch_seconds: None,
+                consecutive_failures: 2,
+                last_error_kind: Some(AgentErrorKind::ApiUnreachable),
+                last_error_message: Some("past background failure".to_owned()),
+            })
+            .expect("past agent status");
+        assert!(
+            build_alerts(&store, false, Some(86_400), &Preferences::default())
+                .expect("manual alerts")
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn stopped_existing_agent_still_reports_a_failure() {
+        let home = TempDir::new().expect("temporary home");
+        let store = LocalStore::new(WarpgatePaths::for_home(home.path()));
+        warpgatesh_runtime::storage::atomic_write(&store.paths().launch_agent, b"existing service")
+            .expect("registered agent fixture");
+        let alerts = build_alerts(&store, false, None, &Preferences::default()).expect("alerts");
+        assert_eq!(alerts[0].id, "agent-down");
+    }
 
     #[test]
     fn refuses_host_keys_changed_since_human_approval() {
@@ -784,7 +858,8 @@ mod tests {
         assert_eq!(state.targets[0].alias, "dmz-nextcloud-01.homeblack");
         assert!(!state.agent_running);
         assert!(!state.agent_synchronizing);
-        assert_eq!(state.alerts[0].id, "agent-down");
+        assert!(state.alerts.is_empty());
+        assert!(state.agent_setup.needs_decision);
         assert_eq!(state.terminal_integration.status, "missing");
         assert_eq!(state.update.phase, updates::UpdatePhase::Current);
     }

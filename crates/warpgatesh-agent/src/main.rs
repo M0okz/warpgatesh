@@ -4,16 +4,14 @@ use std::process::ExitCode;
 use serde_json::json;
 use warpgatesh_core::schedule::SyncSchedule;
 use warpgatesh_runtime::RuntimeError;
-use warpgatesh_runtime::api::ApiClient;
 use warpgatesh_runtime::configuration::{ConfigurationMutation, LocalConfiguration};
 use warpgatesh_runtime::diagnostics::DiagnosticLogger;
 use warpgatesh_runtime::ipc::MUTATION_PREFIX;
-use warpgatesh_runtime::keychain::{SystemKeychain, TokenStore};
-use warpgatesh_runtime::ssh::{save_host_keys, verify_host_keys};
+use warpgatesh_runtime::keychain::SystemKeychain;
 use warpgatesh_runtime::storage::{
     AGENT_STATUS_SCHEMA_VERSION, AgentErrorKind, AgentStatus, LocalStore,
 };
-use warpgatesh_runtime::sync::{SyncReport, synchronize_all};
+use warpgatesh_runtime::sync::{SyncReport, verify_and_synchronize_all};
 
 const LOCAL_COMMAND_LIMIT: u64 = 64 * 1024;
 
@@ -120,20 +118,7 @@ fn verify_and_synchronize(store: &LocalStore) -> Result<SyncReport, RuntimeError
     {
         record_current_error("token.renewal-failed", &error);
     }
-    for profile in store.load_profiles()?.profiles {
-        let token = tokens.get(&profile.name)?;
-        let metadata = ApiClient::new(&profile.base_url)?.validate(&token)?;
-        let presented = verify_host_keys(
-            store.paths(),
-            &profile.name,
-            &metadata.ssh_host,
-            metadata.ssh_port,
-        )?;
-        if profile.ssh_host != metadata.ssh_host || profile.ssh_port != metadata.ssh_port {
-            save_host_keys(store.paths(), &profile.name, &presented.known_hosts)?;
-        }
-    }
-    synchronize_all(store, &tokens)
+    verify_and_synchronize_all(store, &tokens)
 }
 
 fn error_kind(error: &RuntimeError) -> AgentErrorKind {

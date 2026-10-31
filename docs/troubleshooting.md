@@ -23,6 +23,21 @@ warpgatesh agent status
 The agent belongs to your macOS login session and does not require a root
 daemon. Closing the WarpgateSH window does not stop it.
 
+## macOS identifies the background item by the developer's name
+
+Releases through v0.1.22 register their synchronization agent automatically on
+first launch. From v0.1.23, the app explains its role and asks first on new
+installations; existing agents are preserved.
+Older releases, including v0.1.22, omit the LaunchAgent's application
+association, so macOS can display the developer certificate holder's name
+instead of WarpgateSH. This does not rename the application.
+
+The corrected LaunchAgent declares `AssociatedBundleIdentifiers` with
+`dev.warpgatesh.companion`. Opening an updated app refreshes and re-registers an
+existing agent automatically. macOS controls the notification text and may
+retain an earlier notification. Check the item's name in **System Settings →
+General → Login Items & Extensions** after updating.
+
 ## macOS repeatedly asks for Keychain access
 
 WarpgateSH stores personal API tokens under the Keychain service

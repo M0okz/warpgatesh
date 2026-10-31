@@ -6,7 +6,9 @@ struct AccessScreen: View {
   @State private var query = ""
   var body: some View {
     VStack(alignment: .leading, spacing: 22) {
-      AccessHeader(running: state.agentRunning, synchronizing: state.agentSynchronizing)
+      AccessHeader(
+        running: state.agentRunning, synchronizing: state.agentSynchronizing,
+        manualMode: state.manualMode)
       VStack(spacing: 14) {
         HStack(spacing: 8) {
           MetricCard(

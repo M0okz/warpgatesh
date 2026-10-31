@@ -4,6 +4,12 @@ Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
 ## Non publié
 
+## 0.1.23 — 2026-10-31
+
+- Une fenêtre explique le rôle de l’agent avant son installation sur un nouveau Mac. « Plus tard » conserve un mode manuel et mémorise le choix ; les agents déjà installés ne sont pas sollicités. La synchronisation en arrière-plan peut être activée ou désactivée dans les préférences.
+
+- L’agent macOS est explicitement associé à WarpgateSH pour que le système puisse l’identifier par le nom de l’application plutôt que par celui du signataire.
+
 ## 0.1.22 — 2026-10-31
 
 - Le démarrage ignore les entrées temporaires de macOS sans identifiant de processus valide, afin de ne pas fermer l’app comme un faux doublon.

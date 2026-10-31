@@ -21,7 +21,11 @@ synchronisations de démonstration fonctionnent localement.
 Pour utiliser le moteur réel en développement, ajouter `--live`. Cette option
 lit les profils et l’instantané existants et permet les actions demandées dans
 l’interface. Le backend debug n’installe pas automatiquement l’agent ; celui-ci
-doit déjà être actif. Le bundle de production enregistre l’agent comme auparavant.
+doit déjà être actif pour la synchronisation en arrière-plan. Le mode manuel
+reste utilisable sans agent. Le bundle de production demande l’accord au premier
+lancement d’une nouvelle installation, sans solliciter les agents déjà installés.
+Pour prévisualiser cet accueil sans rien installer, lancer le mode `--demo` avec
+l’argument supplémentaire `--demo-first-launch`.
 Ne pas tester une suppression ou une mise à jour sur l’installation personnelle.
 
 ## Validation

@@ -225,3 +225,16 @@
 "Renouvellement du jeton en échec" = "Renouvellement du jeton en échec";
 "Expiration du jeton" = "Expiration du jeton";
 "Une opération est déjà en cours." = "Une opération est déjà en cours.";
+"Synchronisez vos accès en arrière-plan" = "Synchronisez vos accès en arrière-plan";
+"WarpgateSH peut installer un agent dans votre session pour maintenir vos cibles SSH à jour et renouveler automatiquement les jetons gérés, même lorsque la fenêtre est fermée." = "WarpgateSH peut installer un agent dans votre session pour maintenir vos cibles SSH à jour et renouveler automatiquement les jetons gérés, même lorsque la fenêtre est fermée.";
+"Vous pourrez le désactiver dans Préférences → Synchronisation. Avec « Plus tard », la synchronisation reste manuelle." = "Vous pourrez le désactiver dans Préférences → Synchronisation. Avec « Plus tard », la synchronisation reste manuelle.";
+"Plus tard" = "Plus tard";
+"Activer la synchronisation" = "Activer la synchronisation";
+"Synchronisation en arrière-plan" = "Synchronisation en arrière-plan";
+"L’agent est activé dans votre session." = "L’agent est activé dans votre session.";
+"Désactiver la synchronisation en arrière-plan" = "Désactiver la synchronisation en arrière-plan";
+"Mode manuel : utilisez Synchroniser maintenant pour actualiser vos accès." = "Mode manuel : utilisez Synchroniser maintenant pour actualiser vos accès.";
+"Le renouvellement automatique des jetons nécessite l’agent en arrière-plan." = "Le renouvellement automatique des jetons nécessite l’agent en arrière-plan.";
+"Mode manuel" = "Mode manuel";
+"À la demande" = "À la demande";
+"L’installation de l’agent nécessite l’application distribuée. Utilisez le mode démo pour tester cette fenêtre." = "L’installation de l’agent nécessite l’application distribuée. Utilisez le mode démo pour tester cette fenêtre.";

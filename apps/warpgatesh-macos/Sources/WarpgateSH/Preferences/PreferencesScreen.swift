@@ -119,6 +119,22 @@ struct PreferencesScreen: View {
               .font(.caption).foregroundStyle(AccessTheme.secondary)
           }
         } else if tab == "sync" {
+          Section(L10n.text("Synchronisation en arrière-plan")) {
+            if state.agentSetup?.enabled ?? state.agentRunning {
+              Text(L10n.text("L’agent est activé dans votre session."))
+              Button(L10n.text("Désactiver la synchronisation en arrière-plan")) {
+                model.setBackgroundAgent(false)
+              }.disabled(model.busy)
+            } else {
+              Text(
+                L10n.text(
+                  "Mode manuel : utilisez Synchroniser maintenant pour actualiser vos accès.")
+              )
+              .foregroundStyle(AccessTheme.secondary)
+              Button(L10n.text("Activer la synchronisation")) { model.setBackgroundAgent(true) }
+                .disabled(model.busy)
+            }
+          }
           Section(L10n.text("Synchronisation")) {
             Picker(L10n.text("Intervalle"), selection: $draft.syncIntervalSeconds) {
               ForEach([UInt64(60), 300, 600, 900, 1800, 3600, 86400], id: \.self) { seconds in
@@ -136,8 +152,13 @@ struct PreferencesScreen: View {
               Text(L10n.text("Aucun")).tag(Optional<String>.none)
               ForEach(state.profiles) { Text($0.name).tag(Optional($0.name)) }
             }
-            Text(L10n.text("L’agent synchronise vos accès même lorsque cette fenêtre est fermée."))
-              .font(.caption).foregroundStyle(AccessTheme.secondary)
+            Text(
+              L10n.text(
+                state.agentSetup?.enabled ?? state.agentRunning
+                  ? "L’agent synchronise vos accès même lorsque cette fenêtre est fermée."
+                  : "Le renouvellement automatique des jetons nécessite l’agent en arrière-plan.")
+            )
+            .font(.caption).foregroundStyle(AccessTheme.secondary)
           }
         } else {
           Section(L10n.text("Ouverture de session")) {
