@@ -27,7 +27,7 @@ versions use the previous interface; update before following the new labels.
 Do not run the app permanently from the mounted DMG. The background agent must
 refer to the stable application path in `/Applications`.
 
-In the upcoming release, a new installation asks before registering its
+From v0.1.23, a new installation asks before registering its
 per-user background agent. **Enable synchronization** keeps targets up to date
 and renews managed tokens even when the window is closed. **Later** keeps the
 app in manual mode; use **Sync now**, then enable background synchronization

@@ -7,10 +7,10 @@ the synchronization agent and OpenSSH access work independently of its window.
 **Availability:** the native interface is available in **v0.1.18 and later**.
 The screenshots are actual captures of the running SwiftUI application in its
 isolated demo mode. Every profile, target, counter and diagnostic entry shown
-is fictional. These v0.1.22 captures use English labels. From v0.1.20 the
+is fictional. The refreshed v0.1.23 captures use English labels; the three unchanged profile/sign-in/token sheets retain their v0.1.22 captures, identified in the asset manifest. From v0.1.20 the
 interface supports French, English and automatic language selection.
 
-## First launch (upcoming release)
+## First launch (v0.1.23 and later)
 
 New installations explain background synchronization before installing an agent.
 Choose **Enable synchronization** to keep SSH targets current and renew managed
@@ -19,6 +19,10 @@ management and **Sync now** available without installing a background service.
 Automatic token renewal requires the agent. **Preferences → Synchronization**
 lets you enable or disable it later. An existing active or already registered
 agent skips this first-launch window, including on upgrades.
+
+![Manual synchronization preferences with an enable button, after choosing Later](assets/swiftui/preferences-manual.png)
+
+![Access remains available in manual mode without a background agent](assets/swiftui/manual-mode.png)
 
 ## Access
 
@@ -120,7 +124,7 @@ with an underline and color change on hover. Check the installed version and upd
 releases every six hours; **Check for updates** requests a manual check.
 An available signed update requires confirmation before replacing the app, CLI
 and agent together. Homebrew installations instead show the upgrade command.
-The version shown corresponds to the v0.1.22 source build used for these captures.
+The version shown corresponds to the v0.1.23 source build used for these captures.
 
 ## Menu bar, keyboard and accessibility
 

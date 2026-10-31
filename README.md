@@ -21,12 +21,17 @@ tools.
 
 ![WarpgateSH SwiftUI access screen](docs/assets/swiftui/access.png)
 
-*WarpgateSH v0.1.22, English interface. Native SwiftUI companion available from v0.1.18. Actual capture of the running
+*WarpgateSH v0.1.23, English interface. Native SwiftUI companion available from v0.1.18. Actual capture of the running
 macOS app using fictional demo data.*
 
 [Explore the six native screens](docs/desktop-app.md) ·
 [Watch the CLI demo](docs/assets/warpgatesh-demo.gif)
 
+
+From **v0.1.23**, new installations explain background synchronization before
+installing an agent. Choose **Enable synchronization** or **Later**; existing
+agents skip this prompt. Manual synchronization remains available, and the agent
+can be enabled or disabled under **Preferences → Synchronization**.
 
 ## Why WarpgateSH?
 
