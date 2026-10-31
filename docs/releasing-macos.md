@@ -117,3 +117,11 @@ Deux LaunchAgents existent : `dev.warpgatesh.agent.plist` pour la synchronisatio
 et `WarpgateSH.plist` pour l’ouverture facultative du compagnon. Vérifier leur
 association à l’application sans activer un élément désactivé ni réinitialiser
 les réglages globaux de macOS.
+
+La signature de distribution compile d’abord sans assembler le bundle, signe le
+backend Rust, puis lance `tauri bundle`. Cet ordre est nécessaire lorsque
+l’exécutable principal déclaré est l’interface SwiftUI : sa signature vérifie
+les composants du bundle englobant. Le script local et le workflow appliquent
+le même ordre. Une reconstruction d’un ancien tag peut utiliser le workflow
+corrigé sans déplacer ce tag ; noter séparément le commit du workflow et le tag
+des sources de l’application.

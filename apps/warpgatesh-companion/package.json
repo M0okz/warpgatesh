@@ -13,7 +13,7 @@
     "prepare:sidecars": "node scripts/prepare-sidecars.mjs",
     "build:bundle": "npm run prepare:sidecars && python3 ../warpgatesh-macos/scripts/prepare-native.py && npm run build",
     "bundle:macos": "tauri build --bundles app,dmg && npm run verify:bundle",
-    "bundle:macos:universal": "TAURI_ENV_TARGET_TRIPLE=universal-apple-darwin tauri build --config src-tauri/tauri.release.conf.json --target universal-apple-darwin --bundles app,dmg && npm run verify:bundle -- src-tauri/target/universal-apple-darwin/release/bundle/macos/WarpgateSH.app",
+    "bundle:macos:universal": "bash ../../.github/scripts/bundle-macos-release.sh",
     "verify:bundle": "node scripts/verify-macos-bundle.mjs",
     "verify:release-version": "node scripts/verify-release-version.mjs",
     "preview": "vite preview",
