@@ -1,6 +1,7 @@
 import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 
 const root = fileURLToPath(new URL("../dist/", import.meta.url));
 const pages = [
@@ -8,6 +9,25 @@ const pages = [
   ...(await readdir(path.join(root, "docs"))).map((name) => `docs/${name}`),
 ];
 const errors = [];
+const screenshotRoot = path.join(root, "assets/swiftui");
+const manifest = JSON.parse(
+  await readFile(path.join(screenshotRoot, "manifest.json"), "utf8"),
+);
+for (const image of manifest.images) {
+  const data = await readFile(path.join(screenshotRoot, image.file));
+  if (
+    data.length < 24 ||
+    !data.subarray(0, 8).equals(Buffer.from("89504e470d0a1a0a", "hex"))
+  ) {
+    errors.push(`${image.file}: expected PNG screenshot`);
+    continue;
+  }
+  if (
+    data.readUInt32BE(16) !== image.width ||
+    data.readUInt32BE(20) !== image.height ||
+    createHash("sha256").update(data).digest("hex") !== image.sha256
+  ) errors.push(`${image.file}: screenshot manifest does not match file`);
+}
 let links = 0;
 for (const page of pages) {
   const html = await readFile(path.join(root, page), "utf8");
