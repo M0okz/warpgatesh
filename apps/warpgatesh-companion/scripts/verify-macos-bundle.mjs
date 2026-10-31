@@ -37,6 +37,24 @@ for (const executable of [companion, native, cli, agent]) {
   }
 }
 
+const mainExecutable = capture("/usr/libexec/PlistBuddy", [
+  "-c", "Print :CFBundleExecutable", infoPlist,
+]);
+if (mainExecutable !== "warpgatesh-ui") {
+  throw new Error(`The app must declare its SwiftUI interface as CFBundleExecutable, received ${mainExecutable}`);
+}
+
+const bundleIdentifier = capture("/usr/libexec/PlistBuddy", [
+  "-c", "Print :CFBundleIdentifier", infoPlist,
+]);
+const nativeSignature = spawnSync("/usr/bin/codesign", ["-dvv", native], { encoding: "utf8" });
+if (nativeSignature.status === 0 && nativeSignature.stderr.includes("Authority=Developer ID Application:")) {
+  const identifier = nativeSignature.stderr.match(/^Identifier=(.+)$/m)?.[1];
+  if (identifier !== bundleIdentifier) {
+    throw new Error(`The signed SwiftUI main executable must have the app bundle identity: ${identifier}`);
+  }
+}
+
 const iconFile = capture("/usr/libexec/PlistBuddy", [
   "-c",
   "Print :CFBundleIconFile",

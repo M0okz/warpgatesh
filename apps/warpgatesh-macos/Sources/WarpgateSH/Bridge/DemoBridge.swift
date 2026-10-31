@@ -18,7 +18,7 @@ final class DemoBridge: CompanionTransport {
     preferences: .init(
       syncIntervalSeconds: 300, launchCompanionAtLogin: false, defaultProfile: "homelab"),
     terminalIntegration: .init(status: "missing", path: "/usr/local/bin/warpgatesh"),
-    update: .init(phase: "idle", channel: "unsupported", currentVersion: "0.1.23"), alerts: [])
+    update: .init(phase: "idle", channel: "unsupported", currentVersion: "0.1.24"), alerts: [])
 
   init(firstLaunch: Bool = CommandLine.arguments.contains("--demo-first-launch")) {
     state.agentSetup = .init(

@@ -1,5 +1,6 @@
 mod agent_setup;
 mod commands;
+mod companion_login;
 mod installation;
 #[cfg(target_os = "macos")]
 mod native;

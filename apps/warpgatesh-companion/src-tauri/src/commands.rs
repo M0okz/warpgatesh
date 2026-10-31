@@ -215,7 +215,7 @@ pub async fn save_preferences(
         }
 
         if preferences.launch_companion_at_login {
-            app.autolaunch().enable().map_err(display_error)?;
+            crate::companion_login::enable().map_err(display_error)?;
         } else {
             app.autolaunch().disable().map_err(display_error)?;
         }

@@ -3,15 +3,15 @@
   "source": "Running WarpgateSH SwiftUI app, --demo mode",
   "data": "Fictional demo data only; no live profiles or secrets; login is explicitly simulated",
   "language": "English",
-  "releaseStatus": "WarpgateSH v0.1.23; twelve refreshed views and three unchanged v0.1.22 sheets, marked per image",
-  "version": "0.1.23",
+  "releaseStatus": "WarpgateSH v0.1.24; About refreshed; unchanged interface captures retained from v0.1.23 and v0.1.22, marked per image",
+  "version": "0.1.24",
   "images": [
     {
       "file": "about.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "46cfe4e2d78745198f1cdc6cee11612a1eecd8c32c2caeba19ea375a9b6b8cee",
-      "capturedVersion": "0.1.23"
+      "width": 860,
+      "height": 620,
+      "sha256": "8715517361818b8fba86f37d61be6269f4756d95f613b51570e8db75369fffb8",
+      "capturedVersion": "0.1.24"
     },
     {
       "file": "access.png",
