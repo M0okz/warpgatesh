@@ -2,7 +2,7 @@
 
 Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
-## Non publié — migration 0.1.25
+## 0.1.25 — 2026-11-01
 
 - Le compagnon SwiftUI utilise désormais un backend Rust autonome ; Tauri et le frontend web historique sont retirés de l’application et de sa chaîne de distribution.
 - Le packaging universel macOS, la signature des updates et les contrôles Nix/CI deviennent autonomes, tout en conservant le format des mises à jour depuis la 0.1.24.

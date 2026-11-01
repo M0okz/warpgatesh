@@ -66,7 +66,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           directory=apps/warpgatesh-macos/.build/distribution
-          gh release create "$RELEASE_TAG" "$directory"/*.dmg "$directory"/*.sha256 "$directory"/*.tar.gz "$directory"/*.sig "$directory/latest.json" "$directory/appcast.xml" --verify-tag --draft --title "WarpgateSH ${RELEASE_TAG#v}" --generate-notes
+          version="${RELEASE_TAG#v}"
+          gh release create "$RELEASE_TAG" "$directory/WarpgateSH_${version}_universal.dmg" "$directory/WarpgateSH_${version}_universal.dmg.sha256" "$directory/WarpgateSH.app.tar.gz" "$directory/WarpgateSH.app.tar.gz.sig" "$directory/latest.json" "$directory/appcast.xml" --verify-tag --draft --title "WarpgateSH ${version}" --generate-notes
       - name: Preserve failed distribution outputs
         if: failure()
         uses: actions/upload-artifact@v6
