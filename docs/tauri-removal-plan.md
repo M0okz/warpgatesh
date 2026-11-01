@@ -1,6 +1,6 @@
 # Plan de retrait complet de Tauri de WarpgateSH
 
-> **Exécution en cours — 1er novembre 2026.** Gregory a autorisé la migration
+> **Version 0.1.25 publiée — 1er novembre 2026.** Gregory a autorisé la migration
 > complète, les tests et la publication. Ajustement approuvé : **Sparkle natif
 > 2.10.1**, avec compatibilité de mise à jour depuis 0.1.24. Les sections
 > historiques qui prévoyaient un installeur Rust sont remplacées par l’ADR 0038.
@@ -8,22 +8,40 @@
 > Suivi : [issue #15](https://github.com/M0okz/warpgatesh/issues/15).
 > Preuves : [validation 0.1.25](validation/0.1.25-native-migration.md).
 
+Date : 1 novembre 2026. Statut : implémentation et publication livrées en 0.1.25 ; limites du banc de test précisées ci-dessous.
 
-Date : 1 novembre 2026. Statut : plan prêt pour une exécution ultérieure.
-
-Suivi de réalisation : **WarpgateSH #45**, à faire.
+Suivi de réalisation : **WarpgateSH #45**, avec preuves de livraison.
 
 La version **0.1.24 est la base fonctionnelle confirmée par Gregory**, notamment
 pour l’icône de barre des menus et l’identité des éléments de connexion. La
-migration remplacera l’hôte Tauri et ses outils de distribution par un backend
+migration a remplacé l’hôte Tauri et ses outils de distribution par un backend
 Rust autonome et un assemblage macOS explicite, en conservant l’interface SwiftUI
 validée et toutes les fonctions existantes.
 
 L’exécution doit aller jusqu’à une livraison complète : une branche dédiée,
 des commits relisibles, une PR de migration et une release après validation.
 Les étapes ci-dessous sont des jalons internes ; le prototype ou le seul retrait
-des dépendances ne constituent pas la fin du travail. La demande actuelle porte
-sur la préparation de cette note ; l’implémentation n’est pas commencée.
+des dépendances ne constituent pas la fin du travail. Le plan initial a été autorisé puis exécuté ; le résultat et ses limites sont
+consignés ci-dessous et dans le compte rendu de validation.
+
+## Résultat de l’exécution
+
+La migration est livrée dans [0.1.25](https://github.com/M0okz/warpgatesh/releases/tag/v0.1.25).
+Tauri, son frontend et son bundler ne font plus partie du code produit ni du
+bundle. Sparkle natif remplace l’installeur initialement envisagé. Les deux
+transitions ont été exercées : mise à jour officielle 0.1.24 → 0.1.25 sur le Mac
+existant, puis 0.1.25 → 0.1.26 dans une fixture native signée isolée.
+
+Nix, Rust/Clippy, 19 tests Swift, le packaging universel et la distribution Apple
+ont été vérifiés. Les quinze captures sont renouvelées sur GitHub et le site ;
+Homebrew et le déploiement HTTPS sont alignés. Les mesures consignées portent
+sur le backend et les builds Swift, sans promesse de gain de lancement global.
+
+Les critères détaillés ci-dessous gardent leur périmètre initial. L’exécution sur
+Intel/macOS 13, une session macOS réellement neuve et une campagne VoiceOver
+complète ne sont pas certifiées par ce Mac Apple Silicon. Gregory a prévu un
+autre Mac pour le retour de mise à jour ; ses caractéristiques ne sont pas
+présumées. Les limites sont détaillées dans le compte rendu de validation.
 
 ## Périmètre
 
@@ -150,15 +168,15 @@ de ces moyens se vérifie avant d’engager les étapes qui en dépendent.
 
 ### Étape 2 Extraire le backend et verrouiller le protocole
 
-- [ ] Porter les opérations et leurs tests dans le nouveau crate, puis injecter
+- [x] Porter les opérations et leurs tests dans le nouveau crate, puis injecter
   les services de plateforme et d’update. Remplacer les imports/macros Tauri,
   l’état `app.state`, les émissions d’événements et l’exécuteur async.
-- [ ] Garder les noms de commandes, formes JSON et erreurs attendus par Swift,
+- [x] Garder les noms de commandes, formes JSON et erreurs attendus par Swift,
   ainsi que `CompanionTransport` et `DemoBridge`. Couvrir la sérialisation
   `snake_case`/`camelCase` et l’événement explicite `exit` utilisé lors d’une
   relance/désinstallation par des fixtures de contrat partagées. Une déconnexion
   inattendue du backend reste une erreur récupérable dans l’interface.
-- [ ] Conserver les pipes hérités sans port d’écoute supplémentaire, les
+- [x] Conserver les pipes hérités sans port d’écoute supplémentaire, les
   requêtes limitées à 64 Kio, au plus seize opérations simultanées et les
   réponses corrélées. Réserver stdout au protocole ; nettoyer les diagnostics.
 - [ ] Tester requêtes invalides, saturation, EOF, parent disparu, backend arrêté,
@@ -169,19 +187,19 @@ de ces moyens se vérifie avant d’engager les étapes qui en dépendent.
 
 ### Étape 3 Remplacer les intégrations Tauri et préserver les choix macOS
 
-- [ ] Compléter `companion_login` avec les opérations auparavant fournies par
+- [x] Compléter `companion_login` avec les opérations auparavant fournies par
   autostart. Préserver les deux labels et leurs chemins : `WarpgateSH.plist`
   et `dev.warpgatesh.agent.plist`, chacun associé au bundle.
-- [ ] Préserver les arguments et les états activé/désactivé. Une migration au
+- [x] Préserver les arguments et les états activé/désactivé. Une migration au
   démarrage ne crée pas d’élément absent, ne réactive pas un service refusé par
   macOS et ne modifie pas un fichier appartenant à une autre installation.
-- [ ] Garder `dev.warpgatesh.companion`, les identifiants Trousseau, les domaines
+- [x] Garder `dev.warpgatesh.companion`, les identifiants Trousseau, les domaines
   UserDefaults, le Team ID de distribution et les chemins de données. Vérifier
   l’accès aux secrets existants sans effacer les autorisations système.
-- [ ] Conserver le premier lancement explicatif uniquement pour une installation
+- [x] Conserver le premier lancement explicatif uniquement pour une installation
   qui en a besoin, le choix « Plus tard », la synchronisation manuelle et
   l’activation ultérieure. Un agent déjà actif ne revoit pas cette demande.
-- [ ] Rebrancher installation de la CLI, ouverture du terminal/des liens,
+- [x] Rebrancher installation de la CLI, ouverture du terminal/des liens,
   diagnostics et désinstallation avec leurs confirmations existantes.
   Quitter le compagnon conserve l’agent. La désinstallation du produit retire
   ses composants selon les choix et confirmations existants.
@@ -205,7 +223,7 @@ initialement prévues pour un installeur Rust maison (ADR 0038).**
   de service absent ni réactiver le choix de synchronisation manuelle.
 - [x] Parcours natif signé 0.1.25 → 0.1.26 exécuté dans une fixture privée de
   démonstration ; archive altérée refusée, version précédente conservée.
-- [ ] Parcours public officiel 0.1.24 → 0.1.25 après publication des artefacts.
+- [x] Parcours public officiel 0.1.24 → 0.1.25, relance et agent 0.1.25 vérifiés.
 - [ ] Validation sur l’autre Mac de Gregory après sa mise à jour. L’architecture
   et le macOS de ce poste ne sont pas présumés.
 
@@ -229,52 +247,52 @@ initialement prévues pour un installeur Rust maison (ADR 0038).**
 
 ### Étape 6 Assembler et signer le bundle sans outils Tauri
 
-- [ ] Créer le packaging sous `apps/warpgatesh-macos/`, avec métadonnées et icônes
+- [x] Créer le packaging sous `apps/warpgatesh-macos/`, avec métadonnées et icônes
   sous `Bundle/` et scripts sous `scripts/`. La version du workspace est la
   source de référence, y compris pour la version de démo ; la clé publique
   d’update est embarquée sans secret dans les ressources/configurations utiles.
-- [ ] Compiler Swift et Rust pour `arm64` et `x86_64`, assembler les quatre
+- [x] Compiler Swift et Rust pour `arm64` et `x86_64`, assembler les quatre
   exécutables et les ressources Swift. Garder `warpgatesh-ui` comme exécutable
   principal et son identité de signature égale à l’identifiant du bundle.
-- [ ] Signer explicitement les composants imbriqués puis l’app, avec Hardened
+- [x] Signer explicitement les composants imbriqués puis l’app, avec Hardened
   Runtime et horodatage. Notariser et agrafer l’app finale, puis fabriquer le
   DMG et l’archive d’update depuis cette même app. Signer l’archive avec l’outil
   autonome, puis signer/notariser/agrafer le DMG et produire son SHA-256.
-- [ ] Vérifier aussi le contenu extrait du DMG et de l’archive : signature,
+- [x] Vérifier aussi le contenu extrait du DMG et de l’archive : signature,
   Gatekeeper, tickets, architectures, minimum macOS et absence de dépendance
   à `/nix/store`. Déplacer les vérificateurs existants hors du dossier historique.
   L’app installée fonctionne sur un Mac sans outils de développement.
 
 ### Étape 7 Aligner Nix et tous les contrôles CI
 
-- [ ] Conserver `nix run .#check`, `.#build-macos`, `.#release-macos` et
+- [x] Conserver `nix run .#check`, `.#build-macos`, `.#release-macos` et
   `.#build-site` comme entrées de référence. Le build macOS ne lance plus
   npm/Vite, Tauri CLI, `tauri-build` ou un script encore situé sous `src-tauri`.
-- [ ] Unifier les crates et le verrou Cargo, adapter les filtres de sources et
+- [x] Unifier les crates et le verrou Cargo, adapter les filtres de sources et
   les sélections de paquets Nix/Homebrew. Les outils de signature de release et
   le compagnon macOS ne deviennent pas des exécutables installés avec la CLI
   Linux. Protéger les adaptateurs macOS par les configurations de cible utiles.
-- [ ] Porter tests de contrat, manifestes, distribution, relance et installation
+- [x] Porter tests de contrat, manifestes, distribution, relance et installation
   vers les nouveaux emplacements. Ajouter les scénarios d’update et d’intégrité
   ci-dessus ; garder les tests métier CLI/agent sur Linux et macOS.
-- [ ] Aligner `.github/workflows/ci.yml`, `release-macos.yml`, les scripts de
+- [x] Aligner `.github/workflows/ci.yml`, `release-macos.yml`, les scripts de
   sélection Xcode, les caches, les artefacts et les chemins de récupération.
   Le workflow normal et la reconstruction manuelle d’un tag utilisent le même
   packaging autonome. Un tag signé existant n’est jamais déplacé.
 
 ### Étape 8 Retirer les composants obsolètes après validation de la parité
 
-- [ ] Retirer `apps/warpgatesh-companion` après transfert des opérations, tests,
+- [x] Retirer `apps/warpgatesh-companion` après transfert des opérations, tests,
   ressources et outils utiles. Retirer React/Vite/TypeScript, les plugins,
   configurations, capacités, `build.rs` Tauri et verrous devenus inutiles.
-- [ ] Examiner `apps/warpgatesh-macos-demo` et conserver ses éléments encore
+- [x] Examiner `apps/warpgatesh-macos-demo` et conserver ses éléments encore
   utiles avant retrait des seuls prototypes devenus obsolètes. Préserver les
   captures et documents historiques correctement identifiés.
-- [ ] Vérifier `cargo tree`, les manifestes npm de l’app, les scripts actifs et
+- [x] Vérifier `cargo tree`, les manifestes npm de l’app, les scripts actifs et
   le contenu du bundle : aucune dépendance `tauri*`, `tao`, `wry`, aucun frontend
   Tauri embarqué, aucun appel au bundler ou au signer Tauri. Le nom historique
   d’un secret CI ou une mention dans un changelog n’est pas une dépendance.
-- [ ] Conserver WebKit pour la connexion native à l’instance et ses protections
+- [x] Conserver WebKit pour la connexion native à l’instance et ses protections
   d’origine, de cookie, SSO/MFA et de TLS. Refaire les mesures de l’étape 1 dans
   les mêmes conditions et documenter les gains réellement observés.
 
@@ -296,16 +314,16 @@ initialement prévues pour un installeur Rust maison (ADR 0038).**
 
 ### Étape 10 Livrer et clôturer la migration
 
-- [ ] Exécuter les contrôles de référence, la CI et les essais de mise à niveau
+- [x] Exécuter les contrôles de référence, la CI et les essais de mise à niveau
   signée ; choisir la prochaine version libre supérieure à 0.1.24 et aligner
   workspace, bundle, démo, changelog, manifeste et notes de release.
-- [ ] Mettre à jour README, CONTRIBUTING, guides Nix/macOS/Linux concernés,
+- [x] Mettre à jour README, CONTRIBUTING, guides Nix/macOS/Linux concernés,
   installation, dépannage, désinstallation et ADR. Corriger les références aux
   anciens chemins et au repli Tauri ; conserver l’historique des versions.
-- [ ] Capturer les écrans réellement modifiés/versionnés en démo avec données
+- [x] Capturer les écrans réellement modifiés/versionnés en démo avec données
   fictives. Contrôler rendu, format, dimensions et empreintes ; identifier
   honnêtement les captures anciennes conservées car l’écran est inchangé.
-- [ ] Fusionner la PR après les contrôles, publier le tag signé et préparer le
+- [x] Fusionner la PR après les contrôles, publier le tag signé et préparer le
   brouillon de release avec DMG, SHA-256, archive, signature et `latest.json`.
   Valider les fichiers téléchargés et une installation réelle avant publication.
 - [ ] Publier la release et Homebrew avec le bon SHA-256. Déployer le site sur
@@ -344,21 +362,21 @@ leurs erreurs et leurs effets comptent, pas seulement leur présence dans un enu
 
 ## Critères de fin
 
-- [ ] Le bundle et toute sa chaîne de construction/distribution fonctionnent
+- [x] Le bundle et toute sa chaîne de construction/distribution fonctionnent
   sans Tauri ; le backend n’a plus d’hôte GUI ni de dépendance au frontend web.
 - [ ] La matrice de parité est validée et les deux transitions d’update signée
   sont démontrées : 0.1.24 → version sans Tauri → version de test suivante.
 - [ ] Une installation neuve et une installation existante conservent une
   fenêtre/une icône correctes, les choix de démarrage, le nom de l’application,
   les profils et l’accès aux secrets. Les écrans et actions restent accessibles.
-- [ ] Le domaine métier et les mutations restent dans Rust et dans l’agent ;
+- [x] Le domaine métier et les mutations restent dans Rust et dans l’agent ;
   les vues n’embarquent ni API Warpgate dupliquée ni stockage de jetons.
-- [ ] Les tâches async ont des délais, une annulation et une gestion explicite
+- [x] Les tâches async ont des délais, une annulation et une gestion explicite
   des erreurs ; les tests utilisent des services injectés et des fixtures isolées.
 - [ ] Nix, CI, macOS 13/Intel/Apple Silicon, Linux et la distribution Apple sont
   validés. Une limite de banc de test ou un contrôle rouge reste explicite et
   empêche de déclarer la migration complètement livrée.
-- [ ] GitHub, Homebrew, le site et ses captures correspondent à la version
+- [x] GitHub, Homebrew, le site et ses captures correspondent à la version
   publiée ; les preuves identifient version, commit et périmètre réel des tests.
 - [ ] Les mesures avant/après sont consignées ; aucune amélioration chiffrée
   n’est annoncée sans mesure. Les temporaires sont nettoyés et le suivi est clos.
