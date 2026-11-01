@@ -1,115 +1,130 @@
 {
-  "capturedOn": "2026-10-31",
+  "capturedOn": "2026-11-01",
   "source": "Running WarpgateSH SwiftUI app, --demo mode",
   "data": "Fictional demo data only; no live profiles or secrets; login is explicitly simulated",
   "language": "English",
-  "releaseStatus": "WarpgateSH v0.1.24; About refreshed; unchanged interface captures retained from v0.1.23 and v0.1.22, marked per image",
-  "version": "0.1.24",
+  "releaseStatus": "WarpgateSH v0.1.25 native companion; all captures refreshed from the running app in isolated demo mode.",
+  "version": "0.1.25",
   "images": [
     {
       "file": "about.png",
       "width": 860,
       "height": 620,
-      "sha256": "8715517361818b8fba86f37d61be6269f4756d95f613b51570e8db75369fffb8",
-      "capturedVersion": "0.1.24"
+      "sha256": "0237215302ee49ebfda683e2af96015275d2160db9e7ad56c9d6aef420e26ef8",
+      "capturedVersion": "0.1.25",
+      "capturedOn": "2026-11-01"
     },
     {
       "file": "access.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "8f991fefd170f32e83e5ea89cacdf549dc541cb8f2135c343f34fbdd050cf202",
-      "capturedVersion": "0.1.23"
+      "width": 860,
+      "height": 620,
+      "sha256": "05ccdab84f61736bb78c525fa82c4f2c8b27deea3246bee752c5f73d373d67bb",
+      "capturedVersion": "0.1.25",
+      "capturedOn": "2026-11-01"
     },
     {
       "file": "logs.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "a913cf08ec38884ad3489768e525e910c0a2b25de45e072f2650415bc9e9ff3f",
-      "capturedVersion": "0.1.23"
+      "width": 860,
+      "height": 620,
+      "sha256": "e8f4151fcbe09885a6dfcaf64d8cded537811daa1c70209edd49f1b60d9bac07",
+      "capturedVersion": "0.1.25",
+      "capturedOn": "2026-11-01"
     },
     {
       "file": "manual-mode.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "8079b64f2362e5bd95c0ccfd8ca3ace8f05bf280a5c2955cae4300aa3b1c3ad5",
-      "capturedVersion": "0.1.23"
+      "width": 860,
+      "height": 620,
+      "sha256": "6b1e2f6be63bdbaa92b2553cd5e6285a2c5e49e1ae324b610fcc00963de843e3",
+      "capturedVersion": "0.1.25",
+      "capturedOn": "2026-11-01"
     },
     {
       "file": "preferences-black.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "d512d365affcf35bbd02880f2315bc8ca01e4ec16a8ca7630e3678bdf695322f",
-      "capturedVersion": "0.1.23"
+      "width": 860,
+      "height": 620,
+      "sha256": "ee65f51b6e920fcba1f00e19af1c7ad7cd97d636390b67eec23190f01c415f8a",
+      "capturedVersion": "0.1.25",
+      "capturedOn": "2026-11-01"
     },
     {
       "file": "preferences-light.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "1d28dae709693bee5e211d61f8ac2fbfeb81b54300fc262620403190db591a85",
-      "capturedVersion": "0.1.23"
+      "width": 860,
+      "height": 620,
+      "sha256": "1718dd718997115588fac3321f803083c39d6234c544902abfdea2f7b53deca7",
+      "capturedVersion": "0.1.25",
+      "capturedOn": "2026-11-01"
     },
     {
       "file": "preferences-manual.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "3e062d450fce7a57520e69caee9ea060f3c030d176133570505dacf86a7b85ba",
-      "capturedVersion": "0.1.23"
+      "width": 860,
+      "height": 620,
+      "sha256": "90a4d5ec3376e554f2457ea6fcb3b51f33798cb0e11745eccf59e499d2907765",
+      "capturedVersion": "0.1.25",
+      "capturedOn": "2026-11-01"
     },
     {
       "file": "preferences-sync.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "93d0a419cc6f735ae0f9da31b48db3f1cb4518776963a2678c2d425cd0790386",
-      "capturedVersion": "0.1.23"
+      "width": 860,
+      "height": 620,
+      "sha256": "531bbb46428c58ded8c49339c765ee34541fd55356c3c297d32b6eccda1255e7",
+      "capturedVersion": "0.1.25",
+      "capturedOn": "2026-11-01"
     },
     {
       "file": "preferences-system.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "9321b9482de74de6a14b715af2ce6a0c114bcd35455ca3282ed44511aea68752",
-      "capturedVersion": "0.1.23"
+      "width": 860,
+      "height": 620,
+      "sha256": "001a4672e3e06c0e79d2a97acb8b4dee999bd83e2b6f9977107fc69a1c51f92b",
+      "capturedVersion": "0.1.25",
+      "capturedOn": "2026-11-01"
     },
     {
       "file": "preferences.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "848baae2939a27a3901c1d995578041f5b223527b87c3dba599e580083846ee1",
-      "capturedVersion": "0.1.23"
+      "width": 860,
+      "height": 620,
+      "sha256": "a16779192c7504137179ff67a5904c2c0923814e2f76c3ee6cc312f90a56d926",
+      "capturedVersion": "0.1.25",
+      "capturedOn": "2026-11-01"
     },
     {
       "file": "profile-add.png",
       "width": 560,
       "height": 490,
-      "sha256": "23a7c3711d56f043f9ec98539f6d645b922c9812f179cc6d30b8e029f14034b3",
-      "capturedVersion": "0.1.22"
+      "sha256": "d99852e026959c0b5b7436fa5531b65465df16032108c49ae496ee29e6f95294",
+      "capturedVersion": "0.1.25",
+      "capturedOn": "2026-11-01"
     },
     {
       "file": "profile-login.png",
       "width": 680,
       "height": 560,
-      "sha256": "bf1c8834581f2573c031e5c6b33a551bc78fdfe1fadd94436adc562b1597d034",
-      "capturedVersion": "0.1.22"
+      "sha256": "9a5444b2d468791b62a0ffce023ead2df1de2aee2751157c78e156e8f11d0d9a",
+      "capturedVersion": "0.1.25",
+      "capturedOn": "2026-11-01"
     },
     {
       "file": "profiles.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "42a2c0e7977f8cd1cad0e36d0614f1f9213b019634a46038a5f0ad218d445075",
-      "capturedVersion": "0.1.23"
+      "width": 860,
+      "height": 620,
+      "sha256": "c6301cf5cb5023a6d50ecbcc1cb65defe05131af8921e66379944887221d801d",
+      "capturedVersion": "0.1.25",
+      "capturedOn": "2026-11-01"
     },
     {
       "file": "synchronization.png",
-      "width": 881,
-      "height": 713,
-      "sha256": "3e22ece3d923357d8285935aa268db7dd1c784053eeca8c0c5e887b952b1e22e",
-      "capturedVersion": "0.1.23"
+      "width": 860,
+      "height": 620,
+      "sha256": "9b41c02f651bb932a023df1cdaaaecb3a0af1247c0c6e076b3b5bd8c3aa6ebc1",
+      "capturedVersion": "0.1.25",
+      "capturedOn": "2026-11-01"
     },
     {
       "file": "token-renewal.png",
       "width": 520,
       "height": 283,
-      "sha256": "3a5e517469d0ffd0567f4338b3d51c2b0c9ba3308eff198287bd727b4d4ece98",
-      "capturedVersion": "0.1.22"
+      "sha256": "a813951cff96a42d5040d806b93d9b9a7864345ecdb888d15c89cebf67c83260",
+      "capturedVersion": "0.1.25",
+      "capturedOn": "2026-11-01"
     }
   ]
 }

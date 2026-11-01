@@ -11,7 +11,7 @@ check_rust() {
 }
 
 check_companion() {
-  cargo build -p warpgatesh-companion --locked
+  cargo build -p warpgatesh-companion -p warpgatesh-cli -p warpgatesh-agent --locked
   python3 apps/warpgatesh-macos/scripts/swift.py test --package-path apps/warpgatesh-macos
   python3 apps/warpgatesh-macos/scripts/swift.py format lint --strict --recursive apps/warpgatesh-macos/Sources apps/warpgatesh-macos/Tests apps/warpgatesh-macos/Package.swift
   python3 apps/warpgatesh-macos/scripts/test-bridge.py target/debug/warpgatesh-companion

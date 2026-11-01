@@ -12,9 +12,25 @@ fn sign() -> Result<(), Box<dyn std::error::Error>> {
     std::fs::write(format!("{path}.sig"), encoded)?;
     Ok(())
 }
+fn verify() -> Result<(), Box<dyn std::error::Error>> {
+    let args: Vec<String> = std::env::args().collect();
+    let archive = std::fs::read(args.get(2).ok_or("Expected archive")?)?;
+    let signature = std::fs::read_to_string(args.get(3).ok_or("Expected signature")?)?;
+    let public = std::fs::read_to_string(args.get(4).ok_or("Expected public key")?)?;
+    let decoded = base64::engine::general_purpose::STANDARD.decode(signature.trim())?;
+    let signature = minisign_verify::Signature::decode(std::str::from_utf8(&decoded)?)?;
+    minisign_verify::PublicKey::decode(&public)?.verify(&archive, &signature, false)?;
+    println!("Legacy 0.1.24 signature verified");
+    Ok(())
+}
 fn main() {
-    if sign().is_err() {
-        eprintln!("Unable to sign the update archive; verify release inputs.");
+    let result = if std::env::args().nth(1).as_deref() == Some("--verify") {
+        verify()
+    } else {
+        sign()
+    };
+    if result.is_err() {
+        eprintln!("Unable to sign or verify the update archive; verify release inputs.");
         std::process::exit(1);
     }
 }

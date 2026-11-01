@@ -15,3 +15,5 @@ apps/warpgatesh-companion/src-tauri/binaries/
 apps/warpgatesh-companion/src-tauri/native-resources/
 
 /.build/
+
+/.build-benchmark/

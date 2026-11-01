@@ -29,3 +29,5 @@ reference. These guides provide the complete public onboarding path.
 WarpgateSH is an unofficial community project. Use the official
 [Warpgate documentation](https://warpgate.null.page/) for server installation,
 administration, and access-control configuration.
+
+- [Native migration validation (0.1.25)](validation/0.1.25-native-migration.md)

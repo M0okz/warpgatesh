@@ -9,9 +9,7 @@ repository.workspace = true
 [dependencies]
 minisign = "=0.7.9"
 base64 = "0.22"
+minisign-verify = "=0.2.5"
 
 [lints]
 workspace = true
-
-[dev-dependencies]
-minisign-verify = "=0.2.5"

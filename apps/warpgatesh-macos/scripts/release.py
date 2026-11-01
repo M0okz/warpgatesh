@@ -25,5 +25,6 @@ run(['hdiutil','verify',image]);run([sys.executable,scripts/'verify-bundle.py',a
 with tempfile.TemporaryDirectory(prefix='warpgatesh-updater-check-') as directory:
  run(['tar','-xzf',out/'WarpgateSH.app.tar.gz','-C',directory]);extracted=pathlib.Path(directory)/'WarpgateSH.app'
  run([sys.executable,scripts/'verify-bundle.py',extracted]);run(['xcrun','stapler','validate',extracted],retry=True)
+run(['cargo','run','--locked','--package','warpgatesh-update-sign','--','--verify',out/'WarpgateSH.app.tar.gz',out/'WarpgateSH.app.tar.gz.sig',root/'apps/warpgatesh-macos/Bundle/updater.pub'])
 pathlib.Path(str(image)+'.sha256').write_text(hashlib.sha256(image.read_bytes()).hexdigest()+'  '+image.name+'\n')
 print('Signed, notarized distribution is ready for draft publication.')

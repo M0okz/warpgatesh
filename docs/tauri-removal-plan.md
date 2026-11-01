@@ -6,6 +6,7 @@
 > historiques qui prévoyaient un installeur Rust sont remplacées par l’ADR 0038.
 > Aucun installeur privilégié ou mécanisme de bascule maison n’est livré.
 > Suivi : [issue #15](https://github.com/M0okz/warpgatesh/issues/15).
+> Preuves : [validation 0.1.25](validation/0.1.25-native-migration.md).
 
 
 Date : 1 novembre 2026. Statut : plan prêt pour une exécution ultérieure.
@@ -135,16 +136,16 @@ de ces moyens se vérifie avant d’engager les étapes qui en dépendent.
 
 ### Étape 1 Figer la référence et les preuves
 
-- [ ] Vérifier Git, les instructions locales, les versions disponibles et les
+- [x] Vérifier Git, les instructions locales, les versions disponibles et les
   travaux non liés ; créer une branche `codex/` et l’issue GitHub d’architecture.
   Relier l’issue à cette note et au suivi Vikunja.
-- [ ] Conserver la distribution officielle 0.1.24 comme référence réinstallable.
+- [x] Conserver la distribution officielle 0.1.24 comme référence réinstallable.
   Utiliser un compte macOS ou des fixtures jetables pour les parcours destructifs.
 - [ ] Relever sur la même machine et avec les mêmes données de démo la taille
   du bundle/DMG, le lancement jusqu’à la fenêtre et à l’icône, la mémoire et le
   CPU au repos des processus UI/backend, et la durée d’un build propre puis
   incrémental. Faire plusieurs mesures et conserver médiane et dispersion.
-- [ ] Ajouter l’ADR de remplacement et une matrice fonctionnelle avant/après.
+- [x] Ajouter l’ADR de remplacement et une matrice fonctionnelle avant/après.
   Les gains de taille et de performance seront mesurés, sans pourcentage promis.
 
 ### Étape 2 Extraire le backend et verrouiller le protocole
@@ -187,48 +188,26 @@ de ces moyens se vérifie avant d’engager les étapes qui en dépendent.
 
 ### Étape 4 Remplacer complètement les mises à jour Tauri
 
-- [ ] Garder le flux public `releases/latest/download/latest.json`, ses champs
-  `version`, `notes`, `pub_date`, `platforms`, `url`, `signature`, et les deux
-  cibles `darwin-aarch64`/`darwin-x86_64`. Garder les noms
-  `WarpgateSH.app.tar.gz` et `.sig`, la clé publique et le couple de clés
-  existants. La compatibilité du format ne nécessite pas la bibliothèque Tauri.
-- [ ] Créer un outil Rust de signature de distribution autonome, fondé sur
-  Minisign et épinglé dans le build. Vérifier le format de clé chiffrée, de
-  signature et leur encodage avec le vérificateur de la 0.1.24. Les noms actuels
-  des secrets CI peuvent servir d’alias de compatibilité ; aucune clé n’est
-  régénérée ou exportée dans les logs pour cette migration.
-- [ ] Préserver SemVer, le cache de contrôle de six heures, la vérification
-  manuelle forcée, les notes et les états/progressions déjà consommés par Swift.
-  Une notification ou un contrôle de version ne déclenche pas une installation.
-  Le canal Homebrew reste géré par Homebrew et une app sur DMG reste non éligible.
-- [ ] Télécharger par HTTPS, sans identifiants Warpgate, avec délais et bornes
-  de taille. Vérifier la signature Minisign avant toute extraction. Rejeter
-  manifeste incohérent, cible incompatible, archive tronquée, signature absente
-  ou erronée et version plus ancienne ou déjà installée.
-- [ ] Extraire en privé avec limites de taille décompressée/nombre de fichiers.
-  Refuser traversées de chemin, chemins absolus, liens qui sortent du bundle,
-  fichiers spéciaux et contenu inattendu. Valider version, bundle ID,
-  `CFBundleExecutable`, architectures, signature Apple et Team ID attendus.
-  Les contrôles côté client utilisent les API/outils livrés avec macOS ;
-  ils n’exigent pas Xcode, Nix ou Node sur le poste utilisateur.
-- [ ] Implémenter une transaction de remplacement testable : verrou exclusif,
-  staging sur le volume de destination, état de reprise durable, ancienne app
-  conservée jusqu’au succès, gestion de l’espace et des permissions, relance
-  d’un helper vérifié hors du bundle remplacé. Celui-ci attend la sortie
-  effective des anciens processus et remplace l’application complète, pas
-  seulement l’exécutable SwiftUI.
-- [ ] Interrompre l’agent uniquement pour la bascule finale et seulement s’il
-  était actif ; le redémarrer depuis le nouveau bundle. Préserver le mode
-  manuel. Programmer la réouverture après remplacement sans prendre un PID
-  Launch Services invalide ou un ancien processus pour la nouvelle instance.
-- [ ] Tester échecs et interruptions à chaque étape, y compris permissions
-  refusées, réseau coupé, manque d’espace, remplacement partiel et relance en
-  échec. Couvrir les chemins avec espaces, apostrophes et métacaractères ;
-  transmettre les arguments littéralement, sans les interpoler en code shell.
-  Avant la validation du nouveau lancement, restaurer l’ancienne app
-  et l’état précédent de l’agent, ou exposer une reprise explicite sans perdre
-  les données. Après validation, supprimer uniquement les temporaires et la
-  copie de retour arrière créés par l’opération.
+**Ajustement approuvé pendant l’exécution : Sparkle natif remplace les tâches
+initialement prévues pour un installeur Rust maison (ADR 0038).**
+
+- [x] Conserver `latest.json`, les deux cibles Darwin, `WarpgateSH.app.tar.gz`,
+  sa signature Minisign et la clé historique pour les clients 0.1.24.
+- [x] Outil de signature Rust autonome ; vérification de la signature réelle
+  avec le vérificateur Minisign 0.2.5 utilisé par les anciens clients.
+- [x] Sparkle 2.10.1 épinglé, framework et services natifs embarqués/signés ;
+  appcast et archive signés EdDSA avec une clé séparée conservée dans le coffre.
+- [x] Vérification d’information toutes les six heures, contrôle manuel,
+  installation confirmée dans Sparkle, aucun téléchargement automatique,
+  aucun profilage système et aucune transmission d’identifiants Warpgate.
+- [x] Sparkle possède extraction, vérification, permissions et relance.
+  Le nouveau backend redémarre un agent actif d’une autre version, sans créer
+  de service absent ni réactiver le choix de synchronisation manuelle.
+- [x] Parcours natif signé 0.1.25 → 0.1.26 exécuté dans une fixture privée de
+  démonstration ; archive altérée refusée, version précédente conservée.
+- [ ] Parcours public officiel 0.1.24 → 0.1.25 après publication des artefacts.
+- [ ] Validation sur l’autre Mac de Gregory après sa mise à jour. L’architecture
+  et le macOS de ce poste ne sont pas présumés.
 
 ### Étape 5 Verrouiller la compatibilité de la première mise à niveau
 
