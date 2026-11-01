@@ -7,7 +7,7 @@ the synchronization agent and OpenSSH access work independently of its window.
 **Availability:** the native interface is available in **v0.1.18 and later**.
 The screenshots are actual captures of the running SwiftUI application in its
 isolated demo mode. Every profile, target, counter and diagnostic entry shown
-is fictional. The refreshed v0.1.23 captures use English labels; the three unchanged profile/sign-in/token sheets retain their v0.1.22 captures, identified in the asset manifest. From v0.1.20 the
+is fictional. All fifteen screenshots were refreshed from v0.1.25 on 1 November 2026, with English labels; dimensions and hashes are recorded in the asset manifest. From v0.1.20 the
 interface supports French, English and automatic language selection.
 
 ## First launch (v0.1.23 and later)
@@ -23,6 +23,17 @@ agent skips this first-launch window, including on upgrades.
 ![Manual synchronization preferences with an enable button, after choosing Later](assets/swiftui/preferences-manual.png)
 
 ![Access remains available in manual mode without a background agent](assets/swiftui/manual-mode.png)
+
+## Native updates (v0.1.25)
+
+The companion is built with SwiftUI/AppKit and a standalone Rust backend.
+Sparkle handles signed native updates, installation authorization and relaunch.
+Checks run every six hours while the companion is running; downloading and
+installing require your action. Automatic downloads and system profiling are off.
+The same notarized universal archive remains compatible with the 0.1.24 updater.
+Profiles, tokens in Keychain, SSH aliases and your background-agent choice stay
+in place. A background agent already running from an older version is restarted
+from the new bundle when the companion opens.
 
 ## Access
 
@@ -44,7 +55,7 @@ inside an ephemeral sign-in window; the instance still controls SSO and MFA.
 Use **Check profile**, compare the SSH host-key fingerprints with a trusted
 source, approve them, then **Save**. Only saving creates and stores the token.
 
-![Profile enrollment and SSH approval in demo mode](assets/swiftui/profile-add.png)
+![Profile enrollment form in demo mode](assets/swiftui/profile-add.png)
 
 The demo sign-in screen below simulates authentication only. Connected mode
 loads your instance's official page. Providers that reject embedded sign-in can

@@ -33,12 +33,10 @@ cargo build --workspace --locked
 ```
 
 The macOS production interface is SwiftUI in `apps/warpgatesh-macos` (Swift 6.2+).
-See its README for an isolated preview and native tests. The Tauri frontend
-remains available as a development fallback.
-
-For interactive Tauri companion development, run `npm ci` and `npm run tauri dev`
-from `apps/warpgatesh-companion` inside that shell. Manual Cargo/npm workflows
-remain available with an equivalent toolchain.
+See its README for an isolated preview and native tests. The private backend is
+`crates/warpgatesh-companion`; it runs without a GUI framework. Cargo and Swift
+can also be used with an equivalent manually installed toolchain. Node/npm are
+used only for the website.
 
 ## Required checks
 
@@ -58,17 +56,13 @@ nix run .#build-macos
 ```
 
 `nix run .#check` runs workspace formatting, tests and Clippy. On macOS it also
-runs frontend checks, sidecar/updater tests, and native companion formatting,
-tests and Clippy. CI uses the same commands and pinned inputs.
+runs Swift tests/formatting and the standalone pipe protocol smoke test. The
+universal bundle check verifies all four executables, minimum macOS, resource
+loading and absence of Nix-store dependencies.
 
-For changes to the macOS update/relaunch flow, run `npm run test:relaunch` from
-`apps/warpgatesh-companion` inside `nix develop` in a graphical macOS session. This test creates two
-temporary bundles signed ad hoc with the hardened runtime, replaces the first
-with a different executable, and verifies that a visible window opens after the
-old process exits. It uses a separate bundle identifier and does not load user
-profiles, install agents, or modify `/Applications/WarpgateSH.app`. Release
-signing, notarization, and the updater download/signature check still require
-their release validations.
+Changes to the updater require legacy Minisign compatibility, native Sparkle
+verification/installation checks, and both old-to-new and new-to-next updates. Use disposable fixtures and the official signed artifacts for release
+validation; personal installations are not destructive test fixtures.
 
 Add or update tests for behavior changes. Documentation-only changes do not
 need synthetic code tests, but all Markdown links and commands should still be

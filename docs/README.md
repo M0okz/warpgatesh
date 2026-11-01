@@ -23,8 +23,13 @@ reference. These guides provide the complete public onboarding path.
 - [Changelog](../CHANGELOG.md)
 - [Warpgate API compatibility and upgrade checks](warpgate-api-compatibility.md)
 - [macOS release procedure](releasing-macos.md)
+- [Complete Tauri removal plan](tauri-removal-plan.md)
 - [Architecture decisions](adr/)
 
 WarpgateSH is an unofficial community project. Use the official
 [Warpgate documentation](https://warpgate.null.page/) for server installation,
 administration, and access-control configuration.
+
+- [Native migration validation (0.1.25)](validation/0.1.25-native-migration.md)
+
+- [0.1.25 release notes](releases/0.1.25.md)

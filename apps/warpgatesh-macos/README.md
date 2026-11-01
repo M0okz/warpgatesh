@@ -1,8 +1,9 @@
 # Compagnon macOS SwiftUI
 
 Interface native de WarpgateSH, minimum macOS 13, Swift 6.2 ou ultérieur et Xcode.
-Le moteur Rust, la CLI, l’agent et le mécanisme de mise à jour signé sont réutilisés.
-Voir [ADR 0036](../../docs/adr/0036-use-swiftui-for-the-macos-companion.md).
+Le backend Rust autonome, la CLI et l’agent conservent les données et les accès existants.
+Sparkle 2.10.1 gère les mises à jour natives, avec transition depuis la 0.1.24.
+Voir [ADR 0038](../../docs/adr/0038-remove-tauri-from-the-macos-companion.md).
 
 ## Prévisualisation
 
@@ -37,8 +38,8 @@ nix run .#check
 nix run .#build-macos
 ```
 
-Les contrôles macOS compilent aussi l’interface SwiftUI. Le packaging prépare le
-sidecar natif et ses ressources avant le bundle Tauri existant. Le vérificateur
+Les contrôles macOS compilent aussi l’interface SwiftUI. Le packaging natif assemble directement l’interface, le backend autonome,
+la CLI, l’agent et les ressources Swift. Le vérificateur
 contrôle les quatre exécutables, leurs deux architectures et l’absence de liens
 vers le Nix store. Le workflow de publication existant signe et notarise le
 bundle complet ; aucune publication n’est déclenchée par ces commandes locales.

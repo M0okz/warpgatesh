@@ -7,7 +7,7 @@ Python, zsh and native Linux dependencies. Both Apple Rust targets are included
 on macOS. OpenSSH is declared for configuration tests; GitHub CLI and jq are provided for
 release tasks. No global rustup or Node installation is required. On macOS,
 proxy directories containing a host `rustup` are removed from the shell PATH so
-Tauri does not validate Nix's targets against an unrelated Rustup toolchain.
+the pinned compiler remains authoritative for both Apple targets.
 `RUSTUP_TOOLCHAIN` also points to the Nix toolchain so Cargo's rustfmt/Clippy
 proxies in `CARGO_HOME/bin` cannot select a different compiler version.
 
@@ -51,8 +51,8 @@ shipped application executables.
 | `nix develop` | Interactive development shell |
 | `nix build` | CLI and agent in `result/bin/`, built by Nix |
 | `nix flake check` | Evaluate the flake, build and test the CLI/agent package |
-| `nix run .#check` | Rust formatting, tests and Clippy; on macOS also frontend, sidecar and native companion checks |
-| `nix run .#build-macos` | Unsigned universal `.app` and DMG, bundled CLI/agent checks and DMG verification |
+| `nix run .#check` | Rust formatting, tests and Clippy; on macOS also Swift and private backend protocol checks |
+| `nix run .#build-macos` | Locally signed universal `.app` and DMG, without notarization; complete bundle checks |
 | `nix run .#release-macos` | Universal signed release build with updater artifacts; requires release credentials |
 | `nix run .#build-site` | Static website build and link checks |
 
@@ -64,13 +64,13 @@ does not install or start the synchronization agent. Existing runtime platform
 requirements, including system OpenSSH and a native secret store, still apply.
 
 The macOS app commands deliberately build in the checkout, outside the Nix
-sandbox: Tauri packaging and Apple signing/notarization need native host tools
+sandbox: native packaging and Apple signing/notarization need native host tools
 and, for releases, external services. The unsigned validation command enables
 neither notarization nor updater signing. Release secrets remain process
 variables and must never be written to Nix expressions or the Nix store.
 
 Desktop outputs are in
-`apps/warpgatesh-companion/src-tauri/target/universal-apple-darwin/release/bundle/`.
+`apps/warpgatesh-macos/.build/distribution/`.
 The website output is in `apps/warpgatesh-site/dist/`.
 
 ## Updating and cleaning
@@ -82,7 +82,7 @@ version change also requires editing the selection in `flake.nix`; keep the
 minimum version documented in `Cargo.toml` consistent with compatibility tests.
 
 `result` is only a link into the Nix store and can be removed after inspecting
-the package. Cargo target directories, frontend `dist`, Swift `.build`, Tauri native resources and `binaries` and
+the package. Cargo target directories, website `dist`, Swift `.build` and
 `node_modules` remain ignored generated outputs. Preserve local build caches
 unless you intentionally want a clean rebuild. Nix store garbage collection is
 a machine-wide maintenance operation, separate from cleaning this project.

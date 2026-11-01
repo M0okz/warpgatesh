@@ -13,3 +13,7 @@ apps/warpgatesh-companion/src-tauri/binaries/
 
 # SwiftUI native companion build resources
 apps/warpgatesh-companion/src-tauri/native-resources/
+
+/.build/
+
+/.build-benchmark/

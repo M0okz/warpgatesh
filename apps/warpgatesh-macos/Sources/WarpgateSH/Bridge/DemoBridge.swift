@@ -18,7 +18,10 @@ final class DemoBridge: CompanionTransport {
     preferences: .init(
       syncIntervalSeconds: 300, launchCompanionAtLogin: false, defaultProfile: "homelab"),
     terminalIntegration: .init(status: "missing", path: "/usr/local/bin/warpgatesh"),
-    update: .init(phase: "idle", channel: "unsupported", currentVersion: "0.1.24"), alerts: [])
+    update: .init(
+      phase: "idle", channel: "unsupported",
+      currentVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString")
+        as? String ?? "development"), alerts: [])
 
   init(firstLaunch: Bool = CommandLine.arguments.contains("--demo-first-launch")) {
     state.agentSetup = .init(

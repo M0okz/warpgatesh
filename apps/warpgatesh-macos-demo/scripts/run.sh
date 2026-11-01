@@ -6,7 +6,7 @@ binary_dir="$(python3 ../warpgatesh-macos/scripts/swift.py build --show-bin-path
 app_dir="$PWD/.build/WarpgateSH Demo.app"
 mkdir -p "$app_dir/Contents/MacOS" "$app_dir/Contents/Resources"
 cp -R "$binary_dir/WarpgateSHDemo_WarpgateSHDemo.bundle" "$app_dir/Contents/Resources/"
-cp "../warpgatesh-companion/src-tauri/icons/icon.icns" "$app_dir/Contents/Resources/AppIcon.icns"
+cp "../warpgatesh-macos/Bundle/icon.icns" "$app_dir/Contents/Resources/AppIcon.icns"
 cp "$binary_dir/WarpgateSHDemo" "$app_dir/Contents/MacOS/WarpgateSHDemo"
 cat > "$app_dir/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>

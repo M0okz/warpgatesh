@@ -40,6 +40,8 @@
                   || relative == "crates" || lib.hasPrefix "crates/" relative;
             };
             cargoLock.lockFile = ./Cargo.lock;
+            cargoBuildFlags = [ "-p" "warpgatesh-cli" "-p" "warpgatesh-agent" ];
+            cargoTestFlags = [ "-p" "warpgatesh-cli" "-p" "warpgatesh-agent" "-p" "warpgatesh-core" "-p" "warpgatesh-runtime" ];
             nativeBuildInputs = [ pkgs.pkg-config pkgs.perl pkgs.zsh ];
             buildInputs = libraries;
             nativeCheckInputs = [ pkgs.openssh ];
@@ -54,7 +56,6 @@
             # Cargo also discovers rustup proxies in CARGO_HOME/bin before PATH.
             RUSTUP_TOOLCHAIN = "${toolchain}";
             shellHook = lib.optionalString pkgs.stdenv.isDarwin ''
-              # Tauri otherwise asks an unrelated host rustup for installed targets.
               # Keep the Nix toolchain authoritative, including on GitHub runners.
               IFS=: read -r -a warpgatesh_path_entries <<< "$PATH"
               warpgatesh_clean_path=()

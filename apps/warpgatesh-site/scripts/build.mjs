@@ -102,9 +102,11 @@ await writeFile(
   path.join(output, "sitemap.xml"),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((url) => `<url><loc>${origin}${url}</loc></url>`).join("")}</urlset>\n`,
 );
-const product = JSON.parse(await readFile(path.join(repository, "apps", "warpgatesh-companion", "package.json"), "utf8"));
+const manifest = await readFile(path.join(repository, "Cargo.toml"), "utf8");
+const version = manifest.match(/\[workspace\.package\][\s\S]*?\nversion\s*=\s*"([^"]+)"/)?.[1];
+if (!version) throw new Error("Workspace version missing");
 const sourceCommit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: repository, encoding: "utf8" }).trim();
-await writeFile(path.join(output, "release.json"), JSON.stringify({ version: product.version, sourceCommit }) + "\n");
+await writeFile(path.join(output, "release.json"), JSON.stringify({ version, sourceCommit }) + "\n");
 console.log(
   `Built landing page and ${guides.length + 1} documentation pages in ${output}`,
 );
