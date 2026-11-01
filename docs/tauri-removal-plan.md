@@ -8,22 +8,21 @@
 > Suivi : [issue #15](https://github.com/M0okz/warpgatesh/issues/15).
 > Preuves : [validation 0.1.25](validation/0.1.25-native-migration.md).
 
+Date : 1 novembre 2026. Statut : implémentation et publication livrées en 0.1.25 ; limites du banc de test précisées ci-dessous.
 
-Date : 1 novembre 2026. Statut : plan prêt pour une exécution ultérieure.
-
-Suivi de réalisation : **WarpgateSH #45**, à faire.
+Suivi de réalisation : **WarpgateSH #45**, avec preuves de livraison.
 
 La version **0.1.24 est la base fonctionnelle confirmée par Gregory**, notamment
 pour l’icône de barre des menus et l’identité des éléments de connexion. La
-migration remplacera l’hôte Tauri et ses outils de distribution par un backend
+migration a remplacé l’hôte Tauri et ses outils de distribution par un backend
 Rust autonome et un assemblage macOS explicite, en conservant l’interface SwiftUI
 validée et toutes les fonctions existantes.
 
 L’exécution doit aller jusqu’à une livraison complète : une branche dédiée,
 des commits relisibles, une PR de migration et une release après validation.
 Les étapes ci-dessous sont des jalons internes ; le prototype ou le seul retrait
-des dépendances ne constituent pas la fin du travail. La demande actuelle porte
-sur la préparation de cette note ; l’implémentation n’est pas commencée.
+des dépendances ne constituent pas la fin du travail. Le plan initial a été autorisé puis exécuté ; le résultat et ses limites sont
+consignés ci-dessous et dans le compte rendu de validation.
 
 ## Résultat de l’exécution
 
@@ -43,7 +42,6 @@ Intel/macOS 13, une session macOS réellement neuve et une campagne VoiceOver
 complète ne sont pas certifiées par ce Mac Apple Silicon. Gregory a prévu un
 autre Mac pour le retour de mise à jour ; ses caractéristiques ne sont pas
 présumées. Les limites sont détaillées dans le compte rendu de validation.
-
 
 ## Périmètre
 
