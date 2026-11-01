@@ -79,7 +79,7 @@ pub fn ensure_bundled_agent() -> Result<bool, RuntimeError> {
         .is_ok_and(|status| {
             !status
                 .split_whitespace()
-                .any(|field| field == "token_management=1")
+                .any(|field| field == format!("version={}", env!("CARGO_PKG_VERSION")))
         })
     {
         launchd::restart()?;

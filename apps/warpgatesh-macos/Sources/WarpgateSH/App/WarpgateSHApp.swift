@@ -4,7 +4,17 @@ import SwiftUI
 struct WarpgateSHApp: App {
   @NSApplicationDelegateAdaptor(CompanionAppDelegate.self) private var delegate
   @StateObject private var model = CompanionModel(
-    transport: CommandLine.arguments.contains("--demo") ? DemoBridge() : NativeBridge())
+    transport: Self.transport())
+  private static func transport() -> any CompanionTransport {
+    #if DEBUG
+      // Private update fixtures keep their isolated domain data across Sparkle relaunch.
+      if Bundle.main.object(forInfoDictionaryKey: "WarpgateSHUpdateFixture") as? Bool == true {
+        return NativeUpdateTransport(base: DemoBridge())
+      }
+    #endif
+    return CommandLine.arguments.contains("--demo")
+      ? DemoBridge() : NativeUpdateTransport(base: NativeBridge())
+  }
   @StateObject private var settings: AppSettings
   @StateObject private var notifications: DesktopNotifications
   init() {

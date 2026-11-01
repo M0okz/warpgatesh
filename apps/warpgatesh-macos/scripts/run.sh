@@ -26,6 +26,9 @@ cat > "$app_dir/Contents/Info.plist" <<'PLIST'
 <key>NSHighResolutionCapable</key><true/>
 </dict></plist>
 PLIST
+mkdir -p "$app_dir/Contents/Frameworks"
+framework_path="$PWD/.build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework"
+/usr/bin/ditto "$framework_path" "$app_dir/Contents/Frameworks/Sparkle.framework"
 # Sign the complete preview bundle so local UserNotifications can identify it.
 codesign --force --deep --sign - "$app_dir"
 # The default preview is isolated: no backend, profiles, tokens, agent or network.

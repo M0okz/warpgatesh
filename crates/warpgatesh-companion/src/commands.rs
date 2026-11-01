@@ -136,7 +136,7 @@ pub async fn install_command_line_tool() -> Result<TerminalIntegration, String> 
 }
 
 pub async fn uninstall_warpgatesh(
-    app: CompanionContext,
+    _app: CompanionContext,
     request: UninstallRequest,
 ) -> Result<(), String> {
     run_blocking(move || {
@@ -154,10 +154,9 @@ pub async fn uninstall_warpgatesh(
         }
         installation::move_application_to_trash().map_err(display_error)?;
 
-        let handle = app.clone();
         std::thread::spawn(move || {
             std::thread::sleep(Duration::from_millis(150));
-            handle.exit(0);
+            CompanionContext::exit(0);
         });
         Ok(())
     })
@@ -890,7 +889,7 @@ mod tests {
                 path: "/usr/local/bin/warpgatesh".to_owned(),
             },
             updates::UpdateStatus {
-                phase: updates::UpdatePhase::Current,
+                phase: updates::UpdatePhase::Idle,
                 channel: updates::UpdateChannel::Direct,
                 current_version: env!("CARGO_PKG_VERSION").to_owned(),
                 available_version: None,
@@ -909,7 +908,7 @@ mod tests {
         assert!(state.alerts.is_empty());
         assert!(state.agent_setup.needs_decision);
         assert_eq!(state.terminal_integration.status, "missing");
-        assert_eq!(state.update.phase, updates::UpdatePhase::Current);
+        assert_eq!(state.update.phase, updates::UpdatePhase::Idle);
     }
 
     #[test]

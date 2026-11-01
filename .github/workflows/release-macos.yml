@@ -22,6 +22,7 @@ jobs:
       APPLE_ID: ${{ secrets.APPLE_ID }}
       APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
       TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     steps:
@@ -65,7 +66,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           directory=apps/warpgatesh-macos/.build/distribution
-          gh release create "$RELEASE_TAG" "$directory"/*.dmg "$directory"/*.sha256 "$directory"/*.tar.gz "$directory"/*.sig "$directory/latest.json" --verify-tag --draft --title "WarpgateSH ${RELEASE_TAG#v}" --generate-notes
+          gh release create "$RELEASE_TAG" "$directory"/*.dmg "$directory"/*.sha256 "$directory"/*.tar.gz "$directory"/*.sig "$directory/latest.json" "$directory/appcast.xml" --verify-tag --draft --title "WarpgateSH ${RELEASE_TAG#v}" --generate-notes
       - name: Preserve failed distribution outputs
         if: failure()
         uses: actions/upload-artifact@v6

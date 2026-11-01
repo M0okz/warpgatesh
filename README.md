@@ -33,6 +33,8 @@ installing an agent. Choose **Enable synchronization** or **Later**; existing
 agents skip this prompt. Manual synchronization remains available, and the agent
 can be enabled or disabled under **Preferences → Synchronization**.
 
+> **macOS 0.1.25:** native SwiftUI/AppKit companion and Sparkle updates, with a standalone Rust backend. The signed update remains compatible with 0.1.24.
+
 ## Why WarpgateSH?
 
 [Warpgate](https://warpgate.null.page/) is a self-hosted bastion and privileged

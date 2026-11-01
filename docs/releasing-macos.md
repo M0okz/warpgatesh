@@ -1,127 +1,99 @@
 # Publier WarpgateSH sur macOS
 
-La publication macOS produit un unique DMG universel contenant le compagnon,
-la CLI et l’agent pour `arm64` et `x86_64`. Le workflow ne se déclenche que sur
-un tag `vX.Y.Z` correspondant exactement aux versions du workspace Rust, du
-compagnon npm et de Tauri.
+Depuis 0.1.25, la distribution utilise Swift, Cargo et les outils Apple, sans
+Tauri. Le bundle universel contient `warpgatesh-ui`, le backend autonome
+`warpgatesh-companion`, la CLI et l’agent. L’interface est l’exécutable principal
+et porte l’identifiant `dev.warpgatesh.companion`.
 
-## Prérequis Apple
+## Construction et contrôles
 
-La distribution hors Mac App Store exige un abonnement Apple Developer et un
-certificat **Developer ID Application** exporté au format PKCS#12 (`.p12`). La
-clé privée ne doit jamais être ajoutée au dépôt. La notarisation utilise un mot
-de passe spécifique à l’application Apple ID.
-
-Configurer les secrets GitHub Actions suivants :
-
-- `APPLE_CERTIFICATE` : contenu base64 du fichier `.p12` ;
-- `APPLE_CERTIFICATE_PASSWORD` : mot de passe choisi lors de l’export ;
-- `KEYCHAIN_PASSWORD` : mot de passe aléatoire du Trousseau éphémère de CI ;
-- `APPLE_ID` : adresse du compte Apple utilisé pour notariser ;
-- `APPLE_PASSWORD` : mot de passe spécifique à l’application ;
-- `APPLE_TEAM_ID` : identifiant de l’équipe Apple Developer.
-- `TAURI_SIGNING_PRIVATE_KEY` : clé privée de l’updater Tauri, également
-  conservée dans Bitwarden et jamais ajoutée au dépôt ;
-- `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` : mot de passe de cette clé.
-
-La clé publique Tauri est intégrée à `tauri.conf.json`. Cette signature est
-indépendante de la signature Developer ID : Apple valide l’application macOS,
-tandis que l’updater vérifie que l’archive a bien été produite par WarpgateSH.
-
-Le workflow importe le certificat dans un Trousseau temporaire du runner,
-active le Hardened Runtime, signe tous les exécutables, soumet le DMG au service
-notarial Apple, agrafe le ticket et exécute `codesign`, `spctl`, `stapler` et
-`hdiutil` avant toute publication.
-
-## Créer une version
-
-1. Aligner les versions dans `Cargo.toml`, `package.json` et
-   `src-tauri/tauri.conf.json`.
-2. Exécuter les tests et créer le tag signé `vX.Y.Z`.
-3. Pousser le tag. Le workflow crée une GitHub Release en brouillon avec le DMG,
-   sa somme SHA-256, l’archive de mise à jour `WarpgateSH.app.tar.gz`, sa
-   signature et `latest.json`.
-4. Installer le DMG sur un Mac de test, puis publier manuellement le brouillon.
-
-Le workflow agrafe explicitement le ticket de l’application après l’assemblage Tauri, puis reconstruit le DMG et l’archive de mise à jour à partir de ce bundle. L’archive est signée de nouveau et son contenu extrait doit encore passer `codesign` et `stapler validate`.
-
-Pour reconstruire une version dont le workflow a échoué sans déplacer son tag signé, utiliser le déclenchement manuel du workflow **Release macOS** depuis `main`, avec le tag existant dans le champ `tag`.
-
-Le brouillon n’est jamais proposé aux clients. Après publication, l’application
-lit `releases/latest/download/latest.json` au maximum une fois toutes les six heures. Elle ne
-télécharge et n’installe une archive qu’après une action explicite de
-l’utilisateur et une vérification réussie de sa signature.
-
-La première version intégrant l’updater doit encore être installée depuis son
-DMG. Les versions suivantes peuvent remplacer ensemble le compagnon, la CLI et
-l’agent, puis redémarrent l’agent `launchd` depuis le nouveau bundle.
-
-## Environnement de build Nix
-
-Le développement, les contrôles CI et la publication utilisent les entrées
-verrouillées de `flake.lock`. Nix fournit Rust 1.85.0, les deux cibles Apple,
-Node.js 22 et npm. Xcode et ses outils de signature restent installés sur le
-Mac ou le runner. Voir [le guide Nix](development-nix.md).
-
-Pour vérifier l’assemblage universel complet sans identifiants de publication,
-depuis la racine du dépôt :
+Nix reste la référence. Xcode fournit Swift 6.2+, les SDK et les outils Apple.
 
 ```sh
+nix run .#check
+nix flake check
 nix run .#build-macos
+nix run .#build-site
 ```
 
-Cette commande produit l’application et le DMG, contrôle les quatre exécutables
-universels et vérifie l’image disque. Elle n’active pas les artefacts d’updater,
-la signature Developer ID ou la notarisation.
+Les sorties sont dans `apps/warpgatesh-macos/.build/distribution/`.
+`package.py` compile les deux architectures, assemble le bundle et le DMG,
+puis exécute `verify-bundle.py` et `hdiutil verify`. Le build local utilise une
+signature ad hoc ; il ne constitue pas une distribution notarisée.
 
-Pour construire une publication avec les identifiants Apple et Tauri injectés
-dans le processus :
+## Identifiants de publication
 
-```sh
-nix run .#release-macos
-```
+Le workflow conserve les secrets Apple existants : `APPLE_CERTIFICATE`,
+`APPLE_CERTIFICATE_PASSWORD`, `KEYCHAIN_PASSWORD`, `APPLE_ID`, `APPLE_PASSWORD`
+et `APPLE_TEAM_ID`. Le certificat Developer ID est importé dans le trousseau
+éphémère du runner. `APPLE_SIGNING_IDENTITY` désigne cette identité.
 
-Cette commande active `tauri.release.conf.json` et exige notamment
-`TAURI_SIGNING_PRIVATE_KEY` et `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
-Ne jamais ajouter ces secrets aux fichiers Nix. Le workflow conserve les étapes
-Apple de finalisation, notarisation et validation avant la création du brouillon.
+`TAURI_SIGNING_PRIVATE_KEY` et `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` sont les noms
+historiques des secrets de signature d’update. Ils conservent leur contenu et
+ne nécessitent pas Tauri : `warpgatesh-update-sign` charge la clé Minisign
+existante et écrit la signature encodée attendue par les anciens clients.
+La clé publique reste dans `apps/warpgatesh-macos/Bundle/updater.pub`.
+Ne jamais copier les secrets dans Git, Nix ou les logs.
 
-## Interface native SwiftUI
+## Préparer une release
 
-Le packaging prépare aussi `warpgatesh-ui` et le bundle de ressources Swift.
-Xcode doit fournir Swift 6.2 ou ultérieur. Le lanceur/backend Rust, l’interface
-SwiftUI, la CLI et l’agent sont tous universels et signés ensemble. Le protocole
-de mise à jour signé, l’identifiant du bundle et les chemins Trousseau restent
-identiques ; aucune conversion des données utilisateur n’est nécessaire.
+1. Aligner la version du workspace, les notes et la documentation. Vérifier
+   qu’aucun tag du même nom n’existe.
+2. Exécuter les contrôles, les scénarios d’update/reprise et la validation du
+   bundle empaqueté sur les environnements supportés.
+3. Créer et vérifier le tag signé `vX.Y.Z`, puis le pousser. Le workflow
+   **Release macOS** construit une distribution en brouillon.
+4. Télécharger les six artefacts, vérifier leur intégrité et leurs signatures,
+   tester l’installation et la relance, puis publier le brouillon.
+5. Vérifier le flux public depuis la 0.1.24 officielle et le nouveau moteur ;
+   aligner Homebrew, le site, les captures et les preuves de validation.
 
+Une reconstruction peut utiliser `workflow_dispatch` avec le tag existant.
+Un tag signé n’est pas déplacé pour réparer un workflow.
 
-## Smoke test du lancement macOS
+## Pipeline de distribution
 
-Lancer le bundle final depuis Finder ou avec `open -n /Applications/WarpgateSH.app`,
-puis vérifier que la fenêtre reste ouverte et que l’agent répond. Répéter avec
-`--args --demo` et vérifier la fermeture/réouverture. Exécuter seulement le
-binaire en ligne de commande ne suffit pas à tester l’enregistrement Launch
-Services. Celui-ci peut présenter une entrée temporaire dont le PID vaut -1 ;
-elle ne doit jamais être considérée comme une autre instance active.
+Avec les accès de release injectés et `RELEASE_NOTES_FILE` pointant sur le texte
+des notes, `nix run .#release-macos` exécute `scripts/release.py` :
 
-Depuis v0.1.24, `CFBundleExecutable` doit désigner `warpgatesh-ui`, également
-signé avec l’identifiant du bundle principal. Le lanceur/backend Rust reste un
-exécutable auxiliaire. Le vérificateur de bundle contrôle ces deux propriétés.
-Tester aussi une identité de bundle neuve : un Mac déjà utilisé pour développer
-peut conserver un enregistrement Launch Services qui masque une régression.
-Vérifier l’entrée dans Réglages Système → Barre des menus, puis la survie du
-compagnon après fermeture par la croix rouge ; le seul processus vivant ne
-prouve pas que l’icône a été enregistrée.
+1. Construire et signer les composants imbriqués puis l’application, avec
+   Hardened Runtime et horodatage.
+2. Soumettre une copie ZIP à Apple, agrafer et valider le ticket de l’app finale.
+3. Fabriquer le DMG et `WarpgateSH.app.tar.gz` depuis cette même app ; signer
+   l’archive avec l’outil autonome et générer `latest.json`.
+4. Signer, notariser, agrafer et vérifier le DMG. Vérifier aussi l’app extraite
+   de l’archive d’update, puis produire le fichier SHA-256.
 
-Deux LaunchAgents existent : `dev.warpgatesh.agent.plist` pour la synchronisation
-et `WarpgateSH.plist` pour l’ouverture facultative du compagnon. Vérifier leur
-association à l’application sans activer un élément désactivé ni réinitialiser
-les réglages globaux de macOS.
+Les sorties publiques restent le DMG universel, son `.sha256`,
+`WarpgateSH.app.tar.gz`, sa `.sig`, `latest.json` et `appcast.xml`. Les deux clés de plateforme
+`darwin-aarch64` et `darwin-x86_64` pointent vers l’archive universelle. Les
+clients installés conservent le même point d’accès HTTPS et la même clé publique.
+Le manifeste et la release doivent avoir les mêmes notes et version.
 
-La signature de distribution compile d’abord sans assembler le bundle, signe le
-backend Rust, puis lance `tauri bundle`. Cet ordre est nécessaire lorsque
-l’exécutable principal déclaré est l’interface SwiftUI : sa signature vérifie
-les composants du bundle englobant. Le script local et le workflow appliquent
-le même ordre. Une reconstruction d’un ancien tag peut utiliser le workflow
-corrigé sans déplacer ce tag ; noter séparément le commit du workflow et le tag
-des sources de l’application.
+## Vérifications fonctionnelles
+
+Lancer depuis Applications/Launch Services, puis tester fermeture par la croix
+rouge, icône visible, réouverture et sortie complète. Répéter avec une identité
+neuve, puis avec un profil existant et l’agent actif. Une présence de processus
+ou une entrée dans les permissions de barre des menus ne prouve pas à elle seule
+la visibilité de l’icône.
+
+Le mode `--demo` et `--demo-first-launch` sert aux captures et aux essais visuels
+isolés. Il ne lance pas le backend réel. Les captures publiées restent fictives ;
+les comptes-rendus doivent distinguer build universel, tests Intel/macOS minimum
+et tests sur le matériel réellement utilisé.
+
+## Native Sparkle transition (0.1.25)
+
+The native companion uses pinned Sparkle 2.10.1. `SUPublicEDKey` comes from
+`apps/warpgatesh-macos/Bundle/sparkle.pub`. `SPARKLE_ED_PRIVATE_KEY` is injected
+as a release secret, separately from the legacy Minisign secrets. The pinned
+official Sparkle signing tools are checksum-verified before use; private keys
+are supplied over standard input, never command arguments.
+
+Publish `appcast.xml` alongside the existing five release assets. Both its
+embedded signature and its enclosure signature are required. `latest.json`
+and `WarpgateSH.app.tar.gz.sig` remain for 0.1.24; the identical notarized archive
+is also signed for Sparkle. All bundle copies and tar archives preserve framework
+symlinks. Nested Sparkle services are signed inside-out before the parent app.
+Sparkle owns authorized installation and relaunch; no custom Rust installer runs.

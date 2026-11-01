@@ -256,7 +256,7 @@ mod tests {
         let config: serde_json::Value = serde_json::from_str(include_str!(
             "../../../apps/warpgatesh-macos/Bundle/app.json"
         ))
-        .expect("Tauri config");
+        .expect("native bundle metadata");
         assert_eq!(config["identifier"].as_str(), Some(BUNDLE_ID));
     }
 }

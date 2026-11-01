@@ -73,7 +73,7 @@ enum Operation {
 /// # Panics
 /// Panics if the required parent PID, async runtime or local storage is unavailable.
 pub fn run() {
-    let parent_pid = std::env::args()
+    let _parent_pid = std::env::args()
         .skip_while(|a| a != "--native-parent")
         .nth(1)
         .and_then(|v| v.parse::<u32>().ok())
@@ -81,9 +81,7 @@ pub fn run() {
         .expect("native parent id");
     let runtime = tokio::runtime::Runtime::new().expect("async runtime");
     let app = CompanionContext {
-        parent_pid,
-        updates: updates::UpdateManager::new().expect("update manager"),
-        background_started: Arc::new(std::sync::atomic::AtomicBool::new(false)),
+        updates: updates::UpdateManager::new(),
     };
     let _guard = runtime.enter();
     serve(&app);
@@ -127,7 +125,7 @@ fn serve(app: &CompanionContext) {
             active.fetch_sub(1, Ordering::AcqRel);
         });
     }
-    app.exit(0);
+    CompanionContext::exit(0);
 }
 
 pub(crate) fn write_message(message: &Value) {
@@ -145,7 +143,6 @@ async fn dispatch(app: CompanionContext, operation: Operation) -> Result<Value, 
                 agent_setup::initialize().map_err(|error| error.to_string())
             })
             .await?;
-            updates::start_background_checks(app);
             serialize(setup)
         }
         Operation::SetBackgroundAgent { enabled } => serialize(
@@ -156,7 +153,6 @@ async fn dispatch(app: CompanionContext, operation: Operation) -> Result<Value, 
         ),
         Operation::GetCompanionState => {
             let state = commands::get_companion_state(app).await?;
-            crate::transaction::acknowledge()?;
             serialize(state)
         }
         Operation::SyncNow => serialize(commands::sync_now().await?),
@@ -211,9 +207,9 @@ async fn dispatch(app: CompanionContext, operation: Operation) -> Result<Value, 
             commands::uninstall_warpgatesh(app, request).await?;
             Ok(Value::Null)
         }
-        Operation::CheckForUpdates => serialize(updates::check_for_updates(app).await?),
+        Operation::CheckForUpdates => serialize(updates::check_for_updates(app)?),
         Operation::InstallUpdate => {
-            updates::install_update(app).await?;
+            updates::install_update(app)?;
             Ok(Value::Null)
         }
     }

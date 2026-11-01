@@ -2,6 +2,12 @@
 
 Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
+## Non publié — migration 0.1.25
+
+- Le compagnon SwiftUI utilise désormais un backend Rust autonome ; Tauri et le frontend web historique sont retirés de l’application et de sa chaîne de distribution.
+- Le packaging universel macOS, la signature des updates et les contrôles Nix/CI deviennent autonomes, tout en conservant le format des mises à jour depuis la 0.1.24.
+- Les mises à jour passent à Sparkle natif : vérification EdDSA, autorisations d’installation et relance, sans téléchargement automatique. L’archive et la signature Minisign restent compatibles avec la 0.1.24.
+
 ## 0.1.24 — 2026-10-31
 
 - Le démarrage du compagnon à la connexion est lui aussi associé à WarpgateSH. Les anciens éléments sont corrigés sans réactiver ni arrêter les services ; les nouveaux sont créés avec les bonnes métadonnées.

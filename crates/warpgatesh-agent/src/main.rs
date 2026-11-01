@@ -390,7 +390,10 @@ fn format_status_response(synchronizing: bool, next_sync_seconds: u64) -> String
     } else {
         "idle"
     };
-    format!("ok running state={state} next_sync_seconds={next_sync_seconds} token_management=1")
+    format!(
+        "ok running state={state} next_sync_seconds={next_sync_seconds} token_management=1 version={}",
+        env!("CARGO_PKG_VERSION")
+    )
 }
 
 #[cfg(unix)]
@@ -489,11 +492,17 @@ mod tests {
     fn reports_the_live_agent_schedule() {
         assert_eq!(
             format_status_response(false, 83),
-            "ok running state=idle next_sync_seconds=83 token_management=1"
+            concat!(
+                "ok running state=idle next_sync_seconds=83 token_management=1 version=",
+                env!("CARGO_PKG_VERSION")
+            )
         );
         assert_eq!(
             format_status_response(true, 0),
-            "ok running state=synchronizing next_sync_seconds=0 token_management=1"
+            concat!(
+                "ok running state=synchronizing next_sync_seconds=0 token_management=1 version=",
+                env!("CARGO_PKG_VERSION")
+            )
         );
     }
 }

@@ -1,12 +1,7 @@
 fn main() {
     #[cfg(target_os = "macos")]
     {
-        if std::env::args().any(|a| a == "--recover-update") {
-            if let Err(error) = warpgatesh_companion::recover() {
-                eprintln!("{error}");
-                std::process::exit(1);
-            }
-        } else if std::env::args().any(|a| a == "--native-backend") {
+        if std::env::args().any(|a| a == "--native-backend") {
             warpgatesh_companion::run();
         } else {
             use std::os::unix::process::CommandExt;

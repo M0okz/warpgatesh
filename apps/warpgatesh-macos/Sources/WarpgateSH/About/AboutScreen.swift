@@ -3,7 +3,6 @@ import SwiftUI
 struct AboutScreen: View {
   @ObservedObject var model: CompanionModel
   let state: CompanionState
-  @State private var confirmUpdate = false
   var body: some View {
     ScrollView {
       VStack(spacing: 20) {
@@ -38,7 +37,7 @@ struct AboutScreen: View {
             Button(L10n.text("Vérifier les mises à jour")) { model.perform("check_for_updates") }
               .disabled(model.busy || state.update.isBusy)
             if state.update.channel == "direct" && state.update.phase == "available" {
-              Button(L10n.text("Installer la mise à jour…")) { confirmUpdate = true }
+              Button(L10n.text("Installer la mise à jour…")) { model.perform("install_update") }
                 .buttonStyle(.borderedProminent).tint(AccessTheme.cyan).disabled(model.busy)
             }
           }
@@ -58,19 +57,8 @@ struct AboutScreen: View {
       .frame(maxWidth: .infinity)
       .padding(.vertical, 16)
     }
-    .confirmationDialog(
-      L10n.text("Installer la mise à jour signée ?"), isPresented: $confirmUpdate,
-      titleVisibility: .visible
-    ) {
-      Button(L10n.text("Installer et redémarrer WarpgateSH")) { model.perform("install_update") }
-    } message: {
-      Text(
-        L10n.text(
-          "L’application, la CLI et l’agent seront remplacés ensemble. WarpgateSH redémarrera après vérification de la signature."
-        )
-      )
-    }
   }
+
   private var updateMessage: String {
     if state.update.channel == "homebrew" {
       return L10n.text("Cette installation est gérée par Homebrew.")

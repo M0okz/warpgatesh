@@ -3,7 +3,7 @@
 import os,pathlib,subprocess,sys,tempfile,time,tomllib,hashlib
 root=pathlib.Path(__file__).resolve().parents[3];scripts=root/'apps/warpgatesh-macos/scripts';out=root/'apps/warpgatesh-macos/.build/distribution'
 version=tomllib.loads((root/'Cargo.toml').read_text())['workspace']['package']['version']
-for key in ['APPLE_SIGNING_IDENTITY','APPLE_ID','APPLE_PASSWORD','APPLE_TEAM_ID','TAURI_SIGNING_PRIVATE_KEY','TAURI_SIGNING_PRIVATE_KEY_PASSWORD','RELEASE_NOTES_FILE']:
+for key in ['APPLE_SIGNING_IDENTITY','APPLE_ID','APPLE_PASSWORD','APPLE_TEAM_ID','TAURI_SIGNING_PRIVATE_KEY','TAURI_SIGNING_PRIVATE_KEY_PASSWORD','RELEASE_NOTES_FILE','SPARKLE_ED_PRIVATE_KEY']:
  if key not in os.environ:raise SystemExit(f'Missing required release input: {key}')
 def run(args, retry=False):
  for attempt in range(6 if retry else 1):

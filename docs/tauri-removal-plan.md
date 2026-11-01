@@ -1,5 +1,13 @@
 # Plan de retrait complet de Tauri de WarpgateSH
 
+> **Exécution en cours — 1er novembre 2026.** Gregory a autorisé la migration
+> complète, les tests et la publication. Ajustement approuvé : **Sparkle natif
+> 2.10.1**, avec compatibilité de mise à jour depuis 0.1.24. Les sections
+> historiques qui prévoyaient un installeur Rust sont remplacées par l’ADR 0038.
+> Aucun installeur privilégié ou mécanisme de bascule maison n’est livré.
+> Suivi : [issue #15](https://github.com/M0okz/warpgatesh/issues/15).
+
+
 Date : 1 novembre 2026. Statut : plan prêt pour une exécution ultérieure.
 
 Suivi de réalisation : **WarpgateSH #45**, à faire.
