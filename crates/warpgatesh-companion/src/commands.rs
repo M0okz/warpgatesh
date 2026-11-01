@@ -1,0 +1,970 @@
+use std::process::Command;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+use crate::CompanionContext;
+use serde::{Deserialize, Serialize};
+use warpgatesh_core::aliases::is_valid_profile_name;
+use warpgatesh_core::profiles::Profile;
+use warpgatesh_runtime::api::ApiClient;
+use warpgatesh_runtime::configuration::ConfigurationMutation;
+use warpgatesh_runtime::diagnostics::{self, DiagnosticLogger, DiagnosticsPreview};
+use warpgatesh_runtime::ipc;
+use warpgatesh_runtime::ssh::{open_token_page, scan_host_keys};
+use warpgatesh_runtime::storage::{AgentErrorKind, LocalStore, Preferences};
+use warpgatesh_runtime::token_api::ApiAuthorization;
+use warpgatesh_runtime::token_lifecycle::{self, ManagedTokenStatus};
+
+use crate::{agent_setup, installation, updates};
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CompanionState {
+    agent_setup: agent_setup::AgentSetup,
+    agent_running: bool,
+    agent_synchronizing: bool,
+    profiles: Vec<CompanionProfile>,
+    targets: Vec<CompanionTarget>,
+    last_sync_age_seconds: Option<u64>,
+    preferences: CompanionPreferences,
+    terminal_integration: TerminalIntegration,
+    update: updates::UpdateStatus,
+    alerts: Vec<CompanionAlert>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TerminalIntegration {
+    status: String,
+    path: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CompanionProfile {
+    name: String,
+    username: String,
+    base_url: String,
+    warpgate_version: Option<String>,
+    ssh_host: String,
+    ssh_port: u16,
+    is_default: bool,
+    managed_token: Option<ManagedTokenStatus>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CompanionTarget {
+    alias: String,
+    qualified_alias: String,
+    name: String,
+    profile: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CompanionPreferences {
+    sync_interval_seconds: u64,
+    launch_companion_at_login: bool,
+    default_profile: Option<String>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CompanionAlert {
+    id: String,
+    kind: String,
+    title: String,
+    message: String,
+    action: Option<String>,
+}
+
+#[derive(Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProfileRequest {
+    name: String,
+    base_url: String,
+    #[serde(default)]
+    token: String,
+    session_cookie: Option<String>,
+    ssh_host: Option<String>,
+    ssh_port: Option<u16>,
+    pub(crate) expected_fingerprints: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UninstallRequest {
+    delete_user_data: bool,
+    confirmation: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProfileInspection {
+    normalized_base_url: String,
+    username: String,
+    warpgate_version: Option<String>,
+    ssh_host: String,
+    ssh_port: u16,
+    fingerprints: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DiagnosticsExport {
+    path: String,
+}
+
+pub async fn get_companion_state(app: CompanionContext) -> Result<CompanionState, String> {
+    run_blocking(move || {
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        let launches_at_login = crate::companion_login::is_enabled().map_err(display_error)?;
+        let terminal = load_terminal_integration()?;
+        let update = updates::status(&app);
+        load_state(&store, launches_at_login, terminal, update)
+    })
+    .await
+}
+
+pub async fn install_command_line_tool() -> Result<TerminalIntegration, String> {
+    run_blocking(move || {
+        installation::install_cli()
+            .map(|status| terminal_integration(&status))
+            .map_err(display_error)
+    })
+    .await
+}
+
+pub async fn uninstall_warpgatesh(
+    app: CompanionContext,
+    request: UninstallRequest,
+) -> Result<(), String> {
+    run_blocking(move || {
+        if request.confirmation.trim() != "DÉSINSTALLER" {
+            return Err("Saisissez DÉSINSTALLER pour confirmer.".to_owned());
+        }
+
+        if crate::companion_login::is_enabled().map_err(display_error)? {
+            crate::companion_login::disable().map_err(display_error)?;
+        }
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        installation::uninstall_components(&store).map_err(display_error)?;
+        if request.delete_user_data {
+            installation::delete_user_data(&store).map_err(display_error)?;
+        }
+        installation::move_application_to_trash().map_err(display_error)?;
+
+        let handle = app.clone();
+        std::thread::spawn(move || {
+            std::thread::sleep(Duration::from_millis(150));
+            handle.exit(0);
+        });
+        Ok(())
+    })
+    .await
+}
+
+pub async fn sync_now() -> Result<String, String> {
+    run_blocking(move || {
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        DiagnosticLogger::new(&store.paths().logs_directory, "companion").info("sync.requested");
+        request_sync(&store)
+    })
+    .await
+}
+
+pub async fn preview_diagnostics() -> Result<DiagnosticsPreview, String> {
+    run_blocking(move || {
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        diagnostics::preview(&store).map_err(display_error)
+    })
+    .await
+}
+
+pub async fn export_diagnostics() -> Result<DiagnosticsExport, String> {
+    run_blocking(move || {
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        let logger = DiagnosticLogger::new(&store.paths().logs_directory, "companion");
+        logger.info("diagnostics.export-requested");
+        let path = diagnostics::export(&store).map_err(display_error)?;
+        let _ = Command::new("/usr/bin/open").arg("-R").arg(&path).spawn();
+        logger.info("diagnostics.exported");
+        Ok(DiagnosticsExport {
+            path: path.display().to_string(),
+        })
+    })
+    .await
+}
+
+pub async fn save_preferences(
+    _app: CompanionContext,
+    preferences: CompanionPreferences,
+) -> Result<(), String> {
+    run_blocking(move || {
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        let catalog = store.load_profiles().map_err(display_error)?;
+        if let Some(default) = &preferences.default_profile {
+            if catalog.find(default).is_none() {
+                return Err(format!("Le profil « {default} » n’existe pas."));
+            }
+        }
+
+        if preferences.launch_companion_at_login {
+            crate::companion_login::enable().map_err(display_error)?;
+        } else {
+            crate::companion_login::disable().map_err(display_error)?;
+        }
+        let persisted = Preferences {
+            sync_interval_seconds: preferences.sync_interval_seconds,
+            launch_companion_at_login: preferences.launch_companion_at_login,
+            ..Preferences::default()
+        };
+        request_configuration(
+            &store,
+            &ConfigurationMutation::SavePreferences {
+                preferences: persisted,
+                default_profile: preferences.default_profile,
+            },
+        )?;
+        Ok(())
+    })
+    .await
+}
+
+pub async fn open_token_page_for(base_url: String) -> Result<(), String> {
+    run_blocking(move || {
+        let client = ApiClient::new(&base_url).map_err(display_error)?;
+        let page = client.token_page_url().map_err(display_error)?;
+        open_token_page(page.as_str()).map_err(display_error)
+    })
+    .await
+}
+
+pub async fn inspect_profile(request: ProfileRequest) -> Result<ProfileInspection, String> {
+    run_blocking(move || {
+        validate_profile_request(&request)?;
+        let client = ApiClient::new(request.base_url.trim()).map_err(display_error)?;
+        let metadata = client
+            .validate_authorization(&profile_authorization(&request)?)
+            .map_err(display_error)?;
+        let ssh_host = request
+            .ssh_host
+            .as_deref()
+            .map(str::trim)
+            .filter(|host| !host.is_empty())
+            .unwrap_or(&metadata.ssh_host)
+            .to_owned();
+        let ssh_port = request.ssh_port.unwrap_or(metadata.ssh_port);
+        let host_keys = scan_host_keys(&ssh_host, ssh_port).map_err(display_error)?;
+        Ok(ProfileInspection {
+            normalized_base_url: client.base_url().as_str().to_owned(),
+            username: metadata.username,
+            warpgate_version: metadata.version,
+            ssh_host,
+            ssh_port,
+            fingerprints: host_keys.fingerprints,
+        })
+    })
+    .await
+}
+
+pub async fn add_profile(request: ProfileRequest) -> Result<(), String> {
+    run_blocking(move || {
+        validate_profile_request(&request)?;
+        let client = ApiClient::new(request.base_url.trim()).map_err(display_error)?;
+        let metadata = client
+            .validate_authorization(&profile_authorization(&request)?)
+            .map_err(display_error)?;
+        let ssh_host = request
+            .ssh_host
+            .as_deref()
+            .map(str::trim)
+            .filter(|host| !host.is_empty())
+            .unwrap_or(&metadata.ssh_host)
+            .to_owned();
+        let ssh_port = request.ssh_port.unwrap_or(metadata.ssh_port);
+        let host_keys = scan_host_keys(&ssh_host, ssh_port).map_err(display_error)?;
+        verify_expected_fingerprints(
+            request.expected_fingerprints.as_deref(),
+            &host_keys.fingerprints,
+        )?;
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        if let Some(cookie) = request
+            .session_cookie
+            .as_deref()
+            .filter(|value| !value.is_empty())
+        {
+            request_configuration(
+                &store,
+                &ConfigurationMutation::EnrollManagedProfile {
+                    profile: Profile {
+                        name: request.name.clone(),
+                        base_url: client.base_url().as_str().to_owned(),
+                        username: metadata.username,
+                        warpgate_version: metadata.version,
+                        ssh_host,
+                        ssh_port,
+                        ssh_authentication: warpgatesh_core::profiles::SshAuthentication::Auto,
+                    },
+                    known_hosts: host_keys.known_hosts,
+                    session_cookie: cookie.to_owned(),
+                },
+            )?;
+            return Ok(());
+        }
+        request_configuration(
+            &store,
+            &ConfigurationMutation::SaveProfile {
+                profile: Profile {
+                    name: request.name.clone(),
+                    base_url: client.base_url().as_str().to_owned(),
+                    username: metadata.username,
+                    warpgate_version: metadata.version,
+                    ssh_host,
+                    ssh_port,
+                    ssh_authentication: warpgatesh_core::profiles::SshAuthentication::Auto,
+                },
+                token: request.token.trim().to_owned(),
+                known_hosts: host_keys.known_hosts,
+            },
+        )?;
+        Ok(())
+    })
+    .await
+}
+
+pub async fn renew_profile_token(name: String, token: String) -> Result<(), String> {
+    run_blocking(move || {
+        if token.trim().is_empty() {
+            return Err("Le jeton API est requis.".to_owned());
+        }
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        let catalog = store.load_profiles().map_err(display_error)?;
+        let existing = catalog
+            .find(&name)
+            .cloned()
+            .ok_or_else(|| format!("Le profil « {name} » n’existe pas."))?;
+        let client = ApiClient::new(&existing.base_url).map_err(display_error)?;
+        let metadata = client.validate(token.trim()).map_err(display_error)?;
+        if metadata.username != existing.username {
+            return Err(
+                "Reconnectez-vous avec la même identité Warpgate que ce profil.".to_owned(),
+            );
+        }
+        request_configuration(
+            &store,
+            &ConfigurationMutation::RenewToken {
+                name,
+                token: token.trim().to_owned(),
+                username: metadata.username,
+                warpgate_version: metadata.version,
+            },
+        )?;
+        Ok(())
+    })
+    .await
+}
+
+pub async fn remove_profile(name: String) -> Result<(), String> {
+    run_blocking(move || {
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        request_configuration(&store, &ConfigurationMutation::RemoveProfile { name })?;
+        Ok(())
+    })
+    .await
+}
+
+pub async fn open_target(alias: String) -> Result<(), String> {
+    run_blocking(move || {
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        let snapshot = store
+            .load_snapshot()
+            .map_err(display_error)?
+            .ok_or_else(|| "Aucune cible SSH synchronisée n’est disponible.".to_owned())?;
+        let known = snapshot.targets.iter().any(|target| {
+            target.qualified_alias == alias || target.short_alias.as_deref() == Some(alias.as_str())
+        });
+        if !known {
+            return Err("L’alias SSH sélectionné n’est pas dans l’instantané local.".to_owned());
+        }
+
+        #[cfg(target_os = "macos")]
+        let status = Command::new("/usr/bin/open")
+            .arg(format!("ssh://{alias}"))
+            .status()
+            .map_err(display_error)?;
+
+        #[cfg(target_os = "linux")]
+        let status = Command::new("xdg-open")
+            .arg(format!("ssh://{alias}"))
+            .status()
+            .map_err(display_error)?;
+
+        #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+        return Err(
+            "L’ouverture de cibles SSH n’est pas prise en charge sur cette plateforme.".to_owned(),
+        );
+
+        if status.success() {
+            Ok(())
+        } else {
+            Err(format!("Le terminal s’est arrêté avec le statut {status}."))
+        }
+    })
+    .await
+}
+
+pub(crate) async fn run_blocking<T: Send + 'static>(
+    operation: impl FnOnce() -> Result<T, String> + Send + 'static,
+) -> Result<T, String> {
+    tokio::task::spawn_blocking(operation)
+        .await
+        .map_err(display_error)?
+}
+
+fn load_state(
+    store: &LocalStore,
+    launches_at_login: bool,
+    terminal_integration: TerminalIntegration,
+    update: updates::UpdateStatus,
+) -> Result<CompanionState, String> {
+    let catalog = store.load_profiles().map_err(display_error)?;
+    let snapshot = store.load_snapshot().map_err(display_error)?;
+    let preferences = store.load_preferences().map_err(display_error)?;
+    let managed = token_lifecycle::statuses(store).map_err(display_error)?;
+    let profiles = catalog
+        .profiles
+        .iter()
+        .map(|profile| CompanionProfile {
+            is_default: catalog.default_profile.as_deref() == Some(profile.name.as_str()),
+            managed_token: managed
+                .get(&profile.name)
+                .filter(|status| status.managed)
+                .cloned(),
+            name: profile.name.clone(),
+            username: profile.username.clone(),
+            base_url: profile.base_url.clone(),
+            warpgate_version: profile.warpgate_version.clone(),
+            ssh_host: profile.ssh_host.clone(),
+            ssh_port: profile.ssh_port,
+        })
+        .collect();
+    let (targets, last_sync_age_seconds) = snapshot.map_or_else(
+        || (Vec::new(), None),
+        |snapshot| {
+            let targets = snapshot
+                .targets
+                .into_iter()
+                .map(|target| CompanionTarget {
+                    alias: target
+                        .short_alias
+                        .unwrap_or_else(|| target.qualified_alias.clone()),
+                    qualified_alias: target.qualified_alias,
+                    name: target.name,
+                    profile: target.profile,
+                })
+                .collect();
+            let age = epoch_seconds().saturating_sub(snapshot.synchronized_at_epoch_seconds);
+            (targets, Some(age))
+        },
+    );
+    let agent_runtime = ipc::request_with_read_timeout(
+        &store.paths().agent_socket,
+        "status",
+        Duration::from_secs(1),
+    )
+    .map_or(
+        AgentRuntimeState {
+            running: false,
+            synchronizing: false,
+        },
+        |response| parse_agent_runtime_state(&response),
+    );
+    let alerts = build_alerts(
+        store,
+        agent_runtime.running,
+        last_sync_age_seconds,
+        &preferences,
+    )?;
+
+    Ok(CompanionState {
+        agent_setup: agent_setup::status(store).map_err(display_error)?,
+        agent_running: agent_runtime.running,
+        agent_synchronizing: agent_runtime.synchronizing,
+        profiles,
+        targets,
+        last_sync_age_seconds,
+        preferences: CompanionPreferences {
+            sync_interval_seconds: preferences.sync_interval_seconds,
+            launch_companion_at_login: launches_at_login,
+            default_profile: catalog.default_profile,
+        },
+        terminal_integration,
+        update,
+        alerts,
+    })
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct AgentRuntimeState {
+    running: bool,
+    synchronizing: bool,
+}
+
+fn parse_agent_runtime_state(response: &str) -> AgentRuntimeState {
+    AgentRuntimeState {
+        running: response.split_whitespace().any(|field| field == "running"),
+        synchronizing: response
+            .split_whitespace()
+            .any(|field| field == "state=synchronizing"),
+    }
+}
+
+fn load_terminal_integration() -> Result<TerminalIntegration, String> {
+    installation::cli_installation()
+        .map(|status| terminal_integration(&status))
+        .map_err(display_error)
+}
+
+fn terminal_integration(status: &installation::CliInstallation) -> TerminalIntegration {
+    TerminalIntegration {
+        status: status.status().to_owned(),
+        path: status.path().display().to_string(),
+    }
+}
+
+fn build_alerts(
+    store: &LocalStore,
+    agent_running: bool,
+    sync_age: Option<u64>,
+    preferences: &Preferences,
+) -> Result<Vec<CompanionAlert>, String> {
+    let mut alerts = Vec::new();
+    let manual = !agent_running && agent_setup::manual_mode(store).map_err(display_error)?;
+    if !agent_running && !manual {
+        alerts.push(CompanionAlert {
+            id: "agent-down".to_owned(),
+            kind: "error".to_owned(),
+            title: "Agent arrêté".to_owned(),
+            message: "La synchronisation automatique ne fonctionne plus.".to_owned(),
+            action: None,
+        });
+    }
+    if let Some(status) = store
+        .load_agent_status()
+        .map_err(display_error)?
+        .filter(|status| !manual && status.consecutive_failures >= 2)
+    {
+        if let (Some(kind), Some(message)) = (status.last_error_kind, status.last_error_message) {
+            let (id, title, action) = match kind {
+                AgentErrorKind::Unauthorized => ("token", "Jeton refusé", Some("profiles")),
+                AgentErrorKind::ApiUnreachable => ("api", "Warpgate injoignable", None),
+                AgentErrorKind::HostKey => ("host-key", "Clé SSH à vérifier", Some("profiles")),
+                AgentErrorKind::Incompatible => ("api-version", "API incompatible", None),
+                AgentErrorKind::Other => ("sync", "Synchronisation en échec", None),
+            };
+            alerts.push(CompanionAlert {
+                id: id.to_owned(),
+                kind: "error".to_owned(),
+                title: title.to_owned(),
+                message,
+                action: action.map(str::to_owned),
+            });
+        }
+    }
+    for (name, managed) in token_lifecycle::statuses(store).map_err(display_error)? {
+        if managed.last_error.is_some() {
+            alerts.push(CompanionAlert {
+                id: format!("token-renewal-{name}"),
+                kind: "error".to_owned(),
+                title: "Renouvellement du jeton en échec".to_owned(),
+                message: "Automatic token renewal failed. Check the profile and secure storage."
+                    .to_owned(),
+                action: Some("profiles".to_owned()),
+            });
+        }
+    }
+    let stale_after = preferences
+        .sync_interval_seconds
+        .saturating_mul(2)
+        .saturating_add(60);
+    if !manual && alerts.is_empty() && sync_age.is_some_and(|age| age > stale_after) {
+        alerts.push(CompanionAlert {
+            id: "stale".to_owned(),
+            kind: "warning".to_owned(),
+            title: "Synchronisation en retard".to_owned(),
+            message: "L’instantané local est plus ancien que prévu.".to_owned(),
+            action: None,
+        });
+    }
+    Ok(alerts)
+}
+
+fn verify_expected_fingerprints(expected: Option<&str>, actual: &str) -> Result<(), String> {
+    let normalized = |value: &str| {
+        value
+            .lines()
+            .map(str::trim)
+            .filter(|line| !line.is_empty())
+            .map(str::to_owned)
+            .collect::<std::collections::BTreeSet<_>>()
+    };
+    if expected.is_some_and(|value| normalized(value) != normalized(actual)) {
+        Err(
+            "Les empreintes SSH ont changé. Vérifiez à nouveau le profil avant de l’enregistrer."
+                .to_owned(),
+        )
+    } else {
+        Ok(())
+    }
+}
+
+fn validate_profile_request(request: &ProfileRequest) -> Result<(), String> {
+    if !is_valid_profile_name(request.name.trim()) {
+        return Err(
+            "Le nom doit utiliser uniquement des lettres minuscules, chiffres et tirets."
+                .to_owned(),
+        );
+    }
+    if request.token.trim().is_empty()
+        && request.session_cookie.as_deref().is_none_or(str::is_empty)
+    {
+        return Err("Le jeton API est requis.".to_owned());
+    }
+    Ok(())
+}
+
+fn request_sync(store: &LocalStore) -> Result<String, String> {
+    if agent_setup::manual_mode(store).map_err(display_error)? {
+        let report = warpgatesh_runtime::sync::verify_and_synchronize_all(
+            store,
+            &warpgatesh_runtime::keychain::SystemKeychain,
+        )
+        .map_err(display_error)?;
+        return Ok(format!("{} targets synchronized", report.target_count));
+    }
+    ipc::request_with_retry(&store.paths().agent_socket, "sync", Duration::from_secs(20))
+        .map_err(display_error)
+}
+
+fn request_configuration(
+    store: &LocalStore,
+    mutation: &ConfigurationMutation,
+) -> Result<String, String> {
+    if agent_setup::manual_mode(store).map_err(display_error)? {
+        warpgatesh_runtime::configuration::LocalConfiguration::new(
+            store,
+            &warpgatesh_runtime::keychain::SystemKeychain,
+        )
+        .apply(mutation.clone())
+        .map_err(display_error)?;
+        return Ok("Configuration saved".to_owned());
+    }
+    ipc::request_mutation(
+        &store.paths().agent_socket,
+        mutation,
+        Duration::from_secs(if mutation.is_network_operation() {
+            120
+        } else {
+            20
+        }),
+    )
+    .map_err(display_error)
+}
+
+fn epoch_seconds() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
+}
+
+fn display_error(error: impl std::fmt::Display) -> String {
+    error.to_string()
+}
+
+fn profile_authorization(request: &ProfileRequest) -> Result<ApiAuthorization, String> {
+    if let Some(cookie) = request
+        .session_cookie
+        .as_deref()
+        .filter(|value| !value.is_empty())
+    {
+        if !cookie.starts_with("warpgate-http-session=") || cookie.contains(['\r', '\n', ';']) {
+            return Err("Session Warpgate invalide.".to_owned());
+        }
+        Ok(ApiAuthorization::Session(cookie.to_owned()))
+    } else {
+        Ok(ApiAuthorization::Token(request.token.trim().to_owned()))
+    }
+}
+
+pub async fn rotate_profile_token(
+    name: String,
+    session_cookie: Option<String>,
+) -> Result<ManagedTokenStatus, String> {
+    run_blocking(move || {
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        let _profile = store
+            .load_profiles()
+            .map_err(display_error)?
+            .find(&name)
+            .cloned()
+            .ok_or_else(|| "Profil introuvable.".to_owned())?;
+        if let Some(cookie) = &session_cookie {
+            if !cookie.starts_with("warpgate-http-session=") || cookie.contains(['\r', '\n', ';']) {
+                return Err("Session Warpgate invalide.".to_owned());
+            }
+        }
+        request_configuration(
+            &store,
+            &ConfigurationMutation::RotateManagedToken {
+                name: name.clone(),
+                session_cookie,
+            },
+        )?;
+        let result = token_lifecycle::statuses(&store)
+            .map_err(display_error)?
+            .remove(&name)
+            .ok_or_else(|| "État du jeton indisponible.".to_owned())?;
+        Ok(result)
+    })
+    .await
+}
+
+pub async fn set_token_auto_renew(name: String, enabled: bool) -> Result<(), String> {
+    run_blocking(move || {
+        let store = LocalStore::for_current_user().map_err(display_error)?;
+        request_configuration(
+            &store,
+            &ConfigurationMutation::SetTokenAutoRenew { name, enabled },
+        )?;
+        Ok(())
+    })
+    .await
+}
+
+#[cfg(test)]
+mod tests {
+    use tempfile::TempDir;
+    use warpgatesh_core::paths::WarpgatePaths;
+    use warpgatesh_core::profiles::{Profile, ProfileCatalog};
+    use warpgatesh_runtime::storage::{
+        AgentStatus, SNAPSHOT_SCHEMA_VERSION, Snapshot, SyncedTarget,
+    };
+
+    use super::*;
+
+    #[test]
+    fn manual_configuration_and_sync_do_not_install_a_background_agent() {
+        let home = TempDir::new().expect("temporary home");
+        let store = LocalStore::new(WarpgatePaths::for_home(home.path()));
+        request_configuration(
+            &store,
+            &ConfigurationMutation::SavePreferences {
+                preferences: Preferences::default(),
+                default_profile: None,
+            },
+        )
+        .expect("save preferences without an agent");
+        request_sync(&store).expect("manual sync without an agent");
+        assert!(store.load_snapshot().expect("snapshot").is_some());
+        assert!(!store.paths().launch_agent.exists());
+        assert!(!store.paths().agent_socket.exists());
+        assert!(
+            build_alerts(&store, false, Some(0), &Preferences::default())
+                .expect("alerts")
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn manual_mode_has_no_stale_background_failure_or_scheduled_deadline() {
+        let home = TempDir::new().expect("temporary home");
+        let store = LocalStore::new(WarpgatePaths::for_home(home.path()));
+        store
+            .save_agent_status(&AgentStatus {
+                schema_version: warpgatesh_runtime::storage::AGENT_STATUS_SCHEMA_VERSION,
+                last_attempt_epoch_seconds: epoch_seconds(),
+                last_success_epoch_seconds: None,
+                consecutive_failures: 2,
+                last_error_kind: Some(AgentErrorKind::ApiUnreachable),
+                last_error_message: Some("past background failure".to_owned()),
+            })
+            .expect("past agent status");
+        assert!(
+            build_alerts(&store, false, Some(86_400), &Preferences::default())
+                .expect("manual alerts")
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn stopped_existing_agent_still_reports_a_failure() {
+        let home = TempDir::new().expect("temporary home");
+        let store = LocalStore::new(WarpgatePaths::for_home(home.path()));
+        warpgatesh_runtime::storage::atomic_write(&store.paths().launch_agent, b"existing service")
+            .expect("registered agent fixture");
+        let alerts = build_alerts(&store, false, None, &Preferences::default()).expect("alerts");
+        assert_eq!(alerts[0].id, "agent-down");
+    }
+
+    #[test]
+    fn refuses_host_keys_changed_since_human_approval() {
+        assert!(verify_expected_fingerprints(Some("SHA256:approved"), "SHA256:changed").is_err());
+        assert!(
+            verify_expected_fingerprints(Some(" SHA256:approved\n"), "SHA256:approved").is_ok()
+        );
+    }
+
+    #[test]
+    fn accepts_identical_approved_host_keys_in_a_different_scan_order() {
+        let approved =
+            "256 SHA256:ed25519 example.com (ED25519)\n3072 SHA256:rsa example.com (RSA)\n";
+        let rescanned =
+            "3072 SHA256:rsa example.com (RSA)\n\n256 SHA256:ed25519 example.com (ED25519)\n";
+        assert!(verify_expected_fingerprints(Some(approved), rescanned).is_ok());
+    }
+
+    #[test]
+    fn profile_inspection_reports_a_connection_error_without_panicking_in_the_async_runtime() {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("local port");
+        let address = listener.local_addr().expect("local address");
+        drop(listener);
+        let result = tokio::runtime::Runtime::new()
+            .expect("test runtime")
+            .block_on(async {
+                tokio::task::spawn(async move {
+                    inspect_profile(ProfileRequest {
+                        name: "test".to_owned(),
+                        base_url: format!("http://{address}"),
+                        token: "test-token".to_owned(),
+                        session_cookie: None,
+                        ssh_host: None,
+                        ssh_port: None,
+                        expected_fingerprints: None,
+                    })
+                    .await
+                })
+                .await
+            });
+        assert!(result.is_ok(), "the native command panicked: {result:?}");
+        assert!(result.expect("command completed").is_err());
+    }
+
+    #[test]
+    fn maps_the_local_snapshot_without_exposing_secrets() {
+        let home = TempDir::new().expect("temporary home");
+        let store = LocalStore::new(WarpgatePaths::for_home(home.path()));
+        let mut catalog = ProfileCatalog::default();
+        catalog
+            .upsert(Profile {
+                name: "homeblack".to_owned(),
+                base_url: "https://warpgate.example/".to_owned(),
+                username: "gregory".to_owned(),
+                warpgate_version: Some("0.27.1".to_owned()),
+                ssh_host: "10.60.0.17".to_owned(),
+                ssh_port: 2222,
+                ssh_authentication: warpgatesh_core::profiles::SshAuthentication::Auto,
+            })
+            .expect("profile");
+        store.save_profiles(&catalog).expect("save profiles");
+        store
+            .save_snapshot(&Snapshot {
+                schema_version: SNAPSHOT_SCHEMA_VERSION,
+                synchronized_at_epoch_seconds: epoch_seconds(),
+                targets: vec![SyncedTarget {
+                    profile: "homeblack".to_owned(),
+                    target_id: "target-1".to_owned(),
+                    name: "dmz-nextcloud-01".to_owned(),
+                    short_alias: None,
+                    qualified_alias: "dmz-nextcloud-01.homeblack".to_owned(),
+                }],
+            })
+            .expect("save snapshot");
+
+        let state = load_state(
+            &store,
+            false,
+            TerminalIntegration {
+                status: "missing".to_owned(),
+                path: "/usr/local/bin/warpgatesh".to_owned(),
+            },
+            updates::UpdateStatus {
+                phase: updates::UpdatePhase::Current,
+                channel: updates::UpdateChannel::Direct,
+                current_version: env!("CARGO_PKG_VERSION").to_owned(),
+                available_version: None,
+                notes: None,
+                checked_at_epoch_seconds: Some(epoch_seconds()),
+                progress_percent: None,
+                message: None,
+            },
+        )
+        .expect("companion state");
+        assert_eq!(state.profiles.len(), 1);
+        assert_eq!(state.targets.len(), 1);
+        assert_eq!(state.targets[0].alias, "dmz-nextcloud-01.homeblack");
+        assert!(!state.agent_running);
+        assert!(!state.agent_synchronizing);
+        assert!(state.alerts.is_empty());
+        assert!(state.agent_setup.needs_decision);
+        assert_eq!(state.terminal_integration.status, "missing");
+        assert_eq!(state.update.phase, updates::UpdatePhase::Current);
+    }
+
+    #[test]
+    fn parses_the_live_agent_synchronization_state() {
+        assert_eq!(
+            parse_agent_runtime_state("running state=synchronizing next_sync_seconds=0"),
+            AgentRuntimeState {
+                running: true,
+                synchronizing: true,
+            }
+        );
+        assert_eq!(
+            parse_agent_runtime_state("running state=idle next_sync_seconds=42"),
+            AgentRuntimeState {
+                running: true,
+                synchronizing: false,
+            }
+        );
+    }
+
+    #[test]
+    fn hides_the_first_sync_failure_and_reports_the_second() {
+        let home = TempDir::new().expect("temporary home");
+        let store = LocalStore::new(WarpgatePaths::for_home(home.path()));
+        let preferences = Preferences::default();
+
+        store
+            .save_agent_status(&AgentStatus {
+                schema_version: warpgatesh_runtime::storage::AGENT_STATUS_SCHEMA_VERSION,
+                last_attempt_epoch_seconds: epoch_seconds(),
+                last_success_epoch_seconds: Some(epoch_seconds().saturating_sub(60)),
+                consecutive_failures: 1,
+                last_error_kind: Some(AgentErrorKind::ApiUnreachable),
+                last_error_message: Some("temporary failure".to_owned()),
+            })
+            .expect("first failed attempt");
+        assert!(
+            build_alerts(&store, true, Some(60), &preferences)
+                .expect("alerts after first failure")
+                .is_empty()
+        );
+
+        store
+            .save_agent_status(&AgentStatus {
+                schema_version: warpgatesh_runtime::storage::AGENT_STATUS_SCHEMA_VERSION,
+                last_attempt_epoch_seconds: epoch_seconds(),
+                last_success_epoch_seconds: Some(epoch_seconds().saturating_sub(90)),
+                consecutive_failures: 2,
+                last_error_kind: Some(AgentErrorKind::ApiUnreachable),
+                last_error_message: Some("second failure".to_owned()),
+            })
+            .expect("second failed attempt");
+        let alerts = build_alerts(&store, true, Some(90), &preferences)
+            .expect("alerts after second failure");
+        assert_eq!(alerts.len(), 1);
+        assert_eq!(alerts[0].id, "api");
+    }
+}

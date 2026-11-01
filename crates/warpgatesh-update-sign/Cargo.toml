@@ -1,0 +1,17 @@
+[package]
+name = "warpgatesh-update-sign"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+minisign = "=0.7.9"
+base64 = "0.22"
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+minisign-verify = "=0.2.5"

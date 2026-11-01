@@ -4,15 +4,15 @@ cd "$(dirname "$0")/.."
 python3 scripts/swift.py build
 binary_dir="$(python3 scripts/swift.py build --show-bin-path)"
 repo_dir="$(cd ../.. && pwd)"
-cargo build --manifest-path "$repo_dir/apps/warpgatesh-companion/src-tauri/Cargo.toml" --locked
+cargo build --manifest-path "$repo_dir/Cargo.toml" --locked --package warpgatesh-companion
 cargo build --manifest-path "$repo_dir/Cargo.toml" --locked --package warpgatesh-cli --package warpgatesh-agent
 app_dir="$PWD/.build/WarpgateSH Preview.app"
 mkdir -p "$app_dir/Contents/MacOS" "$app_dir/Contents/Resources"
 cp "$binary_dir/warpgatesh-ui" "$app_dir/Contents/MacOS/warpgatesh-ui"
-cp "$repo_dir/apps/warpgatesh-companion/src-tauri/target/debug/warpgatesh-companion" "$app_dir/Contents/MacOS/warpgatesh-companion"
+cp "$repo_dir/target/debug/warpgatesh-companion" "$app_dir/Contents/MacOS/warpgatesh-companion"
 cp "$repo_dir/target/debug/warpgatesh" "$repo_dir/target/debug/warpgatesh-agent" "$app_dir/Contents/MacOS/"
 cp -R "$binary_dir/WarpgateSH_WarpgateSH.bundle" "$app_dir/Contents/Resources/"
-cp "../warpgatesh-companion/src-tauri/icons/icon.icns" "$app_dir/Contents/Resources/icon.icns"
+cp "Bundle/icon.icns" "$app_dir/Contents/Resources/icon.icns"
 cat > "$app_dir/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

@@ -1,0 +1,6 @@
+{
+  "identifier": "dev.warpgatesh.companion",
+  "name": "WarpgateSH",
+  "minimumSystemVersion": "13.0",
+  "updateEndpoint": "https://github.com/M0okz/warpgatesh/releases/latest/download/latest.json"
+}
