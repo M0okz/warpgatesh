@@ -31,3 +31,5 @@ WarpgateSH is an unofficial community project. Use the official
 administration, and access-control configuration.
 
 - [Native migration validation (0.1.25)](validation/0.1.25-native-migration.md)
+
+- [0.1.25 release notes](releases/0.1.25.md)

@@ -59,7 +59,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           export RELEASE_NOTES_FILE="${RUNNER_TEMP}/notes.md"
-          gh api --method POST "repos/${GITHUB_REPOSITORY}/releases/generate-notes" -f tag_name="$RELEASE_TAG" --jq .body > "$RELEASE_NOTES_FILE"
+          version="${RELEASE_TAG#v}"
+          if [[ -f "docs/releases/${version}.md" ]]; then
+            cp "docs/releases/${version}.md" "$RELEASE_NOTES_FILE"
+          else
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/releases/generate-notes" -f tag_name="$RELEASE_TAG" --jq .body > "$RELEASE_NOTES_FILE"
+          fi
           nix run .#release-macos
       - name: Create draft release
         env:
@@ -67,7 +72,7 @@ jobs:
         run: |
           directory=apps/warpgatesh-macos/.build/distribution
           version="${RELEASE_TAG#v}"
-          gh release create "$RELEASE_TAG" "$directory/WarpgateSH_${version}_universal.dmg" "$directory/WarpgateSH_${version}_universal.dmg.sha256" "$directory/WarpgateSH.app.tar.gz" "$directory/WarpgateSH.app.tar.gz.sig" "$directory/latest.json" "$directory/appcast.xml" --verify-tag --draft --title "WarpgateSH ${version}" --generate-notes
+          gh release create "$RELEASE_TAG" "$directory/WarpgateSH_${version}_universal.dmg" "$directory/WarpgateSH_${version}_universal.dmg.sha256" "$directory/WarpgateSH.app.tar.gz" "$directory/WarpgateSH.app.tar.gz.sig" "$directory/latest.json" "$directory/appcast.xml" --verify-tag --draft --title "WarpgateSH ${version}" --notes-file "${RUNNER_TEMP}/notes.md"
       - name: Preserve failed distribution outputs
         if: failure()
         uses: actions/upload-artifact@v6
