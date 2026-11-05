@@ -79,7 +79,8 @@ summary {
 }
 a:focus-visible,
 button:focus-visible,
-summary:focus-visible {
+summary:focus-visible,
+[tabindex="0"]:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 5px;
 }
@@ -182,7 +183,8 @@ nav > a {
   border: 1px solid var(--line);
   padding: 7px 13px;
   border-radius: 30px;
-  font-size: 0.73rem;
+  font-size: 0.75rem;
+  min-height: 44px;
   color: #b3b9c8;
 }
 .dot {
@@ -228,7 +230,7 @@ h1 > span {
   color: #c5c9d7;
 }
 .fine {
-  font-size: 0.73rem;
+  font-size: 0.75rem;
   color: var(--muted);
   line-height: 1.8;
 }
@@ -584,7 +586,7 @@ h1 > span {
 }
 .companion-figure figcaption {
   text-align: center;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   margin-top: 20px;
 }
 .reverse {
@@ -713,7 +715,8 @@ h1 > span {
   max-width: 420px;
 }
 .copy-line {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   justify-content: space-between;
   align-items: center;
@@ -725,26 +728,47 @@ h1 > span {
   min-width: 0;
 }
 .copy-line code {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   color: #c7d6e6;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 .copy-line button {
+  display: none;
   flex-shrink: 0;
   border: 1px solid #3a3e4b;
   background: #252833;
   border-radius: 5px;
-  font-size: 0.61rem;
-  min-width: 44px;
-  min-height: 36px;
+  font-size: 0.75rem;
+  width: 76px;
+  min-height: 44px;
+}
+.js .copy-line button {
+  display: block;
+}
+.copy-line button[data-copy-state="copied"] {
+  color: var(--green);
+  border-color: #52765e;
+}
+.copy-line button[data-copy-state="error"] {
+  color: var(--ink);
+  border-color: var(--accent);
+}
+.copy-error {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.7;
+  padding: 0 0 4px;
 }
 .inline-link {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: var(--accent);
-  font-size: 0.74rem;
+  font-size: 0.8rem;
   margin-top: 18px;
-  min-height: 24px;
+  min-height: 44px;
 }
 .cli-links {
   display: flex;
@@ -756,6 +780,11 @@ h1 > span {
 .cli-links a > span {
   margin-left: 7px;
   color: var(--accent);
+}
+.cli-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 .open-source {
   text-align: center;
@@ -828,7 +857,7 @@ h1 > span {
   padding: 32px 0 38px;
 }
 .footer p {
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   color: var(--muted);
   margin-top: 12px;
 }
@@ -877,7 +906,7 @@ h1 > span {
 }
 .docs-sidebar a {
   font-size: 0.79rem;
-  min-height: 40px;
+  min-height: 44px;
   padding: 8px 12px;
   border-radius: 6px;
 }
@@ -936,6 +965,7 @@ h1 > span {
   margin: 22px 0;
 }
 .docs-content pre code {
+  font-size: inherit;
   background: none;
   padding: 0;
   white-space: pre;
@@ -966,7 +996,7 @@ h1 > span {
   margin-top: 45px !important;
   color: var(--muted);
 }
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   nav > a:hover,
   .text-link:hover,
   .cli-links a:hover {
@@ -987,24 +1017,24 @@ h1 > span {
   }
 }
 @media (prefers-reduced-motion: no-preference) {
-  html {
-    scroll-behavior: smooth;
-  }
-  .button,
-  .copy-line button {
+  .button:not(:focus-visible),
+  .copy-line button:not(:focus-visible) {
     transition:
       background-color 150ms,
       color 150ms,
       scale 150ms;
   }
-  .button:active,
-  .copy-line button:active {
-    scale: 0.96;
+  .button:active:not(:focus-visible),
+  .copy-line button:active:not(:focus-visible) {
+    scale: 0.98;
   }
 }
 @media (max-width: 1000px) {
   .wrap {
     width: calc(100% - 56px);
+  }
+  .product-stage:before {
+    inset-inline: 0;
   }
   .feature {
     gap: 40px;
@@ -1055,6 +1085,7 @@ h1 > span {
   .header {
     min-height: 80px;
     position: relative;
+    flex-wrap: wrap;
   }
   .brand {
     font-size: 1rem;
@@ -1062,7 +1093,7 @@ h1 > span {
   .brand img {
     width: 32px;
   }
-  .menu-button {
+  .js .menu-button {
     display: block;
     border: 1px solid var(--line);
     border-radius: 7px;
@@ -1072,21 +1103,26 @@ h1 > span {
     font-size: 0.8rem;
   }
   .header > nav {
+    display: flex;
+    flex-direction: column;
+    flex-basis: 100%;
+    background: #1c1f28;
+    border: 1px solid #3d4351;
+    border-radius: 12px;
+    padding: 20px;
+    align-items: stretch;
+    gap: 5px;
+  }
+  .js .header > nav {
     display: none;
     position: absolute;
     top: 70px;
     right: 0;
     left: 0;
     z-index: 5;
-    background: #1c1f28;
-    border: 1px solid #3d4351;
     box-shadow: 0 20px 60px #0008;
-    border-radius: 12px;
-    padding: 20px;
-    align-items: stretch;
-    gap: 5px;
   }
-  .header > nav.is-open {
+  .js .header > nav.is-open {
     display: flex;
     flex-direction: column;
   }
@@ -1106,7 +1142,7 @@ h1 > span {
     margin: 28px 0 23px;
   }
   .release {
-    font-size: 0.65rem;
+    font-size: 0.75rem;
     padding: 7px 11px;
   }
   .lead {
@@ -1131,7 +1167,7 @@ h1 > span {
     gap: 8px;
   }
   .hero > .fine {
-    font-size: 0.63rem;
+    font-size: 0.75rem;
   }
   .product-stage {
     margin-top: 45px;
@@ -1141,7 +1177,7 @@ h1 > span {
     inset-inline: 0;
   }
   .stage-caption {
-    font-size: 0.65rem;
+    font-size: 0.75rem;
   }
   .window-bar {
     font-size: 0.6rem;
@@ -1159,7 +1195,7 @@ h1 > span {
   }
   .terminal-body {
     padding: 23px 17px;
-    font-size: 0.65rem;
+    font-size: 0.75rem;
     line-height: 2;
   }
   .terminal-table {
@@ -1168,7 +1204,7 @@ h1 > span {
     row-gap: 4px;
   }
   .table-head {
-    font-size: 0.5rem;
+    font-size: 0.65rem;
   }
   .sync-note {
     position: static;
@@ -1185,10 +1221,10 @@ h1 > span {
     font-size: 0.76rem;
   }
   .sync-note div > span {
-    font-size: 0.65rem;
+    font-size: 0.75rem;
   }
   .demo-note {
-    font-size: 0.6rem;
+    font-size: 0.75rem;
   }
   .tools {
     padding: 45px 0;
@@ -1200,7 +1236,7 @@ h1 > span {
     margin: 20px 0;
   }
   .tools > .fine {
-    font-size: 0.65rem;
+    font-size: 0.75rem;
     max-width: 300px;
     margin: auto;
   }
@@ -1215,7 +1251,7 @@ h1 > span {
   }
   .eyebrow {
     margin-bottom: 18px;
-    font-size: 0.6rem;
+    font-size: 0.75rem;
   }
   .companion-figure {
     max-width: 440px;
@@ -1292,10 +1328,10 @@ h1 > span {
     max-width: none;
   }
   .copy-line code {
-    font-size: 0.67rem;
+    font-size: 0.75rem;
   }
   .copy-line button {
-    min-height: 40px;
+    min-height: 44px;
   }
   .cli-links {
     flex-direction: column;
@@ -1331,7 +1367,7 @@ h1 > span {
     flex-wrap: wrap;
   }
   .footer nav > a {
-    font-size: 0.67rem;
+    font-size: 0.75rem;
   }
   .docs-layout {
     grid-template-columns: 1fr;
@@ -1347,7 +1383,8 @@ h1 > span {
     gap: 4px;
   }
   .docs-sidebar a {
-    font-size: 0.72rem;
+    font-size: 0.8rem;
+    min-height: 44px;
   }
   .docs-content {
     font-size: 0.88rem;
@@ -1392,4 +1429,9 @@ h1 > span {
 @media (max-width: 700px) {
   .companion-section, .screenshot-grid { grid-template-columns: minmax(0, 1fr); }
   .screenshot-section { padding-bottom: 64px; }
+}
+@media (min-width: 701px) and (max-width: 900px) {
+  .companion-section { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .companion-section .feature-copy { max-width: 64ch; }
+  .companion-figure { max-width: 760px; width: 100%; margin-inline: auto; }
 }

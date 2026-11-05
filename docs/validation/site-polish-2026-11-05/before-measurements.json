@@ -1,0 +1,120 @@
+{
+  "375": {
+    "viewport": 375,
+    "pageWidth": 375,
+    "copyButtons": [
+      {
+        "width": 44,
+        "height": 40,
+        "font": "9.76px"
+      },
+      {
+        "width": 44,
+        "height": 40,
+        "font": "9.76px"
+      },
+      {
+        "width": 44,
+        "height": 40,
+        "font": "9.76px"
+      },
+      {
+        "width": 44,
+        "height": 40,
+        "font": "9.76px"
+      },
+      {
+        "width": 44,
+        "height": 40,
+        "font": "9.76px"
+      },
+      {
+        "width": 44,
+        "height": 40,
+        "font": "9.76px"
+      }
+    ],
+    "mainTabindex": null,
+    "scrolling": "smooth",
+    "finePrint": "10.08px",
+    "menuAfterResize": "true"
+  },
+  "768": {
+    "viewport": 768,
+    "pageWidth": 770,
+    "copyButtons": [
+      {
+        "width": 44,
+        "height": 36,
+        "font": "9.76px"
+      },
+      {
+        "width": 44,
+        "height": 36,
+        "font": "9.76px"
+      },
+      {
+        "width": 44,
+        "height": 36,
+        "font": "9.76px"
+      },
+      {
+        "width": 44,
+        "height": 36,
+        "font": "9.76px"
+      },
+      {
+        "width": 44,
+        "height": 36,
+        "font": "9.76px"
+      },
+      {
+        "width": 44,
+        "height": 36,
+        "font": "9.76px"
+      }
+    ],
+    "mainTabindex": null,
+    "scrolling": "smooth",
+    "finePrint": "11.68px"
+  },
+  "1440": {
+    "viewport": 1440,
+    "pageWidth": 1440,
+    "copyButtons": [
+      {
+        "width": 44,
+        "height": 36,
+        "font": "9.76px"
+      },
+      {
+        "width": 44,
+        "height": 36,
+        "font": "9.76px"
+      },
+      {
+        "width": 44,
+        "height": 36,
+        "font": "9.76px"
+      },
+      {
+        "width": 44,
+        "height": 36,
+        "font": "9.76px"
+      },
+      {
+        "width": 44,
+        "height": 36,
+        "font": "9.76px"
+      },
+      {
+        "width": 44,
+        "height": 36,
+        "font": "9.76px"
+      }
+    ],
+    "mainTabindex": null,
+    "scrolling": "smooth",
+    "finePrint": "11.68px"
+  }
+}

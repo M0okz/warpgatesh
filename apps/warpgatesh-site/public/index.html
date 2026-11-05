@@ -68,7 +68,7 @@
         >
       </nav>
     </header>
-    <main id="main">
+    <main id="main" tabindex="-1">
       <section class="hero wrap" aria-labelledby="hero-title">
         <a class="release" href="https://github.com/M0okz/warpgatesh/releases"
           ><span class="dot"></span> Meet your Warpgate companion
@@ -102,7 +102,7 @@
             <span class="dot"></span> One familiar command. All your SSH
             targets.
           </figcaption>
-          <div class="terminal hero-terminal">
+          <div class="terminal hero-terminal" aria-hidden="true">
             <div class="window-bar">
               <span class="traffic" aria-hidden="true"
                 ><i></i><i></i><i></i></span
@@ -137,7 +137,7 @@
               </p>
             </div>
           </div>
-          <div class="sync-note">
+          <div class="sync-note" aria-hidden="true">
             <span class="sync-symbol" aria-hidden="true">↻</span>
             <div>
               <strong>Quietly up to date.</strong
@@ -161,7 +161,7 @@
           configuration.
         </p>
       </section>
-      <section class="feature companion-section wrap" id="companion">
+      <section class="feature companion-section wrap" id="companion" tabindex="-1">
         <div class="feature-copy">
           <p class="eyebrow">01 / A little closer</p>
           <h2>Your targets.<br />A glance away.</h2>
@@ -177,7 +177,7 @@
           <p class="fine">
             Close the window. The background agent keeps working.
           </p>
-          <p class="preview-note">The native SwiftUI companion is included in v0.1.18 and later. Version 0.1.25 removes Tauri and uses native Sparkle updates, retaining compatibility with 0.1.24 and the existing menu-bar and background-agent behavior. First launch explains background synchronization and offers manual mode.</p>
+          <p class="preview-note">Native on macOS, with signed updates when you choose. Enable background synchronization at first launch or stay in manual mode.</p>
           <a class="inline-link" href="docs/desktop-app.html">Explore the native companion <span aria-hidden="true">→</span></a>
         </div>
         <figure class="companion-figure">
@@ -306,7 +306,7 @@ Host personal-server
           </article>
         </div>
       </section>
-      <section class="cli-section" id="cli">
+      <section class="cli-section" id="cli" tabindex="-1">
         <div class="wrap">
           <div class="cli-intro">
             <p class="eyebrow">04 / At home in your terminal</p>
@@ -407,6 +407,7 @@ Host personal-server
               >
             </article>
           </div>
+          <p class="copy-status sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
           <div class="cli-links">
             <a href="docs/getting-started.html"
               >Read the getting started guide
@@ -534,6 +535,5 @@ Host personal-server
         >
       </nav>
     </footer>
-    <p class="sr-only" role="status" aria-live="polite"></p>
   </body>
 </html>
