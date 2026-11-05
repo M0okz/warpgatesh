@@ -1,0 +1,872 @@
+{
+  "url": "https://warpgatesh.homeblack.fr/",
+  "pages": [
+    {
+      "route": "/",
+      "viewport": 320,
+      "width": 320,
+      "content": 320,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/",
+      "viewport": 320,
+      "width": 320,
+      "content": 320,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/desktop-app.html",
+      "viewport": 320,
+      "width": 320,
+      "content": 320,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/installation.html",
+      "viewport": 320,
+      "width": 320,
+      "content": 320,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/installation-linux.html",
+      "viewport": 320,
+      "width": 320,
+      "content": 320,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/getting-started.html",
+      "viewport": 320,
+      "width": 320,
+      "content": 320,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/troubleshooting.html",
+      "viewport": 320,
+      "width": 320,
+      "content": 320,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/uninstall.html",
+      "viewport": 320,
+      "width": 320,
+      "content": 320,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "/",
+      "viewport": 375,
+      "width": 375,
+      "content": 375,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/",
+      "viewport": 375,
+      "width": 375,
+      "content": 375,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/desktop-app.html",
+      "viewport": 375,
+      "width": 375,
+      "content": 375,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/installation.html",
+      "viewport": 375,
+      "width": 375,
+      "content": 375,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/installation-linux.html",
+      "viewport": 375,
+      "width": 375,
+      "content": 375,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/getting-started.html",
+      "viewport": 375,
+      "width": 375,
+      "content": 375,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/troubleshooting.html",
+      "viewport": 375,
+      "width": 375,
+      "content": 375,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/uninstall.html",
+      "viewport": 375,
+      "width": 375,
+      "content": 375,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "/",
+      "viewport": 768,
+      "width": 768,
+      "content": 768,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/",
+      "viewport": 768,
+      "width": 768,
+      "content": 768,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/desktop-app.html",
+      "viewport": 768,
+      "width": 768,
+      "content": 768,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/installation.html",
+      "viewport": 768,
+      "width": 768,
+      "content": 768,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/installation-linux.html",
+      "viewport": 768,
+      "width": 768,
+      "content": 768,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/getting-started.html",
+      "viewport": 768,
+      "width": 768,
+      "content": 768,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/troubleshooting.html",
+      "viewport": 768,
+      "width": 768,
+      "content": 768,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/uninstall.html",
+      "viewport": 768,
+      "width": 768,
+      "content": 768,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "/",
+      "viewport": 1440,
+      "width": 1440,
+      "content": 1440,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/",
+      "viewport": 1440,
+      "width": 1440,
+      "content": 1440,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/desktop-app.html",
+      "viewport": 1440,
+      "width": 1440,
+      "content": 1440,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/installation.html",
+      "viewport": 1440,
+      "width": 1440,
+      "content": 1440,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/installation-linux.html",
+      "viewport": 1440,
+      "width": 1440,
+      "content": 1440,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/getting-started.html",
+      "viewport": 1440,
+      "width": 1440,
+      "content": 1440,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/troubleshooting.html",
+      "viewport": 1440,
+      "width": 1440,
+      "content": 1440,
+      "imagesReady": true,
+      "mainTarget": true
+    },
+    {
+      "route": "docs/uninstall.html",
+      "viewport": 1440,
+      "width": 1440,
+      "content": 1440,
+      "imagesReady": true,
+      "mainTarget": true
+    }
+  ],
+  "checks": [
+    {
+      "check": "320: / responds",
+      "passed": true
+    },
+    {
+      "check": "320: / fits viewport",
+      "passed": true
+    },
+    {
+      "check": "320: / has its initial images",
+      "passed": true
+    },
+    {
+      "check": "320: / skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "320: docs/ responds",
+      "passed": true
+    },
+    {
+      "check": "320: docs/ fits viewport",
+      "passed": true
+    },
+    {
+      "check": "320: docs/ has its initial images",
+      "passed": true
+    },
+    {
+      "check": "320: docs/ skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "320: docs/desktop-app.html responds",
+      "passed": true
+    },
+    {
+      "check": "320: docs/desktop-app.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "320: docs/desktop-app.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "320: docs/desktop-app.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "320: docs/installation.html responds",
+      "passed": true
+    },
+    {
+      "check": "320: docs/installation.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "320: docs/installation.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "320: docs/installation.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "320: docs/installation-linux.html responds",
+      "passed": true
+    },
+    {
+      "check": "320: docs/installation-linux.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "320: docs/installation-linux.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "320: docs/installation-linux.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "320: docs/getting-started.html responds",
+      "passed": true
+    },
+    {
+      "check": "320: docs/getting-started.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "320: docs/getting-started.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "320: docs/getting-started.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "320: docs/troubleshooting.html responds",
+      "passed": true
+    },
+    {
+      "check": "320: docs/troubleshooting.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "320: docs/troubleshooting.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "320: docs/troubleshooting.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "320: docs/uninstall.html responds",
+      "passed": true
+    },
+    {
+      "check": "320: docs/uninstall.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "320: docs/uninstall.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "320: docs/uninstall.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "375: / responds",
+      "passed": true
+    },
+    {
+      "check": "375: / fits viewport",
+      "passed": true
+    },
+    {
+      "check": "375: / has its initial images",
+      "passed": true
+    },
+    {
+      "check": "375: / skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "375: docs/ responds",
+      "passed": true
+    },
+    {
+      "check": "375: docs/ fits viewport",
+      "passed": true
+    },
+    {
+      "check": "375: docs/ has its initial images",
+      "passed": true
+    },
+    {
+      "check": "375: docs/ skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "375: docs/desktop-app.html responds",
+      "passed": true
+    },
+    {
+      "check": "375: docs/desktop-app.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "375: docs/desktop-app.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "375: docs/desktop-app.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "375: docs/installation.html responds",
+      "passed": true
+    },
+    {
+      "check": "375: docs/installation.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "375: docs/installation.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "375: docs/installation.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "375: docs/installation-linux.html responds",
+      "passed": true
+    },
+    {
+      "check": "375: docs/installation-linux.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "375: docs/installation-linux.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "375: docs/installation-linux.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "375: docs/getting-started.html responds",
+      "passed": true
+    },
+    {
+      "check": "375: docs/getting-started.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "375: docs/getting-started.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "375: docs/getting-started.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "375: docs/troubleshooting.html responds",
+      "passed": true
+    },
+    {
+      "check": "375: docs/troubleshooting.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "375: docs/troubleshooting.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "375: docs/troubleshooting.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "375: docs/uninstall.html responds",
+      "passed": true
+    },
+    {
+      "check": "375: docs/uninstall.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "375: docs/uninstall.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "375: docs/uninstall.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "768: / responds",
+      "passed": true
+    },
+    {
+      "check": "768: / fits viewport",
+      "passed": true
+    },
+    {
+      "check": "768: / has its initial images",
+      "passed": true
+    },
+    {
+      "check": "768: / skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "768: docs/ responds",
+      "passed": true
+    },
+    {
+      "check": "768: docs/ fits viewport",
+      "passed": true
+    },
+    {
+      "check": "768: docs/ has its initial images",
+      "passed": true
+    },
+    {
+      "check": "768: docs/ skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "768: docs/desktop-app.html responds",
+      "passed": true
+    },
+    {
+      "check": "768: docs/desktop-app.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "768: docs/desktop-app.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "768: docs/desktop-app.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "768: docs/installation.html responds",
+      "passed": true
+    },
+    {
+      "check": "768: docs/installation.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "768: docs/installation.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "768: docs/installation.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "768: docs/installation-linux.html responds",
+      "passed": true
+    },
+    {
+      "check": "768: docs/installation-linux.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "768: docs/installation-linux.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "768: docs/installation-linux.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "768: docs/getting-started.html responds",
+      "passed": true
+    },
+    {
+      "check": "768: docs/getting-started.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "768: docs/getting-started.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "768: docs/getting-started.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "768: docs/troubleshooting.html responds",
+      "passed": true
+    },
+    {
+      "check": "768: docs/troubleshooting.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "768: docs/troubleshooting.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "768: docs/troubleshooting.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "768: docs/uninstall.html responds",
+      "passed": true
+    },
+    {
+      "check": "768: docs/uninstall.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "768: docs/uninstall.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "768: docs/uninstall.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "1440: / responds",
+      "passed": true
+    },
+    {
+      "check": "1440: / fits viewport",
+      "passed": true
+    },
+    {
+      "check": "1440: / has its initial images",
+      "passed": true
+    },
+    {
+      "check": "1440: / skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/ responds",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/ fits viewport",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/ has its initial images",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/ skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/desktop-app.html responds",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/desktop-app.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/desktop-app.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/desktop-app.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/installation.html responds",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/installation.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/installation.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/installation.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/installation-linux.html responds",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/installation-linux.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/installation-linux.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/installation-linux.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/getting-started.html responds",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/getting-started.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/getting-started.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/getting-started.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/troubleshooting.html responds",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/troubleshooting.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/troubleshooting.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/troubleshooting.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/uninstall.html responds",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/uninstall.html fits viewport",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/uninstall.html has its initial images",
+      "passed": true
+    },
+    {
+      "check": "1440: docs/uninstall.html skip target can receive focus",
+      "passed": true
+    },
+    {
+      "check": "Skip link moves keyboard focus into main",
+      "passed": true
+    },
+    {
+      "check": "Mobile menu opens by keyboard; Escape closes and restores focus",
+      "passed": true
+    },
+    {
+      "check": "Mobile section link closes menu and focuses its destination",
+      "passed": true
+    },
+    {
+      "check": "Outside click dismisses mobile menu",
+      "passed": true
+    },
+    {
+      "check": "Resizing clears stale mobile menu state",
+      "passed": true
+    },
+    {
+      "check": "cmd-profile: touch target >= 44px",
+      "passed": true
+    },
+    {
+      "check": "cmd-sync: touch target >= 44px",
+      "passed": true
+    },
+    {
+      "check": "cmd-list: touch target >= 44px",
+      "passed": true
+    },
+    {
+      "check": "cmd-connect: touch target >= 44px",
+      "passed": true
+    },
+    {
+      "check": "cmd-ssh: touch target >= 44px",
+      "passed": true
+    },
+    {
+      "check": "cmd-brew: touch target >= 44px",
+      "passed": true
+    },
+    {
+      "check": "Copy writes the exact command",
+      "passed": true
+    },
+    {
+      "check": "Visible Copy confirmation also has a live announcement",
+      "passed": true
+    },
+    {
+      "check": "Copy confirmation keeps button width stable",
+      "passed": true
+    },
+    {
+      "check": "Keyboard copy feedback has no animated transition",
+      "passed": true
+    },
+    {
+      "check": "Repeated copy restarts confirmation instead of letting an old timer clear it",
+      "passed": true
+    },
+    {
+      "check": "Clipboard denial provides visible retry and manual-copy guidance",
+      "passed": true
+    },
+    {
+      "check": "FAQ opens with Enter",
+      "passed": true
+    },
+    {
+      "check": "Reduced motion removes button transitions",
+      "passed": true
+    },
+    {
+      "check": "Anchor navigation remains immediate",
+      "passed": true
+    },
+    {
+      "check": "Mobile navigation remains available without JavaScript",
+      "passed": true
+    },
+    {
+      "check": "No inactive menu toggle without JavaScript",
+      "passed": true
+    },
+    {
+      "check": "No inactive copy buttons without JavaScript",
+      "passed": true
+    },
+    {
+      "check": "No JavaScript runtime errors",
+      "passed": true
+    }
+  ],
+  "runtimeErrors": []
+}

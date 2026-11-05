@@ -27,3 +27,11 @@ Requested follow-up to the Picta pass using [emil-design-eng](https://github.com
 - A complete VoiceOver, touch-device and cross-browser campaign is not claimed. No system accessibility or privacy settings are changed.
 
 Tracking: WarpgateSH project (24), Kanban view (96), task #46, medium priority (2), Doing (64) → Done (65) after validation and delivery. No new dates or colors.
+
+## Delivery
+
+[PR #18](https://github.com/M0okz/warpgatesh/pull/18) merged after all website, Rust, Homebrew and macOS-companion checks passed. The deployed artifact is the successful main-branch [Website run 41998721370](https://github.com/M0okz/warpgatesh/actions/runs/41998721370), source `40c59513fd557f507d293603268292ef179a20af`.
+
+Before deployment, all 31 production files matched the preserved CI artifact from run 41267606763, providing a verified rollback source. Only changed files were replaced, each atomically, while preserving the bind-mounted directory. All 31 public HTTPS files then matched the new CI artifact; the container remained healthy. The public-site browser campaign also passed all 152 checks with no runtime errors. Keyboard horizontal scrolling of a guide code block and focusability after resizing were checked separately.
+
+See `deployment.json` for provenance and hashes and `public-browser-checks.json` for the live campaign. The staging directory, downloaded artifacts, QA environment and other task-created temporary files were removed after validation. Existing application data, backup policies and unrelated files were preserved.
