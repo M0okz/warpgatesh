@@ -34,3 +34,8 @@ The intended public domain is `warpgatesh.homeblack.fr`.
 The production reverse proxy, firewall, and DNS configuration is maintained
 separately in the infrastructure repository. The website CI builds and checks
 the static artifact; production delivery is currently performed manually.
+
+The [5 November 2026 design engineering pass](../../docs/validation/site-polish-2026-11-05/README.md)
+documents responsive, clipboard, keyboard and reduced-motion checks. Its
+`browser_checks.py` accepts a preview/public `--url` and an `--output` directory;
+Python Playwright and Chromium are optional QA dependencies, outside the site build.
