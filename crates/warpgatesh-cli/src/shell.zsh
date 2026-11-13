@@ -3,23 +3,30 @@ typeset -gA _warpgatesh_owned
 
 _warpgatesh_refresh() {
   emulate -L zsh
-  local listing target body
-  local -a targets
+  local listing target destination body line
+  local -a entries
   # A failed read preserves the previous functions; this never synchronizes.
-  listing=$(command warpgatesh shell aliases) || return
-  targets=("${(@f)listing}")
+  listing=$(command warpgatesh shell commands) || return
+  entries=("${(@f)listing}")
   for target in "${(@k)_warpgatesh_owned}"; do
     if [[ ${functions[$target]-} == ${_warpgatesh_owned[$target]} ]]; then
       unfunction -- "$target"
     fi
   done
   _warpgatesh_owned=()
-  for target in "${targets[@]}"; do
+  for line in "${entries[@]}"; do
+    [[ $line == *$'\t'* ]] || continue
+    target=${line%%$'\t'*}
+    destination=${line#*$'\t'}
     # Validate before embedding a target in executable shell code.
     [[ $target == [a-zA-Z0-9]* && $target != *[^a-zA-Z0-9._-]* ]] || continue
+    [[ $destination == [a-zA-Z0-9]* && $destination != *[^a-zA-Z0-9._-]* ]] || continue
     # Preserve builtins, aliases, functions, reserved words and executables.
-    whence -w -- "$target" >/dev/null 2>&1 && continue
-    body="command warpgatesh ${(q)target} -- \"\$@\""
+    if whence -w -- "$target" >/dev/null 2>&1; then
+      target=$destination
+      whence -w -- "$target" >/dev/null 2>&1 && continue
+    fi
+    body="command warpgatesh ${(q)destination} -- \"\$@\""
     functions[$target]=$body
     _warpgatesh_owned[$target]=${functions[$target]}
   done

@@ -2,7 +2,14 @@
 
 Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
-## 0.1.26 — 2026-11-13
+## 0.1.27 — 2026-11-13
+
+- La complétion zsh propose un seul nom par VM : le nom court pour le profil par défaut, sans doublon avec son suffixe de profil.
+- Les commandes courtes utilisent l’alias qualifié en interne, même lorsqu’un ancien alias SSH personnel occupe déjà le nom court.
+- Les commandes personnelles du shell restent prioritaires ; les autres profils et les conflits de noms utilisent un nom qualifié.
+- Cette version inclut la proposition d’activation zsh dans l’application décrite ci-dessous. La 0.1.26 est restée en brouillon.
+
+## 0.1.26 — 2026-11-13 (non publiée)
 
 - Après l’installation de la commande embarquée, l’application propose d’activer l’intégration zsh pour se connecter en tapant directement le nom d’une VM.
 - Préférences → Système permet d’activer ou désactiver cette intégration et affiche son état réel. Le choix « Plus tard » conserve le shell tel quel.
