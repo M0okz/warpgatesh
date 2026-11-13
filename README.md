@@ -33,7 +33,7 @@ installing an agent. Choose **Enable synchronization** or **Later**; existing
 agents skip this prompt. Manual synchronization remains available, and the agent
 can be enabled or disabled under **Preferences → Synchronization**.
 
-> **macOS 0.1.26:** the app offers direct VM commands in zsh after installing the bundled command. Enable or disable the integration in Preferences → System, then open a new terminal.
+> **macOS 0.1.27:** the app offers direct VM commands in zsh after installing the bundled command. Enable or disable the integration in Preferences → System, then open a new terminal.
 
 ## Why WarpgateSH?
 
@@ -131,8 +131,12 @@ can enable or disable it later in **Preferences → System → VM commands in zs
 The app asks before changing your zsh startup file.
 
 Open a new terminal. With your normal zsh completion enabled, type `app-` and
-press Tab to complete a target, then Enter to connect. Both short and qualified
-aliases are available. SSH arguments can be passed directly, for example
+press Tab to complete a target, then Enter to connect. The default profile exposes
+one short command per VM, such as `app-01`, without also listing `app-01.profile`. Commands
+connect through the qualified SSH alias internally. Other profiles and shell-name
+conflicts use qualified commands; personal shell commands keep priority. Qualified
+SSH aliases also remain available with `ssh` and `warpgatesh`. SSH arguments can be
+passed directly, for example
 `app-01 -L 8080:localhost:80`.
 
 The integration refreshes from the local snapshot before each prompt, without
