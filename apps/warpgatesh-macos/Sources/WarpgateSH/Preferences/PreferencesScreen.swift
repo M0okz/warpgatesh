@@ -169,10 +169,11 @@ struct PreferencesScreen: View {
             Text(state.terminalIntegration.path).font(.body.monospaced()).textSelection(.enabled)
             Text(terminalStatus).foregroundStyle(AccessTheme.secondary)
             Button(L10n.text("Installer la commande warpgatesh")) {
-              model.perform("install_command_line_tool", success: L10n.text("Commande installée."))
+              model.installCommandLineTool()
             }
             .disabled(
-              ["managed", "external", "conflict"].contains(state.terminalIntegration.status))
+              model.busy
+                || ["managed", "external", "conflict"].contains(state.terminalIntegration.status))
             DocumentationLink(
               L10n.text("Commande warpgatesh : utilité et installation"),
               destination: URL(
@@ -182,6 +183,7 @@ struct PreferencesScreen: View {
             )
             .foregroundStyle(AccessTheme.cyan)
           }
+          ShellIntegrationSection(model: model, terminal: state.terminalIntegration)
           Section(L10n.text("Application")) {
             Button(L10n.text("Désinstaller WarpgateSH…"), role: .destructive) {
               uninstalling = true
@@ -200,6 +202,7 @@ struct PreferencesScreen: View {
       }
     }
     .sheet(isPresented: $uninstalling) { UninstallSheet(model: model) }
+    .sheet(isPresented: $model.showShellSetup) { ShellIntegrationSetupSheet(model: model) }
     .onChange(of: settings.preferences.notifications.serverUpdates) { enabled in
       if enabled { Task { await notifications.evaluate(state, isDemo: model.isDemo) } }
     }

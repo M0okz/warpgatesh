@@ -238,3 +238,20 @@
 "Mode manuel" = "Manual mode";
 "À la demande" = "On demand";
 "L’installation de l’agent nécessite l’application distribuée. Utilisez le mode démo pour tester cette fenêtre." = "Installing the agent requires the distributed app. Use demo mode to test this dialog.";
+
+/* Direct VM commands */
+"Commandes de VM dans zsh" = "VM commands in zsh";
+"Connectez-vous en tapant directement le nom d’une VM dans le terminal." = "Connect by typing a VM name directly in the terminal.";
+"Intégration zsh activée" = "Zsh integration enabled";
+"Ouvrez un nouveau terminal pour appliquer le changement." = "Open a new terminal to apply the change.";
+"Désactiver l’intégration zsh" = "Disable zsh integration";
+"L’intégration zsh n’est pas activée." = "Zsh integration is not enabled.";
+"Activer l’intégration zsh…" = "Enable zsh integration…";
+"Installez d’abord la commande warpgatesh ci-dessus." = "Install the warpgatesh command above first.";
+"Ce fichier de configuration nécessite une installation manuelle." = "This configuration file requires manual setup.";
+"Connectez-vous avec le nom d’une VM" = "Connect using a VM name";
+"Activez l’intégration zsh pour taper le nom d’une VM directement, sans ajouter ssh ou warpgatesh." = "Enable zsh integration to type a VM name directly, without adding ssh or warpgatesh.";
+"WarpgateSH ajoutera un bloc à votre fichier de configuration zsh. Vous pourrez le retirer dans Préférences → Système." = "WarpgateSH will add a block to your zsh configuration file. You can remove it in Preferences → System.";
+"Après activation, ouvrez un nouveau terminal pour utiliser les commandes de VM." = "After enabling it, open a new terminal to use VM commands.";
+"Activation en cours" = "Enabling integration";
+"Activer l’intégration zsh" = "Enable zsh integration";

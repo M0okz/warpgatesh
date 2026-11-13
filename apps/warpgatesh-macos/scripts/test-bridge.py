@@ -23,6 +23,9 @@ try:
     state = request({"id": 1, "command": "get_companion_state"})
     assert state["id"] == 1 and "result" in state, "State request failed"
     assert all(key in state["result"] for key in ["agentRunning", "profiles", "targets", "preferences", "update", "alerts"])
+    zsh = state["result"]["terminalIntegration"]["zsh"]
+    assert zsh["status"] in ["enabled", "disabled", "manual", "unavailable"]
+    assert "path" in zsh and "message" in zsh
     invalid = request({"id": 2, "command": "unknown_operation"})
     assert invalid["id"] == 2 and "error" in invalid
     unapproved = request({"id": 3, "command": "add_profile", "args": {"request": {"name": "fixture", "baseUrl": "https://example.invalid", "token": "fixture-not-a-real-token"}}})

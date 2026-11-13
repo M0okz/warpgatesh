@@ -9,6 +9,7 @@ pub mod error;
 pub mod ipc;
 pub mod keychain;
 pub mod launchd;
+pub mod shell_integration;
 pub mod ssh;
 pub mod storage;
 pub mod sync;

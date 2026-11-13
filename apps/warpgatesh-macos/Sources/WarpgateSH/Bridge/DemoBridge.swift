@@ -17,7 +17,9 @@ final class DemoBridge: CompanionTransport {
     }, lastSyncAgeSeconds: 180,
     preferences: .init(
       syncIntervalSeconds: 300, launchCompanionAtLogin: false, defaultProfile: "homelab"),
-    terminalIntegration: .init(status: "missing", path: "/usr/local/bin/warpgatesh"),
+    terminalIntegration: .init(
+      status: "missing", path: "/usr/local/bin/warpgatesh",
+      zsh: .init(status: "disabled", path: "~/.zshrc")),
     update: .init(
       phase: "idle", channel: "unsupported",
       currentVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString")
@@ -38,6 +40,13 @@ final class DemoBridge: CompanionTransport {
       state.agentRunning = enabled
       return try .encoding(state.agentSetup)
     case "get_companion_state": return try .encoding(state)
+    case "install_command_line_tool":
+      state.terminalIntegration.status = "managed"
+      return try .encoding(state.terminalIntegration)
+    case "set_shell_integration":
+      let enabled: Bool = try (args["enabled"] ?? .null).decoded()
+      state.terminalIntegration.zsh?.status = enabled ? "enabled" : "disabled"
+      return .null
     case "sync_now":
       state.agentSynchronizing = true
       defer { state.agentSynchronizing = false }

@@ -238,3 +238,20 @@
 "Mode manuel" = "Mode manuel";
 "À la demande" = "À la demande";
 "L’installation de l’agent nécessite l’application distribuée. Utilisez le mode démo pour tester cette fenêtre." = "L’installation de l’agent nécessite l’application distribuée. Utilisez le mode démo pour tester cette fenêtre.";
+
+/* Direct VM commands */
+"Commandes de VM dans zsh" = "Commandes de VM dans zsh";
+"Connectez-vous en tapant directement le nom d’une VM dans le terminal." = "Connectez-vous en tapant directement le nom d’une VM dans le terminal.";
+"Intégration zsh activée" = "Intégration zsh activée";
+"Ouvrez un nouveau terminal pour appliquer le changement." = "Ouvrez un nouveau terminal pour appliquer le changement.";
+"Désactiver l’intégration zsh" = "Désactiver l’intégration zsh";
+"L’intégration zsh n’est pas activée." = "L’intégration zsh n’est pas activée.";
+"Activer l’intégration zsh…" = "Activer l’intégration zsh…";
+"Installez d’abord la commande warpgatesh ci-dessus." = "Installez d’abord la commande warpgatesh ci-dessus.";
+"Ce fichier de configuration nécessite une installation manuelle." = "Ce fichier de configuration nécessite une installation manuelle.";
+"Connectez-vous avec le nom d’une VM" = "Connectez-vous avec le nom d’une VM";
+"Activez l’intégration zsh pour taper le nom d’une VM directement, sans ajouter ssh ou warpgatesh." = "Activez l’intégration zsh pour taper le nom d’une VM directement, sans ajouter ssh ou warpgatesh.";
+"WarpgateSH ajoutera un bloc à votre fichier de configuration zsh. Vous pourrez le retirer dans Préférences → Système." = "WarpgateSH ajoutera un bloc à votre fichier de configuration zsh. Vous pourrez le retirer dans Préférences → Système.";
+"Après activation, ouvrez un nouveau terminal pour utiliser les commandes de VM." = "Après activation, ouvrez un nouveau terminal pour utiliser les commandes de VM.";
+"Activation en cours" = "Activation en cours";
+"Activer l’intégration zsh" = "Activer l’intégration zsh";
