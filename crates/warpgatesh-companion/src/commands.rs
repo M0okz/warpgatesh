@@ -36,6 +36,7 @@ pub struct CompanionState {
 pub struct TerminalIntegration {
     status: String,
     path: String,
+    zsh: warpgatesh_runtime::shell_integration::ShellIntegration,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
@@ -130,6 +131,27 @@ pub async fn install_command_line_tool() -> Result<TerminalIntegration, String> 
     run_blocking(move || {
         installation::install_cli()
             .map(|status| terminal_integration(&status))
+            .map_err(display_error)
+    })
+    .await
+}
+
+pub async fn set_shell_integration(enabled: bool) -> Result<(), String> {
+    run_blocking(move || {
+        if enabled {
+            match installation::cli_installation().map_err(display_error)? {
+                installation::CliInstallation::Managed(_)
+                | installation::CliInstallation::External(_) => {}
+                _ => {
+                    return Err(
+                        "Installez la commande warpgatesh avant d’activer l’intégration zsh."
+                            .to_owned(),
+                    );
+                }
+            }
+        }
+        warpgatesh_runtime::shell_integration::set_enabled(enabled)
+            .map(|_| ())
             .map_err(display_error)
     })
     .await
@@ -529,6 +551,7 @@ fn terminal_integration(status: &installation::CliInstallation) -> TerminalInteg
     TerminalIntegration {
         status: status.status().to_owned(),
         path: status.path().display().to_string(),
+        zsh: warpgatesh_runtime::shell_integration::status(),
     }
 }
 
@@ -887,6 +910,11 @@ mod tests {
             TerminalIntegration {
                 status: "missing".to_owned(),
                 path: "/usr/local/bin/warpgatesh".to_owned(),
+                zsh: warpgatesh_runtime::shell_integration::ShellIntegration {
+                    status: "disabled".to_owned(),
+                    path: "/example/.zshrc".to_owned(),
+                    message: None,
+                },
             },
             updates::UpdateStatus {
                 phase: updates::UpdatePhase::Idle,

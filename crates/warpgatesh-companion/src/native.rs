@@ -61,6 +61,9 @@ enum Operation {
         alias: String,
     },
     InstallCommandLineTool,
+    SetShellIntegration {
+        enabled: bool,
+    },
     UninstallWarpgatesh {
         request: commands::UninstallRequest,
     },
@@ -202,6 +205,10 @@ async fn dispatch(app: CompanionContext, operation: Operation) -> Result<Value, 
         }
         Operation::InstallCommandLineTool => {
             serialize(commands::install_command_line_tool().await?)
+        }
+        Operation::SetShellIntegration { enabled } => {
+            commands::set_shell_integration(enabled).await?;
+            Ok(Value::Null)
         }
         Operation::UninstallWarpgatesh { request } => {
             commands::uninstall_warpgatesh(app, request).await?;

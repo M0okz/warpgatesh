@@ -1997,7 +1997,7 @@ dependencies = [
 
 [[package]]
 name = "warpgatesh-agent"
-version = "0.1.25"
+version = "0.1.26"
 dependencies = [
  "serde_json",
  "warpgatesh-core",
@@ -2006,7 +2006,7 @@ dependencies = [
 
 [[package]]
 name = "warpgatesh-cli"
-version = "0.1.25"
+version = "0.1.26"
 dependencies = [
  "rpassword",
  "tempfile",
@@ -2016,7 +2016,7 @@ dependencies = [
 
 [[package]]
 name = "warpgatesh-companion"
-version = "0.1.25"
+version = "0.1.26"
 dependencies = [
  "plist",
  "serde",
@@ -2029,14 +2029,14 @@ dependencies = [
 
 [[package]]
 name = "warpgatesh-core"
-version = "0.1.25"
+version = "0.1.26"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "warpgatesh-runtime"
-version = "0.1.25"
+version = "0.1.26"
 dependencies = [
  "chrono",
  "fs2",
@@ -2054,7 +2054,7 @@ dependencies = [
 
 [[package]]
 name = "warpgatesh-update-sign"
-version = "0.1.25"
+version = "0.1.26"
 dependencies = [
  "base64",
  "minisign",

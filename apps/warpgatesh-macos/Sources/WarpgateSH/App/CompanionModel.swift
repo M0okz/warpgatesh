@@ -5,6 +5,7 @@ final class CompanionModel: ObservableObject {
   @Published var state: CompanionState?
   @Published var section: AppSection = .access
   @Published var showAgentSetup = false
+  @Published var showShellSetup = false
   @Published var busy = false
   @Published var error: String?
   @Published var notice: String?
@@ -75,12 +76,30 @@ final class CompanionModel: ObservableObject {
         notice = success
         noticeExpiresAt = success == nil ? nil : Date().addingTimeInterval(4)
         await refresh()
+        if command == "install_command_line_tool",
+          state?.terminalIntegration.commandAvailable == true,
+          state?.terminalIntegration.zsh?.status == "disabled"
+        {
+          showShellSetup = true
+        } else if command == "set_shell_integration" {
+          showShellSetup = false
+        }
       } catch is CancellationError {} catch { self.error = error.localizedDescription }
     }
     return action
   }
   func setBackgroundAgent(_ enabled: Bool) {
     perform("set_background_agent", args: ["enabled": .bool(enabled)])
+  }
+  @discardableResult
+  func installCommandLineTool() -> Task<Void, Never>? {
+    perform("install_command_line_tool", success: L10n.text("Commande installée."))
+  }
+  @discardableResult
+  func setShellIntegration(_ enabled: Bool) -> Task<Void, Never>? {
+    perform(
+      "set_shell_integration", args: ["enabled": .bool(enabled)],
+      success: L10n.text("Ouvrez un nouveau terminal pour appliquer le changement."))
   }
   func synchronize() { perform("sync_now", success: L10n.text("Vos accès sont à jour.")) }
   func open(_ target: CompanionTarget) {

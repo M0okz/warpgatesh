@@ -33,7 +33,7 @@ installing an agent. Choose **Enable synchronization** or **Later**; existing
 agents skip this prompt. Manual synchronization remains available, and the agent
 can be enabled or disabled under **Preferences → Synchronization**.
 
-> **macOS 0.1.25:** native SwiftUI/AppKit companion and Sparkle updates, with a standalone Rust backend. The signed update remains compatible with 0.1.24.
+> **macOS 0.1.26:** the app offers direct VM commands in zsh after installing the bundled command. Enable or disable the integration in Preferences → System, then open a new terminal.
 
 ## Why WarpgateSH?
 
@@ -125,6 +125,10 @@ To connect by typing a target name directly, explicitly enable the integration:
 ```console
 $ warpgatesh shell install zsh
 ```
+
+The macOS app also offers this step after installing the bundled command. You
+can enable or disable it later in **Preferences → System → VM commands in zsh**.
+The app asks before changing your zsh startup file.
 
 Open a new terminal. With your normal zsh completion enabled, type `app-` and
 press Tab to complete a target, then Enter to connect. Both short and qualified

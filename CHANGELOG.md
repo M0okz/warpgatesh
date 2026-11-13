@@ -2,6 +2,12 @@
 
 Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
+## 0.1.26 — 2026-11-13
+
+- Après l’installation de la commande embarquée, l’application propose d’activer l’intégration zsh pour se connecter en tapant directement le nom d’une VM.
+- Préférences → Système permet d’activer ou désactiver cette intégration et affiche son état réel. Le choix « Plus tard » conserve le shell tel quel.
+- Un rappel précise d’ouvrir un nouveau terminal après activation. Les réglages personnels du fichier zsh sont conservés.
+
 ## 0.1.25 — 2026-11-01
 
 - Le compagnon SwiftUI utilise désormais un backend Rust autonome ; Tauri et le frontend web historique sont retirés de l’application et de sa chaîne de distribution.
