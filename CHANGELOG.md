@@ -2,6 +2,11 @@
 
 Toutes les évolutions notables de WarpgateSH sont documentées ici.
 
+## 0.1.28 — 2026-11-14
+
+- Le message d’erreur du moteur local disparaît automatiquement dès que le rafraîchissement de l’application réussit à nouveau, notamment après une interruption temporaire.
+- Une ancienne requête ne peut plus réafficher son erreur après une action réussie. Les erreurs liées à une action restent visibles.
+
 ## 0.1.27 — 2026-11-13
 
 - La complétion zsh propose un seul nom par VM : le nom court pour le profil par défaut, sans doublon avec son suffixe de profil.
