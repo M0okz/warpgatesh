@@ -32,6 +32,7 @@ administration, and access-control configuration.
 
 - [Native migration validation (0.1.25)](validation/0.1.25-native-migration.md)
 
+- [0.1.28 release notes](releases/0.1.28.md)
 - [0.1.27 release notes](releases/0.1.27.md)
 - [0.1.26 release notes](releases/0.1.26.md)
 - [0.1.25 release notes](releases/0.1.25.md)

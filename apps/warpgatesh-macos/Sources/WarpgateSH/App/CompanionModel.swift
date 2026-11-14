@@ -7,11 +7,14 @@ final class CompanionModel: ObservableObject {
   @Published var showAgentSetup = false
   @Published var showShellSetup = false
   @Published var busy = false
-  @Published var error: String?
+  @Published var error: String? {
+    didSet { errorCameFromRefresh = false }
+  }
   @Published var notice: String?
   var notifications: DesktopNotifications?
   var settings: AppSettings?
   private var revision: UInt64 = 0
+  private var errorCameFromRefresh = false
   private var noticeExpiresAt: Date?
   private let transport: any CompanionTransport
   private var polling: Task<Void, Never>?
@@ -24,6 +27,7 @@ final class CompanionModel: ObservableObject {
     polling = Task {
       do { try await transport.perform("initialize") } catch {
         self.error = error.localizedDescription
+        errorCameFromRefresh = true
       }
       while !Task.isCancelled {
         if let deadline = noticeExpiresAt, deadline <= Date() {
@@ -42,9 +46,14 @@ final class CompanionModel: ObservableObject {
       try Task.checkCancellation()
       guard expectedRevision == revision else { return }
       state = fresh
+      if errorCameFromRefresh { error = nil }
       showAgentSetup = fresh.agentSetup?.needsDecision == true && !fresh.agentRunning
       await notifications?.evaluate(fresh, isDemo: isDemo)
-    } catch is CancellationError {} catch { self.error = error.localizedDescription }
+    } catch is CancellationError {} catch {
+      guard !Task.isCancelled, expectedRevision == revision else { return }
+      self.error = error.localizedDescription
+      errorCameFromRefresh = true
+    }
   }
   @discardableResult
   func perform(_ command: String, args: [String: JSONValue] = [:], success: String? = nil) -> Task<
